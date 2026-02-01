@@ -23,9 +23,10 @@ import { pool } from "../config/database";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
 import type { RoundRow } from "../models/round";
-import type { GuessRow, Guess, PublicGuess } from "../models/guess";
+import type { GuessRow, Guess, PublicGuess, ElementScoreBreakdown } from "../models/guess";
 import { toGuess } from "../models/guess";
 import { createEmbeddingProvider, cosineSimilarity } from "./embedding";
+import { hybridScoringService } from "./hybridScoringService";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -95,7 +96,12 @@ function toPostgresFloatArray(embedding: number[]): string {
 async function scoreGuess(
   roundId: string,
   guessText: string
-): Promise<{ score: number; embeddingSimilarity: number; guessEmbedding: number[] }> {
+): Promise<{
+  score: number;
+  embeddingSimilarity: number;
+  guessEmbedding: number[];
+  elementBreakdown: ElementScoreBreakdown;
+}> {
   // 1. Get the round from DB
   const roundResult = await pool.query<RoundRow>(
     `SELECT * FROM rounds WHERE id = $1`,
@@ -135,10 +141,18 @@ async function scoreGuess(
   // 5. Normalize to 0-100 score
   const score = normalizeScore(rawSimilarity);
 
+  // 6. Compute element-level breakdown (augments, does not replace cosine score)
+  const elementBreakdown = await hybridScoringService.computeElementBreakdown(
+    round.prompt,
+    guessText,
+    score
+  );
+
   return {
     score,
     embeddingSimilarity: rawSimilarity,
     guessEmbedding,
+    elementBreakdown,
   };
 }
 
@@ -190,15 +204,13 @@ async function scoreAndSaveGuess(
   }
 
   // 3. Score the guess
-  const { score, embeddingSimilarity, guessEmbedding } = await scoreGuess(
-    roundId,
-    guessText
-  );
+  const { score, embeddingSimilarity, guessEmbedding, elementBreakdown } =
+    await scoreGuess(roundId, guessText);
 
-  // 4. Insert into guesses table
+  // 4. Insert into guesses table (includes element_scores JSONB)
   const insertResult = await pool.query<GuessRow>(
-    `INSERT INTO guesses (round_id, user_id, guess_text, score, embedding_similarity, guess_embedding)
-     VALUES ($1, $2, $3, $4, $5, $6::float[])
+    `INSERT INTO guesses (round_id, user_id, guess_text, score, embedding_similarity, guess_embedding, element_scores)
+     VALUES ($1, $2, $3, $4, $5, $6::float[], $7::jsonb)
      RETURNING *`,
     [
       roundId,
@@ -207,6 +219,7 @@ async function scoreAndSaveGuess(
       score,
       embeddingSimilarity,
       toPostgresFloatArray(guessEmbedding),
+      JSON.stringify(elementBreakdown),
     ]
   );
 
@@ -217,6 +230,7 @@ async function scoreAndSaveGuess(
     userId,
     score,
     similarity: embeddingSimilarity,
+    elementScore: elementBreakdown.elementScore,
   });
 
   return savedGuess;
