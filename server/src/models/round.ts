@@ -16,6 +16,8 @@ export interface RoundRow {
   image_url: string | null;
   status: RoundStatus;
   prompt_embedding: number[] | null;
+  difficulty: string | null;
+  word_count: number | null;
   started_at: Date | null;
   ended_at: Date | null;
   created_at: Date;
@@ -28,6 +30,8 @@ export interface Round {
   imageUrl: string | null;
   status: RoundStatus;
   promptEmbedding: number[] | null;
+  difficulty: string;
+  wordCount: number | null;
   startedAt: Date | null;
   endedAt: Date | null;
   createdAt: Date;
@@ -41,6 +45,7 @@ export interface PublicRound {
   id: string;
   imageUrl: string | null;
   status: RoundStatus;
+  difficulty: string;
   startedAt: string | null;
   endedAt: string | null;
 }
@@ -51,6 +56,7 @@ export interface PublicRound {
  */
 export interface CompletedRound extends PublicRound {
   prompt: string;
+  difficulty: string;
 }
 
 /** Convert a database row to a Round. */
@@ -61,6 +67,8 @@ export function toRound(row: RoundRow): Round {
     imageUrl: row.image_url,
     status: row.status,
     promptEmbedding: row.prompt_embedding,
+    difficulty: row.difficulty ?? 'normal',
+    wordCount: row.word_count ?? null,
     startedAt: row.started_at,
     endedAt: row.ended_at,
     createdAt: row.created_at,
@@ -73,6 +81,7 @@ export function toPublicRound(round: Round): PublicRound {
     id: round.id,
     imageUrl: round.imageUrl,
     status: round.status,
+    difficulty: round.difficulty,
     startedAt: round.startedAt ? round.startedAt.toISOString() : null,
     endedAt: round.endedAt ? round.endedAt.toISOString() : null,
   };
@@ -83,5 +92,6 @@ export function toCompletedRound(round: Round): CompletedRound {
   return {
     ...toPublicRound(round),
     prompt: round.prompt,
+    difficulty: round.difficulty,
   };
 }
