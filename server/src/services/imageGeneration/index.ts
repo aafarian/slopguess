@@ -8,6 +8,7 @@
 
 import { env } from "../../config/env";
 import { MockImageProvider } from "./mockProvider";
+import { OpenAIImageProvider } from "./openaiProvider";
 import type { ImageGenerationProvider, ImageGenerationResult } from "./types";
 
 export type { ImageGenerationProvider, ImageGenerationResult };
@@ -27,11 +28,7 @@ export function createImageProvider(
       return new MockImageProvider();
 
     case "openai":
-      // OpenAI provider will be implemented in Task 1.3
-      throw new Error(
-        `Image provider "openai" is not yet implemented. ` +
-          `Set IMAGE_PROVIDER=mock to use the mock provider for development.`
-      );
+      return new OpenAIImageProvider();
 
     default:
       throw new Error(
