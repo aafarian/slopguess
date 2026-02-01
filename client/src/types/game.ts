@@ -66,8 +66,6 @@ export interface GuessResult {
   score: number | null;
   rank: number;
   totalGuesses: number;
-  prompt: string | null;
-  elementScores?: ElementScoreBreakdown;
 }
 
 // ---------------------------------------------------------------------------
@@ -128,6 +126,7 @@ export interface RoundStats {
 export interface UserRoundResult {
   guessText: string;
   score: number | null;
+  elementScores: ElementScoreBreakdown | null;
   rank: number;
   total: number;
 }

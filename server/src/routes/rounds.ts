@@ -19,6 +19,7 @@ import { scoringService } from "../services/scoringService";
 import { leaderboardService } from "../services/leaderboardService";
 import { streakService } from "../services/streakService";
 import { logger } from "../config/logger";
+import { containsBlockedContent } from "../services/contentFilter";
 import { toPublicRound, toCompletedRound } from "../models/round";
 import type { GuessRow } from "../models/guess";
 import type { ElementScoreBreakdown } from "../models/guess";
@@ -26,7 +27,7 @@ import type { ElementScoreBreakdown } from "../models/guess";
 const roundsRouter = Router();
 
 // ---------------------------------------------------------------------------
-// Validation helpers
+// Constants
 // ---------------------------------------------------------------------------
 
 /** Maximum length for guess text. */
@@ -73,16 +74,15 @@ roundsRouter.get(
         }
       }
 
-      // If user has already guessed, reveal the prompt (no reason to hide it).
-      // Otherwise, hide it to keep the game fair.
-      const publicRound = hasGuessed ? toCompletedRound(round) : toPublicRound(round);
-
       res.status(200).json({
         round: {
-          ...publicRound,
+          ...toPublicRound(round),
           guessCount,
         },
-        ...(req.user ? { hasGuessed, userScore } : {}),
+        ...(req.user ? {
+          hasGuessed,
+          userScore,
+        } : {}),
       });
     } catch (err: unknown) {
       next(err);
@@ -173,6 +173,17 @@ roundsRouter.post(
 
       const guessText = guess.trim();
 
+      // 1b. Content filter
+      if (containsBlockedContent(guessText)) {
+        res.status(400).json({
+          error: {
+            message: "Your guess contains inappropriate language. Please try again.",
+            code: "INAPPROPRIATE_CONTENT",
+          },
+        });
+        return;
+      }
+
       // 2. Score and save the guess (service handles round existence + active check + duplicate check)
       const savedGuess = await scoringService.scoreAndSaveGuess(
         roundId,
@@ -205,16 +216,11 @@ roundsRouter.post(
       );
       const totalGuesses = parseInt(totalResult.rows[0].count, 10);
 
-      // 6. Fetch the round prompt — once you've guessed, there's no reason to hide it
-      const round = await roundService.getRoundById(roundId);
-
       res.status(201).json({
         guessId: savedGuess.id,
         score: savedGuess.score,
-        elementScores: savedGuess.elementScores ?? null,
         rank,
         totalGuesses,
-        prompt: round?.prompt ?? null,
       });
     } catch (err: unknown) {
       // Map service-level errors to proper HTTP status codes

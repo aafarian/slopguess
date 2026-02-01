@@ -18,15 +18,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getActiveRound } from '../services/game';
+import { getActiveRound, rotateRound } from '../services/game';
 import type { Round, GuessResult } from '../types/game';
 import { ApiRequestError } from '../services/api';
-import { GamePageSkeleton } from '../components/SkeletonLoader';
+import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ScoreDisplay from '../components/ScoreDisplay';
 import GuessForm from '../components/GuessForm';
-import ElementBreakdown from '../components/ElementBreakdown';
 import ShareButton from '../components/ShareButton';
 
 /** Duration of the "Analyzing your guess..." transition in ms. */
@@ -35,7 +34,7 @@ const ANALYZING_DELAY_MS = 1200;
 type SubmissionPhase = 'idle' | 'analyzing' | 'revealed';
 
 export default function GamePage() {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   // Round data
@@ -49,6 +48,9 @@ export default function GamePage() {
   const [guessResult, setGuessResult] = useState<GuessResult | null>(null);
   const [submissionPhase, setSubmissionPhase] = useState<SubmissionPhase>('idle');
   const [roundEnded, setRoundEnded] = useState(false);
+
+  // Dev toolbar state
+  const [rotating, setRotating] = useState(false);
 
   const fetchRound = useCallback(async () => {
     setLoading(true);
@@ -72,10 +74,8 @@ export default function GamePage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading) {
-      fetchRound();
-    }
-  }, [authLoading, fetchRound]);
+    fetchRound();
+  }, [fetchRound]);
 
   const handleGuessSuccess = useCallback((result: GuessResult) => {
     setGuessResult(result);
@@ -101,11 +101,33 @@ export default function GamePage() {
     navigate(`/login?returnTo=${returnUrl}`);
   }, [navigate]);
 
+  const handleRotateRound = useCallback(async () => {
+    setRotating(true);
+    try {
+      await rotateRound();
+      // Reset all local state and re-fetch
+      setGuessResult(null);
+      setSubmissionPhase('idle');
+      setHasGuessed(false);
+      setUserScore(null);
+      setRoundEnded(false);
+      await fetchRound();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to rotate round.');
+    } finally {
+      setRotating(false);
+    }
+  }, [fetchRound]);
+
   // -----------------------------------------------------------------------
   // Render: Loading
   // -----------------------------------------------------------------------
-  if (loading || authLoading) {
-    return <GamePageSkeleton />;
+  if (loading) {
+    return (
+      <div className="game-page">
+        <LoadingSpinner message="Loading round..." />
+      </div>
+    );
   }
 
   // -----------------------------------------------------------------------
@@ -185,6 +207,18 @@ export default function GamePage() {
 
   return (
     <div className="game-page">
+      {import.meta.env.DEV && (
+        <div className="dev-toolbar">
+          <span className="dev-toolbar-label">DEV</span>
+          <button
+            className="btn btn-sm btn-outline dev-toolbar-btn"
+            onClick={handleRotateRound}
+            disabled={rotating}
+          >
+            {rotating ? 'Rotating...' : 'Next Round'}
+          </button>
+        </div>
+      )}
       <div className="game-layout">
         {/* Left panel: Image */}
         <div className="game-image-panel">
@@ -244,32 +278,15 @@ export default function GamePage() {
           {isAuthenticated && alreadyGuessed && !isAnalyzing && (
             <div className="game-result game-result--fade-in">
               {guessResult ? (
-                <>
-                  <ScoreDisplay
-                    score={guessResult.score ?? 0}
-                    rank={guessResult.rank}
-                    totalGuesses={guessResult.totalGuesses}
-                  />
-                  {guessResult.elementScores && (
-                    <ElementBreakdown
-                      elementScores={guessResult.elementScores}
-                      promptWords={guessResult.prompt?.split(/\s+/).filter(Boolean)}
-                    />
-                  )}
-                </>
+                <ScoreDisplay
+                  score={guessResult.score ?? 0}
+                  rank={guessResult.rank}
+                  totalGuesses={guessResult.totalGuesses}
+                />
               ) : userScore !== null && userScore !== undefined ? (
                 <div className="game-result-summary">
                   <div className="game-result-score-label">Your score</div>
                   <div className="game-result-score-value">{userScore}</div>
-                  {user && (
-                    <ShareButton
-                      score={userScore}
-                      rank={0}
-                      totalGuesses={round.guessCount}
-                      roundId={round.id}
-                      userId={user.id}
-                    />
-                  )}
                 </div>
               ) : (
                 <p className="game-result-submitted">
@@ -277,13 +294,23 @@ export default function GamePage() {
                 </p>
               )}
 
-              {/* Show the prompt — from guess response or from round data on refresh */}
-              {(guessResult?.prompt || round.prompt) && (
-                <div className="game-prompt-reveal">
-                  <span className="game-prompt-reveal-label">The prompt was</span>
-                  <p className="game-prompt-reveal-text">{guessResult?.prompt || round.prompt}</p>
-                </div>
+              <div className="game-prompt-teaser">
+                <p className="game-prompt-teaser-text">
+                  The prompt and word breakdown will be revealed when this round ends.
+                </p>
+              </div>
+
+              {/* Share actions */}
+              {user && (
+                <ShareButton
+                  score={guessResult?.score ?? userScore ?? 0}
+                  rank={guessResult?.rank ?? 0}
+                  totalGuesses={guessResult?.totalGuesses ?? round.guessCount}
+                  roundId={round.id}
+                  userId={user.id}
+                />
               )}
+
               <div className="game-result-links">
                 <Link
                   to={`/rounds/${round.id}/leaderboard`}
@@ -297,15 +324,6 @@ export default function GamePage() {
                 >
                   Round Details
                 </Link>
-                {guessResult && user && (
-                  <ShareButton
-                    score={guessResult.score ?? 0}
-                    rank={guessResult.rank}
-                    totalGuesses={guessResult.totalGuesses}
-                    roundId={round.id}
-                    userId={user.id}
-                  />
-                )}
               </div>
             </div>
           )}
