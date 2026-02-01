@@ -67,7 +67,7 @@ function loadEnvConfig(): EnvConfig {
     DATABASE_URL: process.env.DATABASE_URL!,
     JWT_SECRET: process.env.JWT_SECRET!,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
-    IMAGE_PROVIDER: process.env.IMAGE_PROVIDER || "openai",
+    IMAGE_PROVIDER: process.env.IMAGE_PROVIDER || "mock",
     PORT: parseInt(process.env.PORT || "3001", 10),
     NODE_ENV: process.env.NODE_ENV || "development",
     CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:5173",
