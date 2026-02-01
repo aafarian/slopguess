@@ -3022,6 +3022,190 @@ body {
   }
 }
 
+/* ===================================================================
+   Streak display
+   =================================================================== */
+
+.streak-display {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  transition: border-color 0.25s, transform 0.2s, box-shadow 0.2s;
+}
+
+.streak-display:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Metrics row --------------------------------------------------- */
+
+.streak-display-metrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Current streak (primary) */
+
+.streak-display-current {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.streak-display-flame {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.streak-display-current-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.streak-display-current-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.streak-display-current-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Longest streak (secondary) */
+
+.streak-display-longest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.streak-display-longest-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.streak-display-longest-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* --- 7-day calendar row -------------------------------------------- */
+
+.streak-display-calendar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.streak-display-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.streak-display-day-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.streak-display-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.streak-display-dot--filled {
+  background: var(--accent);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 6px rgba(100, 108, 255, 0.4);
+}
+
+.streak-display-dot--hollow {
+  background: transparent;
+  border: 2px solid var(--border);
+}
+
+/* --- Streak display responsive ------------------------------------- */
+
+@media (max-width: 480px) {
+  .streak-display {
+    padding: 1.25rem 0.85rem;
+  }
+
+  .streak-display-current-value {
+    font-size: 1.75rem;
+  }
+
+  .streak-display-flame {
+    font-size: 1.5rem;
+  }
+
+  .streak-display-longest-value {
+    font-size: 1.25rem;
+  }
+
+  .streak-display-dot {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .streak-display {
+    padding: 1rem 0.65rem;
+  }
+
+  .streak-display-current-value {
+    font-size: 1.5rem;
+  }
+
+  .streak-display-flame {
+    font-size: 1.25rem;
+  }
+
+  .streak-display-longest-value {
+    font-size: 1.1rem;
+  }
+
+  .streak-display-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .streak-display-day-label {
+    font-size: 0.6rem;
+  }
+}
+
 @media print {
   .navbar,
   .navbar-toggle,
