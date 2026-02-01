@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { router as apiRouter } from "./routes/index";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
+import { generalLimiter } from "./middleware/rateLimiter";
 import { env } from "./config/env";
 
 const app = express();
@@ -26,6 +27,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Request logging
 app.use(requestLogger);
+
+// General rate limiting (100 req / 15 min per IP)
+app.use(generalLimiter);
 
 // API routes
 app.use("/api", apiRouter);

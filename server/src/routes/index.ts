@@ -41,14 +41,15 @@ import { wordBankRouter } from "./wordBank";
 import { adminRouter } from "./admin";
 import { roundsRouter } from "./rounds";
 import { usersRouter } from "./users";
+import { authLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
 // Health check
 router.use("/health", healthRouter);
 
-// Authentication
-router.use("/auth", authRouter);
+// Authentication (stricter rate limit: 20 req / 15 min per IP)
+router.use("/auth", authLimiter, authRouter);
 
 // Word bank (admin/utility)
 router.use("/words", wordBankRouter);

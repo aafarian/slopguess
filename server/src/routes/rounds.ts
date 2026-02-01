@@ -12,6 +12,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { pool } from "../config/database";
 import { requireAuth, optionalAuth } from "../middleware/auth";
+import { guessLimiter } from "../middleware/rateLimiter";
 import { roundService } from "../services/roundService";
 import { scoringService } from "../services/scoringService";
 import { leaderboardService } from "../services/leaderboardService";
@@ -45,9 +46,6 @@ roundsRouter.get(
         return;
       }
 
-      // Build public response — NEVER expose the prompt for active rounds
-      const publicRound = toPublicRound(round);
-
       // Add guess count
       const countResult = await pool.query<{ count: string }>(
         `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1`,
@@ -70,6 +68,10 @@ roundsRouter.get(
           userScore = guessResult.rows[0].score;
         }
       }
+
+      // If user has already guessed, reveal the prompt (no reason to hide it).
+      // Otherwise, hide it to keep the game fair.
+      const publicRound = hasGuessed ? toCompletedRound(round) : toPublicRound(round);
 
       res.status(200).json({
         round: {
@@ -137,6 +139,7 @@ roundsRouter.get(
 
 roundsRouter.post(
   "/:roundId/guess",
+  guessLimiter,
   requireAuth,
   async (req: Request<{ roundId: string }>, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -187,11 +190,15 @@ roundsRouter.post(
       );
       const totalGuesses = parseInt(totalResult.rows[0].count, 10);
 
+      // 5. Fetch the round prompt — once you've guessed, there's no reason to hide it
+      const round = await roundService.getRoundById(roundId);
+
       res.status(201).json({
         guessId: savedGuess.id,
         score: savedGuess.score,
         rank,
         totalGuesses,
+        prompt: round?.prompt ?? null,
       });
     } catch (err: unknown) {
       // Map service-level errors to proper HTTP status codes
