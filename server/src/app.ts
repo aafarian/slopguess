@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { router as apiRouter } from "./routes/index";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
+import { env } from "./config/env";
 
 const app = express();
 
@@ -14,7 +15,7 @@ app.use(helmet());
 // CORS configuration - allow frontend dev server
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: env.CORS_ORIGIN,
     credentials: true,
   })
 );

@@ -128,15 +128,10 @@ async function getRandomWords(
       SELECT *,
         CASE
           WHEN last_used_at IS NULL THEN 0
-          WHEN last_used_at < NOW() - INTERVAL '${minutesCutoff} minutes' THEN 1
+          WHEN last_used_at < NOW() - make_interval(mins => $2) THEN 1
           ELSE 2
         END AS usage_tier
       FROM word_bank
-    ),
-    category_counts AS (
-      SELECT category, COUNT(*) as cat_count
-      FROM word_bank
-      GROUP BY category
     )
     SELECT rw.*
     FROM ranked_words rw
@@ -147,7 +142,7 @@ async function getRandomWords(
   `;
 
   try {
-    const result = await pool.query<WordBankRow>(query, [count * 3]);
+    const result = await pool.query<WordBankRow>(query, [count * 3, minutesCutoff]);
 
     if (result.rows.length === 0) {
       console.warn("[wordBankService] No words found in word bank. Has seed been run?");
