@@ -12,6 +12,7 @@
  */
 
 import { Router, Request, Response } from "express";
+import { pool } from "../config/database";
 import { logger } from "../config/logger";
 import { scheduler } from "../services/scheduler";
 import { promptVarietyService } from "../services/promptVarietyService";
@@ -111,6 +112,36 @@ adminRouter.get("/metrics", (_req: Request, res: Response) => {
     uptime: metrics.uptime,
     lastRoundRotationTime: metrics.lastRoundRotationTime,
   });
+});
+
+/**
+ * GET /api/admin/prompt-sources
+ *
+ * Returns a breakdown of prompt sources (llm vs template) across all rounds.
+ */
+adminRouter.get("/prompt-sources", async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query<{ prompt_source: string; count: string }>(
+      `SELECT prompt_source, COUNT(*) AS count FROM rounds GROUP BY prompt_source`
+    );
+
+    const sources: Record<string, number> = { llm: 0, template: 0 };
+    for (const row of result.rows) {
+      const key = row.prompt_source ?? "template";
+      sources[key] = parseInt(row.count, 10);
+    }
+
+    res.json({ sources });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("admin", "Failed to fetch prompt source breakdown", { error: message });
+    res.status(500).json({
+      error: {
+        message: "Failed to fetch prompt source breakdown",
+        code: "PROMPT_SOURCES_FAILED",
+      },
+    });
+  }
 });
 
 export { adminRouter };

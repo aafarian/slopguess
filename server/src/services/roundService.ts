@@ -18,6 +18,7 @@ import { logger } from "../config/logger";
 import type { RoundRow, Round } from "../models/round";
 import { toRound } from "../models/round";
 import { wordBankService } from "./wordBankService";
+import { promptGenerator } from "./promptGenerator";
 import { createImageProvider } from "./imageGeneration";
 import { createEmbeddingProvider } from "./embedding";
 import { persistImage } from "./imageStorage";
@@ -67,8 +68,8 @@ async function createRound(difficulty?: string): Promise<Round> {
     );
   }
 
-  // Step 2: Assemble prompt from word entries (category-aware)
-  const prompt = wordBankService.assemblePromptFromEntries(wordEntries);
+  // Step 2: Generate prompt via LLM (falls back to template assembly)
+  const { prompt, source: promptSource } = await promptGenerator.generatePromptFromWords(wordEntries);
 
   // Step 3: Generate image and persist locally
   const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
@@ -88,10 +89,10 @@ async function createRound(difficulty?: string): Promise<Round> {
   try {
     await client.query("BEGIN");
 
-    // Insert round (including difficulty and word_count)
+    // Insert round (including difficulty, word_count, and prompt_source)
     const insertRoundQuery = `
-      INSERT INTO rounds (prompt, image_url, status, prompt_embedding, difficulty, word_count)
-      VALUES ($1, $2, 'pending', $3::float[], $4, $5)
+      INSERT INTO rounds (prompt, image_url, status, prompt_embedding, difficulty, word_count, prompt_source)
+      VALUES ($1, $2, 'pending', $3::float[], $4, $5, $6)
       RETURNING *
     `;
     const roundResult = await client.query<RoundRow>(insertRoundQuery, [
@@ -100,6 +101,7 @@ async function createRound(difficulty?: string): Promise<Round> {
       toPostgresFloatArray(embeddingResult.embedding),
       resolvedDifficulty,
       wordEntries.length,
+      promptSource,
     ]);
     const roundRow = roundResult.rows[0];
 

@@ -9,6 +9,9 @@
 /** Round lifecycle status. */
 export type RoundStatus = 'pending' | 'active' | 'completed';
 
+/** Prompt source — tracks whether LLM or template generated the prompt. */
+export type PromptSource = 'llm' | 'template';
+
 /** Full round row as stored in PostgreSQL. */
 export interface RoundRow {
   id: string;
@@ -16,6 +19,7 @@ export interface RoundRow {
   image_url: string | null;
   status: RoundStatus;
   prompt_embedding: number[] | null;
+  prompt_source: PromptSource | null;
   difficulty: string | null;
   word_count: number | null;
   started_at: Date | null;
@@ -30,6 +34,7 @@ export interface Round {
   imageUrl: string | null;
   status: RoundStatus;
   promptEmbedding: number[] | null;
+  promptSource: PromptSource;
   difficulty: string;
   wordCount: number | null;
   startedAt: Date | null;
@@ -57,6 +62,7 @@ export interface PublicRound {
 export interface CompletedRound extends PublicRound {
   prompt: string;
   difficulty: string;
+  promptSource: PromptSource;
 }
 
 /** Convert a database row to a Round. */
@@ -67,6 +73,7 @@ export function toRound(row: RoundRow): Round {
     imageUrl: row.image_url,
     status: row.status,
     promptEmbedding: row.prompt_embedding,
+    promptSource: row.prompt_source ?? 'template',
     difficulty: row.difficulty ?? 'normal',
     wordCount: row.word_count ?? null,
     startedAt: row.started_at,
@@ -93,5 +100,6 @@ export function toCompletedRound(round: Round): CompletedRound {
     ...toPublicRound(round),
     prompt: round.prompt,
     difficulty: round.difficulty,
+    promptSource: round.promptSource,
   };
 }
