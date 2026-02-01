@@ -31,5 +31,8 @@ coverage/
 tmp/
 temp/
 
+# Database backups
+backups/
+
 # TypeScript build info
 *.tsbuildinfo
