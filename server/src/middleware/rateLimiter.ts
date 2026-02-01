@@ -2,9 +2,13 @@
  * Rate limiting middleware using express-rate-limit.
  *
  * Three tiers:
- *   - generalLimiter  — 100 requests per 15 minutes (applied globally)
- *   - authLimiter     — 20 requests per 15 minutes  (applied to /api/auth)
- *   - guessLimiter    — 10 requests per 1 minute     (applied to guess endpoint)
+ *   - generalLimiter  — configurable via RATE_LIMIT_MAX / RATE_LIMIT_WINDOW_MS
+ *   - authLimiter     — 20 requests per window  (applied to /api/auth)
+ *   - guessLimiter    — 10 requests per 1 minute (applied to guess endpoint)
+ *
+ * The general limiter window and max are configurable via environment variables
+ * (RATE_LIMIT_WINDOW_MS and RATE_LIMIT_MAX). Auth and guess limiters use the
+ * same window but with stricter maximums.
  *
  * All limiters use the default in-memory store which is sufficient for
  * single-process deployments. Upgrade to a Redis-backed store when
@@ -12,15 +16,17 @@
  */
 
 import rateLimit from "express-rate-limit";
+import { env } from "../config/env";
 
 /**
  * General API rate limiter.
  * Applied globally to all /api routes.
- * 100 requests per 15 minutes per IP.
+ * Defaults: 100 requests per 15 minutes (900000ms) per IP.
+ * Configurable via RATE_LIMIT_MAX and RATE_LIMIT_WINDOW_MS env vars.
  */
 export const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  windowMs: env.RATE_LIMIT_WINDOW_MS,
+  max: env.RATE_LIMIT_MAX,
   standardHeaders: true, // Return rate limit info in RateLimit-* headers
   legacyHeaders: false, // Disable X-RateLimit-* headers
   message: {
@@ -34,10 +40,10 @@ export const generalLimiter = rateLimit({
 /**
  * Auth route rate limiter (stricter).
  * Applied to /api/auth routes (login, register).
- * 20 requests per 15 minutes per IP.
+ * 20 requests per window per IP.
  */
 export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
@@ -55,7 +61,7 @@ export const authLimiter = rateLimit({
  * 10 requests per 1 minute per IP.
  */
 export const guessLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
+  windowMs: 1 * 60 * 1000, // 1 minute (always fixed)
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,

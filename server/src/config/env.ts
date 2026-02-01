@@ -33,6 +33,12 @@ interface EnvConfig {
   ROUND_CHECK_INTERVAL_MINUTES: number;
   /** Minimum log level: debug, info, warn, error (default: info) */
   LOG_LEVEL: string;
+  /** Whether to trust proxy headers (e.g. X-Forwarded-For) when behind nginx/load balancer (default: false) */
+  TRUST_PROXY: boolean;
+  /** Rate limit window duration in milliseconds (default: 900000 = 15 minutes) */
+  RATE_LIMIT_WINDOW_MS: number;
+  /** Maximum number of requests per window per IP (default: 100) */
+  RATE_LIMIT_MAX: number;
 }
 
 /**
@@ -93,6 +99,13 @@ function loadEnvConfig(): EnvConfig {
       process.env.ROUND_CHECK_INTERVAL_MINUTES || "5"
     ),
     LOG_LEVEL: (process.env.LOG_LEVEL || "info").toLowerCase(),
+    TRUST_PROXY:
+      process.env.TRUST_PROXY === "true" || process.env.TRUST_PROXY === "1",
+    RATE_LIMIT_WINDOW_MS: parseInt(
+      process.env.RATE_LIMIT_WINDOW_MS || "900000",
+      10
+    ),
+    RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "100", 10),
   };
 }
 

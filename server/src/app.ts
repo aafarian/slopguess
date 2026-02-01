@@ -11,6 +11,12 @@ import { env } from "./config/env";
 
 const app = express();
 
+// Trust proxy headers (X-Forwarded-For, etc.) when running behind nginx/load balancer.
+// Required for accurate IP detection in rate limiting and request logging.
+if (env.TRUST_PROXY) {
+  app.set("trust proxy", 1);
+}
+
 // Security headers
 app.use(helmet());
 
