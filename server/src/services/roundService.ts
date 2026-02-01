@@ -50,12 +50,16 @@ function toPostgresFloatArray(embedding: number[]): string {
  *
  * All database operations are wrapped in a transaction.
  *
+ * @param difficulty Optional difficulty level (e.g. "easy", "normal", "hard").
+ *                   Defaults to env.DEFAULT_DIFFICULTY when omitted.
  * @returns The newly created Round
  * @throws Error if any step in the pipeline fails
  */
-async function createRound(): Promise<Round> {
-  // Step 1: Select balanced words with anti-repetition validation
-  const wordEntries = await wordBankService.getBalancedWordsWithVarietyCheck(10);
+async function createRound(difficulty?: string): Promise<Round> {
+  const resolvedDifficulty = difficulty ?? env.DEFAULT_DIFFICULTY;
+
+  // Step 1: Select words sized for the requested difficulty
+  const wordEntries = await wordBankService.getWordsForDifficulty(resolvedDifficulty);
   if (wordEntries.length === 0) {
     throw new Error(
       "[roundService] Cannot create round: no words available in word bank"
@@ -78,16 +82,18 @@ async function createRound(): Promise<Round> {
   try {
     await client.query("BEGIN");
 
-    // Insert round
+    // Insert round (including difficulty and word_count)
     const insertRoundQuery = `
-      INSERT INTO rounds (prompt, image_url, status, prompt_embedding)
-      VALUES ($1, $2, 'pending', $3::float[])
+      INSERT INTO rounds (prompt, image_url, status, prompt_embedding, difficulty, word_count)
+      VALUES ($1, $2, 'pending', $3::float[], $4, $5)
       RETURNING *
     `;
     const roundResult = await client.query<RoundRow>(insertRoundQuery, [
       prompt,
       imageResult.imageUrl,
       toPostgresFloatArray(embeddingResult.embedding),
+      resolvedDifficulty,
+      wordEntries.length,
     ]);
     const roundRow = roundResult.rows[0];
 
@@ -261,9 +267,11 @@ async function getRecentRounds(limit: number = 10): Promise<Round[]> {
  * If there is currently an active round, it will be completed first to
  * ensure only one round is active at a time.
  *
+ * @param difficulty Optional difficulty level (e.g. "easy", "normal", "hard").
+ *                   Defaults to env.DEFAULT_DIFFICULTY when omitted.
  * @returns The newly created and activated Round
  */
-async function createAndActivateRound(): Promise<Round> {
+async function createAndActivateRound(difficulty?: string): Promise<Round> {
   // Complete the currently active round if one exists
   const currentActive = await getActiveRound();
   if (currentActive) {
@@ -271,8 +279,8 @@ async function createAndActivateRound(): Promise<Round> {
     await completeRound(currentActive.id);
   }
 
-  // Create a new round
-  const newRound = await createRound();
+  // Create a new round with the requested difficulty
+  const newRound = await createRound(difficulty);
 
   // Activate the new round
   const activatedRound = await activateRound(newRound.id);

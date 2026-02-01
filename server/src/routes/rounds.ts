@@ -379,6 +379,83 @@ roundsRouter.get(
 );
 
 // ---------------------------------------------------------------------------
+// GET /:roundId/share/:userId — Public shareable score data
+// ---------------------------------------------------------------------------
+
+roundsRouter.get(
+  "/:roundId/share/:userId",
+  async (
+    req: Request<{ roundId: string; userId: string }>,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { roundId, userId } = req.params;
+
+      // 1. Look up the round
+      const round = await roundService.getRoundById(roundId);
+
+      if (!round) {
+        res.status(404).json({
+          error: { message: "Round not found", code: "ROUND_NOT_FOUND" },
+        });
+        return;
+      }
+
+      // 2. Look up the user's guess for this round (join with users for username)
+      const guessResult = await pool.query<GuessRow & { username: string }>(
+        `SELECT g.*, u.username
+         FROM guesses g
+         JOIN users u ON u.id = g.user_id
+         WHERE g.round_id = $1 AND g.user_id = $2`,
+        [roundId, userId]
+      );
+
+      if (guessResult.rows.length === 0) {
+        res.status(404).json({
+          error: { message: "Guess not found", code: "GUESS_NOT_FOUND" },
+        });
+        return;
+      }
+
+      const row = guessResult.rows[0];
+
+      // 3. Compute rank (COUNT of higher scores + 1)
+      const rankResult = await pool.query<{ count: string }>(
+        `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1 AND score > $2`,
+        [roundId, row.score]
+      );
+      const rank = parseInt(rankResult.rows[0].count, 10) + 1;
+
+      // 4. Total guesses for this round
+      const totalResult = await pool.query<{ count: string }>(
+        `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1`,
+        [roundId]
+      );
+      const totalGuesses = parseInt(totalResult.rows[0].count, 10);
+
+      // 5. Build response — only include prompt if round is completed
+      const shareData: Record<string, unknown> = {
+        username: row.username,
+        score: row.score,
+        rank,
+        totalGuesses,
+        roundImageUrl: round.imageUrl,
+        roundId: round.id,
+      };
+
+      if (round.status === "completed") {
+        shareData.prompt = round.prompt;
+      }
+
+      res.status(200).json(shareData);
+    } catch (err: unknown) {
+      next(err);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
 // GET /:roundId/results — Full results for a completed round
 // ---------------------------------------------------------------------------
 
