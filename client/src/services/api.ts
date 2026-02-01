@@ -6,7 +6,7 @@
  *  - Handles 401 responses by clearing the token and redirecting to /login
  */
 
-const TOKEN_KEY = 'slopguesser_token';
+const TOKEN_KEY = 'slopguess_token';
 
 /** Retrieve the stored JWT. */
 export function getToken(): string | null {
