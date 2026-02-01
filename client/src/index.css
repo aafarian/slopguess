@@ -1358,3 +1358,390 @@ form .btn {
     font-size: 1.2rem;
   }
 }
+
+/* ===================================================================
+   Round detail page
+   =================================================================== */
+
+.round-detail {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+/* --- Image --------------------------------------------------------- */
+
+.round-detail-image-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.round-detail-image {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+.round-detail-image-placeholder {
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* --- Body content -------------------------------------------------- */
+
+.round-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* --- Status badge -------------------------------------------------- */
+
+.round-detail-status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  width: fit-content;
+}
+
+.round-detail-status-badge--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.round-detail-status-badge--completed {
+  background: rgba(100, 108, 255, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(100, 108, 255, 0.3);
+}
+
+/* --- Guess count --------------------------------------------------- */
+
+.round-detail-guess-count {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* --- Active round: user result ------------------------------------- */
+
+.round-detail-user-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.round-detail-user-result-label {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.round-detail-user-result-score {
+  font-size: 2.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Active round: play CTA ---------------------------------------- */
+
+.round-detail-play-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.round-detail-play-cta p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* --- Prompt reveal (completed) ------------------------------------- */
+
+@keyframes prompt-reveal-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.round-detail-prompt-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(
+    135deg,
+    rgba(100, 108, 255, 0.12) 0%,
+    rgba(100, 108, 255, 0.04) 100%
+  );
+  border: 1px solid rgba(100, 108, 255, 0.35);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  animation: prompt-reveal-slide 0.5s ease-out both;
+}
+
+.round-detail-prompt-reveal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px 0 0 4px;
+}
+
+.round-detail-prompt-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+.round-detail-prompt-text {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-style: italic;
+}
+
+/* --- Section title ------------------------------------------------- */
+
+.round-detail-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+/* --- User result (completed) --------------------------------------- */
+
+.round-detail-your-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.round-detail-your-guess {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+/* --- Stats grid ---------------------------------------------------- */
+
+.round-detail-stats {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.round-detail-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.round-detail-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.round-detail-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.round-detail-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.round-detail-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Responsive: 2 columns on mobile */
+@media (max-width: 600px) {
+  .round-detail-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* --- Inline leaderboard -------------------------------------------- */
+
+.round-detail-leaderboard {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.round-detail-leaderboard-table-wrapper {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+
+.round-detail-leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.rdl-th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+}
+
+.rdl-th--rank {
+  width: 48px;
+  text-align: center;
+}
+
+.rdl-th--score {
+  width: 72px;
+  text-align: center;
+}
+
+.rdl-td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid rgba(42, 42, 62, 0.5);
+  color: var(--text-primary);
+}
+
+.rdl-td--rank {
+  text-align: center;
+  font-weight: 600;
+}
+
+.rdl-td--score {
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rdl-td--guess {
+  color: var(--text-secondary);
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdl-medal {
+  font-size: 1.1rem;
+}
+
+.rdl-row--current {
+  background: rgba(100, 108, 255, 0.1);
+}
+
+.rdl-row--current td {
+  border-color: rgba(100, 108, 255, 0.25);
+}
+
+.rdl-you-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  background: rgba(100, 108, 255, 0.15);
+  border-radius: 4px;
+}
+
+.round-detail-full-leaderboard-link {
+  margin-top: 1rem;
+  display: inline-block;
+}
+
+/* --- Back link ----------------------------------------------------- */
+
+.round-detail-back {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+/* --- Round detail responsive --------------------------------------- */
+
+@media (max-width: 480px) {
+  .round-detail-image {
+    border-radius: 8px;
+  }
+
+  .round-detail-prompt-text {
+    font-size: 1rem;
+  }
+
+  .round-detail-stat-value {
+    font-size: 1.25rem;
+  }
+
+  .round-detail-user-result-score {
+    font-size: 2rem;
+  }
+}
