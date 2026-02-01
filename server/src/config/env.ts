@@ -39,6 +39,10 @@ interface EnvConfig {
   RATE_LIMIT_WINDOW_MS: number;
   /** Maximum number of requests per window per IP (default: 100) */
   RATE_LIMIT_MAX: number;
+  /** Default difficulty for new rounds (default: normal) */
+  DEFAULT_DIFFICULTY: string;
+  /** JSON mapping of difficulty names to word counts (default: {"easy":4,"normal":7,"hard":10}) */
+  DIFFICULTY_WORD_COUNTS: Record<string, number>;
 }
 
 /**
@@ -106,6 +110,11 @@ function loadEnvConfig(): EnvConfig {
       10
     ),
     RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "100", 10),
+    DEFAULT_DIFFICULTY: process.env.DEFAULT_DIFFICULTY || "normal",
+    DIFFICULTY_WORD_COUNTS: JSON.parse(
+      process.env.DIFFICULTY_WORD_COUNTS ||
+        '{"easy":4,"normal":7,"hard":10}'
+    ),
   };
 }
 
