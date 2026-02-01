@@ -26,6 +26,8 @@ import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ScoreDisplay from '../components/ScoreDisplay';
 import GuessForm from '../components/GuessForm';
+import ElementBreakdown from '../components/ElementBreakdown';
+import ShareButton from '../components/ShareButton';
 
 /** Duration of the "Analyzing your guess..." transition in ms. */
 const ANALYZING_DELAY_MS = 1200;
@@ -33,7 +35,7 @@ const ANALYZING_DELAY_MS = 1200;
 type SubmissionPhase = 'idle' | 'analyzing' | 'revealed';
 
 export default function GamePage() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const navigate = useNavigate();
 
   // Round data
@@ -206,6 +208,11 @@ export default function GamePage() {
             <span className="game-guess-count">
               {round.guessCount} {round.guessCount === 1 ? 'player has' : 'players have'} guessed
             </span>
+            {round.difficulty && round.difficulty !== 'normal' && (
+              <span className={`game-difficulty-badge game-difficulty-badge--${round.difficulty}`}>
+                {round.difficulty}
+              </span>
+            )}
           </div>
 
           {/* ---- State: Not authenticated ---- */}
@@ -237,15 +244,32 @@ export default function GamePage() {
           {isAuthenticated && alreadyGuessed && !isAnalyzing && (
             <div className="game-result game-result--fade-in">
               {guessResult ? (
-                <ScoreDisplay
-                  score={guessResult.score ?? 0}
-                  rank={guessResult.rank}
-                  totalGuesses={guessResult.totalGuesses}
-                />
+                <>
+                  <ScoreDisplay
+                    score={guessResult.score ?? 0}
+                    rank={guessResult.rank}
+                    totalGuesses={guessResult.totalGuesses}
+                  />
+                  {guessResult.elementScores && (
+                    <ElementBreakdown
+                      elementScores={guessResult.elementScores}
+                      promptWords={guessResult.prompt?.split(/\s+/).filter(Boolean)}
+                    />
+                  )}
+                </>
               ) : userScore !== null && userScore !== undefined ? (
                 <div className="game-result-summary">
                   <div className="game-result-score-label">Your score</div>
                   <div className="game-result-score-value">{userScore}</div>
+                  {user && (
+                    <ShareButton
+                      score={userScore}
+                      rank={0}
+                      totalGuesses={round.guessCount}
+                      roundId={round.id}
+                      userId={user.id}
+                    />
+                  )}
                 </div>
               ) : (
                 <p className="game-result-submitted">
@@ -273,6 +297,15 @@ export default function GamePage() {
                 >
                   Round Details
                 </Link>
+                {guessResult && user && (
+                  <ShareButton
+                    score={guessResult.score ?? 0}
+                    rank={guessResult.rank}
+                    totalGuesses={guessResult.totalGuesses}
+                    roundId={round.id}
+                    userId={user.id}
+                  />
+                )}
               </div>
             </div>
           )}
