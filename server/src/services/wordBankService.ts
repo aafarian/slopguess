@@ -12,24 +12,35 @@
 import { pool } from "../config/database";
 import type { WordBankRow, WordBankEntry } from "../models/wordBank";
 import { toWordBankEntry } from "../models/wordBank";
+import { promptVarietyService } from "./promptVarietyService";
 
 // ---------------------------------------------------------------------------
 // Prompt templates for assembling words into image generation prompts.
 // The service picks a template and fills in the blanks with selected words.
 // ---------------------------------------------------------------------------
 
+interface PromptParts {
+  adjectives: string[];
+  nouns: string[];
+  actions: string[];
+  settings: string[];
+  styles: string[];
+  extras: string[];       // materials, colors, body parts
+  atmospheres: string[];  // weather, time periods
+}
+
 interface PromptTemplate {
-  /** How many words from each category the template needs */
+  /** How many words from each role the template needs */
   slots: {
     adjective?: number;
-    noun?: number; // animals, objects, mythical creatures, vehicles, professions
+    noun?: number;
     action?: number;
     setting?: number;
     style?: number;
-    extra?: number; // materials, colors, body parts, etc.
+    extra?: number;
+    atmosphere?: number;
   };
-  /** Template function that builds the prompt string */
-  build: (parts: { adjectives: string[]; nouns: string[]; actions: string[]; settings: string[]; styles: string[]; extras: string[] }) => string;
+  build: (p: PromptParts) => string;
 }
 
 /** Categories that count as "nouns" for prompt assembly */
@@ -44,57 +55,153 @@ const NOUN_CATEGORIES = new Set([
   "nature",
 ]);
 
-/** Categories that count as "extras" — modifiers, materials, colors, etc. */
+/** Categories that provide tangible modifiers (materials, colors, body parts) */
 const EXTRA_CATEGORIES = new Set([
   "colors",
   "materials",
   "body parts",
-  "emotions",
-  "weather",
-  "time periods",
   "abstract concepts",
 ]);
 
+/** Categories that set atmosphere / era */
+const ATMOSPHERE_CATEGORIES = new Set([
+  "weather",
+  "time periods",
+]);
+
+/** Return "an" if the next word starts with a vowel sound, otherwise "a". */
+function aOrAn(word: string): string {
+  return /^[aeiou]/i.test(word) ? "an" : "a";
+}
+
+/**
+ * Wrap a word with an appropriate article.
+ * Handles special cases: words that already include articles, plurals,
+ * mass nouns, and proper-noun-like terms that need "the".
+ */
+function withArticle(word: string): string {
+  const lower = word.toLowerCase();
+  // Already has an article
+  if (/^(the |a |an )/.test(lower)) return word;
+  // Starts with a number / decade
+  if (/^[0-9]/.test(word)) return `the ${word}`;
+  // Proper eras / periods that sound better with "the"
+  if (/^(medieval|victorian|jurassic|neolithic|bronze age|stone age|ice age|wild west|roaring twenties|renaissance|prohibition|ancient|steampunk era|disco era|space age)/i.test(lower)) {
+    return `the ${word}`;
+  }
+  // Mass/uncountable nouns or settings that don't need an article
+  if (/^(space|underwater|outer space)$/i.test(lower)) return word;
+  // Plurals (ending in s but not things like "glass")
+  if (/s$/.test(lower) && !/ss$|us$/.test(lower)) return word;
+  return `${aOrAn(word)} ${word}`;
+}
+
+/** Wrap a setting with appropriate preposition + article. */
+function inSetting(word: string): string {
+  return `in ${withArticle(word)}`;
+}
+
+/** Wrap an atmosphere word with appropriate preposition + article. */
+function duringAtmosphere(word: string): string {
+  const lower = word.toLowerCase();
+  // Time periods sound better with "in" or "set in"
+  if (ATMOSPHERE_CATEGORIES.has("time periods") && /^(medieval|victorian|jurassic|neolithic|futuristic|cyberpunk|post-apocalyptic|retro|bronze age|stone age|ice age|wild west|roaring twenties|renaissance|prohibition|ancient|steampunk|disco|space age|[0-9])/i.test(lower)) {
+    return `set in ${withArticle(word)}`;
+  }
+  return `during ${withArticle(word)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Templates — ordered from most words used to fewest.
+// The matcher picks the template that consumes the MOST available words.
+// ---------------------------------------------------------------------------
+
 const PROMPT_TEMPLATES: PromptTemplate[] = [
+  // === 10-slot templates (maximum detail) ================================
+  {
+    slots: { adjective: 2, noun: 2, action: 1, setting: 1, extra: 2, atmosphere: 1, style: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} and ${p.adjectives[1]} ${p.nouns[0]} wearing ${p.extras[0]} and riding ${withArticle(p.nouns[1])} made of ${p.extras[1]}, ${p.actions[0]} ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}, in ${p.styles[0]} style`,
+  },
+  {
+    slots: { adjective: 1, noun: 3, action: 1, setting: 1, extra: 2, atmosphere: 1, style: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} holding ${withArticle(p.nouns[1])} made of ${p.extras[0]}, ${p.actions[0]} next to ${withArticle(p.nouns[2])} covered in ${p.extras[1]} ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}, in ${p.styles[0]} style`,
+  },
+
+  // === 9-slot templates ==================================================
+  {
+    slots: { adjective: 2, noun: 2, action: 1, setting: 1, extra: 2, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} with ${p.extras[0]} and ${withArticle(p.adjectives[1])} ${p.nouns[1]} made of ${p.extras[1]}, ${p.actions[0]} together ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
+  {
+    slots: { adjective: 1, noun: 2, action: 2, setting: 1, extra: 2, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} made of ${p.extras[0]}, ${p.actions[0]} and ${p.actions[1]} alongside ${withArticle(p.nouns[1])} covered in ${p.extras[1]} ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
+  {
+    slots: { adjective: 1, noun: 3, action: 1, setting: 1, extra: 2, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} riding ${withArticle(p.nouns[1])} made of ${p.extras[0]}, chasing ${withArticle(p.nouns[2])} covered in ${p.extras[1]} while ${p.actions[0]} ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
+
+  // === 8-slot templates ==================================================
+  {
+    slots: { adjective: 1, noun: 2, action: 1, setting: 1, extra: 1, atmosphere: 1, style: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} and ${withArticle(p.nouns[1])} made of ${p.extras[0]}, ${p.actions[0]} together ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}, in ${p.styles[0]} style`,
+  },
+  {
+    slots: { adjective: 2, noun: 1, action: 1, setting: 1, extra: 2, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} and ${p.adjectives[1]} ${p.nouns[0]} covered in ${p.extras[0]}, ${p.actions[0]} through ${withArticle(p.settings[0])} while surrounded by ${p.extras[1]} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
+  {
+    slots: { adjective: 1, noun: 2, action: 2, setting: 1, extra: 1, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} ${p.actions[0]} and ${p.actions[1]} on top of ${withArticle(p.nouns[1])} made of ${p.extras[0]} ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
+
+  // === 7-slot templates ==================================================
+  {
+    slots: { adjective: 1, noun: 2, action: 1, setting: 1, extra: 1, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} riding ${withArticle(p.nouns[1])} made of ${p.extras[0]}, ${p.actions[0]} through ${withArticle(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
+  {
+    slots: { adjective: 1, noun: 1, action: 1, setting: 1, extra: 2, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} with ${p.extras[0]}, ${p.actions[0]} on top of ${withArticle(p.extras[1])} ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
+
+  // === 6-slot templates ==================================================
+  {
+    slots: { adjective: 1, noun: 2, action: 1, setting: 1, extra: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} and ${withArticle(p.nouns[1])} made of ${p.extras[0]}, ${p.actions[0]} together ${inSetting(p.settings[0])}`,
+  },
+  {
+    slots: { adjective: 1, noun: 1, action: 1, setting: 1, extra: 1, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} made of ${p.extras[0]}, ${p.actions[0]} ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
+
+  // === 5-slot fallbacks ==================================================
+  {
+    slots: { adjective: 1, noun: 1, action: 1, setting: 1, extra: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} made of ${p.extras[0]}, ${p.actions[0]} ${inSetting(p.settings[0])}`,
+  },
+  {
+    slots: { adjective: 1, noun: 1, action: 1, setting: 1, atmosphere: 1 },
+    build: (p) =>
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} ${p.actions[0]} ${inSetting(p.settings[0])} ${duringAtmosphere(p.atmospheres[0])}`,
+  },
   {
     slots: { adjective: 1, noun: 1, action: 1, setting: 1 },
     build: (p) =>
-      `a ${p.adjectives[0]} ${p.nouns[0]} ${p.actions[0]} in ${p.settings[0]}`,
-  },
-  {
-    slots: { adjective: 1, noun: 2, action: 1 },
-    build: (p) =>
-      `a ${p.adjectives[0]} ${p.nouns[0]} and a ${p.nouns[1]} ${p.actions[0]} together`,
-  },
-  {
-    slots: { noun: 1, action: 1, setting: 1, extra: 1 },
-    build: (p) =>
-      `a ${p.extras[0]} ${p.nouns[0]} ${p.actions[0]} in ${p.settings[0]}`,
-  },
-  {
-    slots: { adjective: 1, noun: 1, setting: 1, style: 1 },
-    build: (p) =>
-      `a ${p.adjectives[0]} ${p.nouns[0]} in ${p.settings[0]}, ${p.styles[0]} style`,
-  },
-  {
-    slots: { noun: 1, action: 1, extra: 2 },
-    build: (p) =>
-      `a ${p.extras[0]} ${p.nouns[0]} made of ${p.extras[1]} ${p.actions[0]}`,
-  },
-  {
-    slots: { adjective: 1, noun: 2, setting: 1 },
-    build: (p) =>
-      `a ${p.adjectives[0]} ${p.nouns[0]} riding a ${p.nouns[1]} through ${p.settings[0]}`,
-  },
-  {
-    slots: { noun: 1, action: 1, extra: 1, setting: 1 },
-    build: (p) =>
-      `a ${p.nouns[0]} with ${p.extras[0]} ${p.actions[0]} on ${p.settings[0]}`,
-  },
-  {
-    slots: { adjective: 2, noun: 1, action: 1 },
-    build: (p) =>
-      `a ${p.adjectives[0]} and ${p.adjectives[1]} ${p.nouns[0]} ${p.actions[0]}`,
+      `${withArticle(p.adjectives[0])} ${p.nouns[0]} ${p.actions[0]} ${inSetting(p.settings[0])}`,
   },
 ];
 
@@ -246,6 +353,7 @@ function assemblePromptFromEntries(wordEntries: WordBankEntry[]): string {
   const settings: string[] = [];
   const styles: string[] = [];
   const extras: string[] = [];
+  const atmospheres: string[] = [];
 
   for (const entry of wordEntries) {
     const cat = entry.category;
@@ -259,15 +367,20 @@ function assemblePromptFromEntries(wordEntries: WordBankEntry[]): string {
       settings.push(entry.word);
     } else if (cat === "styles") {
       styles.push(entry.word);
+    } else if (ATMOSPHERE_CATEGORIES.has(cat)) {
+      atmospheres.push(entry.word);
     } else if (EXTRA_CATEGORIES.has(cat)) {
       extras.push(entry.word);
     } else {
-      // Unknown category — treat as extra
       extras.push(entry.word);
     }
   }
 
-  // Try to find a matching template
+  // Score each template by how many of the available words it uses,
+  // then pick the best-fitting one.
+  let bestTemplate: PromptTemplate | null = null;
+  let bestSlotCount = 0;
+
   for (const template of PROMPT_TEMPLATES) {
     const s = template.slots;
     const needAdj = s.adjective || 0;
@@ -276,6 +389,7 @@ function assemblePromptFromEntries(wordEntries: WordBankEntry[]): string {
     const needSetting = s.setting || 0;
     const needStyle = s.style || 0;
     const needExtra = s.extra || 0;
+    const needAtmo = s.atmosphere || 0;
 
     if (
       adjectives.length >= needAdj &&
@@ -283,22 +397,42 @@ function assemblePromptFromEntries(wordEntries: WordBankEntry[]): string {
       actions.length >= needAction &&
       settings.length >= needSetting &&
       styles.length >= needStyle &&
-      extras.length >= needExtra
+      extras.length >= needExtra &&
+      atmospheres.length >= needAtmo
     ) {
-      return template.build({
-        adjectives: adjectives.slice(0, needAdj),
-        nouns: nouns.slice(0, needNoun),
-        actions: actions.slice(0, needAction),
-        settings: settings.slice(0, needSetting),
-        styles: styles.slice(0, needStyle),
-        extras: extras.slice(0, needExtra),
-      });
+      const totalSlots = needAdj + needNoun + needAction + needSetting + needStyle + needExtra + needAtmo;
+      if (totalSlots > bestSlotCount) {
+        bestSlotCount = totalSlots;
+        bestTemplate = template;
+      }
     }
   }
 
-  // Fallback: simple concatenation of all words
-  const allWords = wordEntries.map((e) => e.word);
-  return assemblePrompt(allWords);
+  if (bestTemplate) {
+    const s = bestTemplate.slots;
+    return bestTemplate.build({
+      adjectives: adjectives.slice(0, s.adjective || 0),
+      nouns: nouns.slice(0, s.noun || 0),
+      actions: actions.slice(0, s.action || 0),
+      settings: settings.slice(0, s.setting || 0),
+      styles: styles.slice(0, s.style || 0),
+      extras: extras.slice(0, s.extra || 0),
+      atmospheres: atmospheres.slice(0, s.atmosphere || 0),
+    });
+  }
+
+  // Fallback: build a grammatical sentence from whatever we have
+  const parts: string[] = [];
+  const adj = adjectives[0];
+  const noun = nouns[0] || extras[0] || "creature";
+  parts.push(adj ? `${withArticle(adj)} ${noun}` : `${withArticle(noun)}`);
+  if (actions[0]) parts.push(actions[0]);
+  if (settings[0]) parts.push(inSetting(settings[0]));
+  if (extras.length > 0 && !parts[0].includes(extras[0])) {
+    parts.push(`surrounded by ${extras[0]}`);
+  }
+  if (atmospheres[0]) parts.push(duringAtmosphere(atmospheres[0]));
+  return parts.join(" ");
 }
 
 /**
@@ -404,9 +538,148 @@ async function getRandomSubset(count: number): Promise<WordBankEntry[]> {
   return getRandomWords(count);
 }
 
+/**
+ * Get a balanced set of words for prompt generation.
+ *
+ * Guarantees at least one word from each core role (noun, adjective, action,
+ * setting) so that prompt templates can always produce a full sentence. The
+ * remaining slots are filled with random words from any category.
+ *
+ * @param total Total number of words to select (default: 6)
+ * @returns Array of WordBankEntry objects with guaranteed diversity
+ */
+async function getBalancedWordsForPrompt(total: number = 10): Promise<WordBankEntry[]> {
+  // Guarantee specific roles so templates can build rich sentences.
+  // We pull 2 nouns, 2 adjectives, 2 extras to feed the largest templates.
+  const requiredRoles = [
+    { categories: Array.from(NOUN_CATEGORIES), role: "noun-1" },
+    { categories: Array.from(NOUN_CATEGORIES), role: "noun-2" },
+    { categories: ["adjectives", "emotions"], role: "adjective-1" },
+    { categories: ["adjectives", "emotions"], role: "adjective-2" },
+    { categories: ["actions"], role: "action" },
+    { categories: ["settings"], role: "setting" },
+    { categories: Array.from(EXTRA_CATEGORIES), role: "extra-1" },
+    { categories: Array.from(EXTRA_CATEGORIES), role: "extra-2" },
+    { categories: Array.from(ATMOSPHERE_CATEGORIES), role: "atmosphere" },
+  ];
+
+  const selected: WordBankEntry[] = [];
+  const usedIds = new Set<number>();
+
+  // Step 1: Pick one word per required role
+  for (const req of requiredRoles) {
+    const catList = req.categories.map((c) => `'${c}'`).join(", ");
+    const result = await pool.query<WordBankRow>(
+      `SELECT * FROM word_bank
+       WHERE category IN (${catList})
+       ORDER BY
+         CASE WHEN last_used_at IS NULL THEN 0 ELSE 1 END,
+         RANDOM()
+       LIMIT 5`
+    );
+
+    const available = result.rows.filter((r) => !usedIds.has(r.id));
+    if (available.length > 0) {
+      const pick = available[0];
+      selected.push(toWordBankEntry(pick));
+      usedIds.add(pick.id);
+    }
+  }
+
+  // Step 2: Fill remaining slots with random words from any category
+  const remaining = total - selected.length;
+  if (remaining > 0) {
+    const excludeIds = Array.from(usedIds);
+    const fillQuery = excludeIds.length > 0
+      ? `SELECT * FROM word_bank WHERE id != ALL($2)
+         ORDER BY CASE WHEN last_used_at IS NULL THEN 0 ELSE 1 END, RANDOM()
+         LIMIT $1`
+      : `SELECT * FROM word_bank
+         ORDER BY CASE WHEN last_used_at IS NULL THEN 0 ELSE 1 END, RANDOM()
+         LIMIT $1`;
+
+    const fillResult = await pool.query<WordBankRow>(
+      fillQuery,
+      excludeIds.length > 0 ? [remaining, excludeIds] : [remaining]
+    );
+
+    for (const row of fillResult.rows) {
+      if (!usedIds.has(row.id)) {
+        selected.push(toWordBankEntry(row));
+        usedIds.add(row.id);
+      }
+    }
+  }
+
+  return selected;
+}
+
+/**
+ * Maximum number of retry attempts when variety validation rejects a combination.
+ */
+const MAX_VARIETY_RETRIES = 3;
+
+/**
+ * Get balanced words for prompt generation with anti-repetition validation.
+ *
+ * Wraps getBalancedWordsForPrompt with a retry loop that checks the proposed
+ * word combination against recent rounds using the promptVarietyService. If
+ * validation fails (too much overlap with a recent round), re-selects up to
+ * MAX_VARIETY_RETRIES times. If all retries fail, returns the last selection
+ * anyway to avoid blocking round creation.
+ *
+ * @param total Total number of words to select (default: 10)
+ * @returns Array of WordBankEntry objects with guaranteed diversity
+ */
+async function getBalancedWordsWithVarietyCheck(
+  total: number = 10
+): Promise<WordBankEntry[]> {
+  let lastSelection: WordBankEntry[] = [];
+
+  for (let attempt = 1; attempt <= MAX_VARIETY_RETRIES; attempt++) {
+    const words = await getBalancedWordsForPrompt(total);
+    lastSelection = words;
+
+    if (words.length === 0) {
+      console.warn(
+        "[wordBankService] No words returned from balanced selection, skipping variety check"
+      );
+      return words;
+    }
+
+    const wordIds = words.map((w) => w.id);
+    const validation = await promptVarietyService.validateCombination(wordIds);
+
+    if (validation.valid) {
+      if (attempt > 1) {
+        console.log(
+          `[wordBankService] Variety check passed on attempt ${attempt} ` +
+            `(overlap ratio: ${validation.highestOverlapRatio.toFixed(2)})`
+        );
+      }
+      return words;
+    }
+
+    console.warn(
+      `[wordBankService] Variety check failed on attempt ${attempt}/${MAX_VARIETY_RETRIES}: ` +
+        `overlap ratio ${validation.highestOverlapRatio.toFixed(2)} with round ` +
+        `${validation.mostOverlappingRoundId} (${validation.overlappingWordCount} words). Retrying...`
+    );
+  }
+
+  // All retries exhausted -- use the last selection to avoid blocking round creation
+  console.warn(
+    `[wordBankService] All ${MAX_VARIETY_RETRIES} variety check attempts exhausted. ` +
+      `Proceeding with last selection to avoid blocking round creation.`
+  );
+  return lastSelection;
+}
+
 export const wordBankService = {
   getRandomWords,
   getRandomSubset,
+  getBalancedWordsForPrompt,
+  getBalancedWordsWithVarietyCheck,
   assemblePrompt,
   assemblePromptFromEntries,
   markWordsUsed,

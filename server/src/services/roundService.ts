@@ -14,6 +14,7 @@
 
 import { pool } from "../config/database";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
 import type { RoundRow, Round } from "../models/round";
 import { toRound } from "../models/round";
 import { wordBankService } from "./wordBankService";
@@ -39,7 +40,7 @@ function toPostgresFloatArray(embedding: number[]): string {
 /**
  * Full round creation pipeline.
  *
- * 1. Select random words from word bank
+ * 1. Select random words from word bank (with anti-repetition validation)
  * 2. Assemble prompt from the selected words
  * 3. Generate image from the prompt
  * 4. Compute prompt embedding
@@ -53,8 +54,8 @@ function toPostgresFloatArray(embedding: number[]): string {
  * @throws Error if any step in the pipeline fails
  */
 async function createRound(): Promise<Round> {
-  // Step 1: Select random words
-  const wordEntries = await wordBankService.getRandomWords(5);
+  // Step 1: Select balanced words with anti-repetition validation
+  const wordEntries = await wordBankService.getBalancedWordsWithVarietyCheck(10);
   if (wordEntries.length === 0) {
     throw new Error(
       "[roundService] Cannot create round: no words available in word bank"
@@ -115,14 +116,12 @@ async function createRound(): Promise<Round> {
 
     await client.query("COMMIT");
 
-    console.log(
-      `[roundService] Created round ${roundRow.id} with prompt: "${prompt}"`
-    );
+    logger.info("roundService", `Created round ${roundRow.id}`, { roundId: roundRow.id, prompt });
     return toRound(roundRow);
   } catch (err) {
     await client.query("ROLLBACK");
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[roundService] createRound transaction failed:", message);
+    logger.error("roundService", "createRound transaction failed", { error: message });
     throw err;
   } finally {
     client.release();
@@ -162,7 +161,7 @@ async function activateRound(roundId: string): Promise<Round> {
     );
   }
 
-  console.log(`[roundService] Activated round ${roundId}`);
+  logger.info("roundService", `Activated round ${roundId}`, { roundId });
   return toRound(result.rows[0]);
 }
 
@@ -198,7 +197,7 @@ async function completeRound(roundId: string): Promise<Round> {
     );
   }
 
-  console.log(`[roundService] Completed round ${roundId}`);
+  logger.info("roundService", `Completed round ${roundId}`, { roundId });
   return toRound(result.rows[0]);
 }
 
@@ -268,9 +267,7 @@ async function createAndActivateRound(): Promise<Round> {
   // Complete the currently active round if one exists
   const currentActive = await getActiveRound();
   if (currentActive) {
-    console.log(
-      `[roundService] Completing currently active round ${currentActive.id} before creating new one`
-    );
+    logger.info("roundService", `Completing currently active round ${currentActive.id} before creating new one`, { roundId: currentActive.id });
     await completeRound(currentActive.id);
   }
 
