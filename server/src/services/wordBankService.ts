@@ -10,6 +10,7 @@
  */
 
 import { pool } from "../config/database";
+import { env } from "../config/env";
 import { logger } from "../config/logger";
 import type { WordBankRow, WordBankEntry } from "../models/wordBank";
 import { toWordBankEntry } from "../models/wordBank";
@@ -675,11 +676,50 @@ async function getBalancedWordsWithVarietyCheck(
   return lastSelection;
 }
 
+/**
+ * Get words for a specific difficulty level.
+ *
+ * Reads DIFFICULTY_WORD_COUNTS from env config to determine how many words
+ * the given difficulty level requires, then delegates to
+ * getBalancedWordsWithVarietyCheck with that count.
+ *
+ * Falls back to 'normal' difficulty when an unrecognised difficulty string
+ * is supplied.
+ *
+ * @param difficulty Difficulty name (e.g. "easy", "normal", "hard")
+ * @returns Array of WordBankEntry objects sized for the requested difficulty
+ */
+async function getWordsForDifficulty(
+  difficulty: string
+): Promise<WordBankEntry[]> {
+  const wordCounts = env.DIFFICULTY_WORD_COUNTS;
+  const normalised = difficulty.toLowerCase();
+
+  let count = wordCounts[normalised];
+
+  if (count === undefined) {
+    logger.warn(
+      "wordBankService",
+      `Unknown difficulty "${difficulty}", falling back to "normal"`,
+      { requested: difficulty, available: Object.keys(wordCounts) }
+    );
+    count = wordCounts["normal"] ?? 7;
+  }
+
+  logger.info("wordBankService", `Selecting ${count} words for difficulty "${normalised}"`, {
+    difficulty: normalised,
+    wordCount: count,
+  });
+
+  return getBalancedWordsWithVarietyCheck(count);
+}
+
 export const wordBankService = {
   getRandomWords,
   getRandomSubset,
   getBalancedWordsForPrompt,
   getBalancedWordsWithVarietyCheck,
+  getWordsForDifficulty,
   assemblePrompt,
   assemblePromptFromEntries,
   markWordsUsed,
