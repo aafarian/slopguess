@@ -1,0 +1,27 @@
+{
+  "name": "slop-guesser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A multiplayer AI image guessing game",
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "install:all": "cd client && npm install && cd ../server && npm install",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "build": "npm run build:client && npm run build:server",
+    "lint": "cd client && npm run lint && cd ../server && npm run lint",
+    "test": "cd server && npm test"
+  },
+  "keywords": [
+    "game",
+    "ai",
+    "image-generation",
+    "multiplayer",
+    "guessing-game"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
