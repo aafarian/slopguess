@@ -168,10 +168,12 @@ function getNextRotationTime(): Date | null {
  *
  * Completes the currently active round (if any) and creates + activates
  * a new one, then updates the next rotation time.
+ *
+ * @param difficulty Optional difficulty level to pass to round creation.
  */
-async function rotateRound(): Promise<void> {
-  logger.info("scheduler", "Rotating round...");
-  const newRound = await roundService.createAndActivateRound();
+async function rotateRound(difficulty?: string): Promise<void> {
+  logger.info("scheduler", "Rotating round...", { difficulty: difficulty ?? "default" });
+  const newRound = await roundService.createAndActivateRound(difficulty);
   nextRotationTime = computeNextRotation(newRound.startedAt!);
   monitoringService.recordRoundRotation();
   logger.info("scheduler", `Round rotated. New active round: ${newRound.id}`, {

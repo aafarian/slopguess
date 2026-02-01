@@ -25,13 +25,15 @@ const adminRouter = Router();
  * Manually trigger a round rotation. Completes the current active round
  * (if any) and creates + activates a new one.
  */
-adminRouter.post("/rounds/rotate", async (_req: Request, res: Response) => {
+adminRouter.post("/rounds/rotate", async (req: Request, res: Response) => {
   try {
-    await scheduler.rotateRound();
+    const { difficulty } = req.body as { difficulty?: string };
+    await scheduler.rotateRound(difficulty);
     const nextRotation = scheduler.getNextRotationTime();
 
     res.json({
       message: "Round rotated successfully",
+      difficulty: difficulty ?? "default",
       nextRotationAt: nextRotation?.toISOString() ?? null,
     });
   } catch (err) {
