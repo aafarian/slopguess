@@ -1,3 +1,15 @@
+# =============================================================================
+# Deploy Workflow - Build, push, and deploy Docker images to production
+# =============================================================================
+#
+# Required GitHub Secrets:
+#   - GITHUB_TOKEN    : Automatically provided by GitHub Actions for GHCR auth
+#   - DEPLOY_SSH_KEY  : Private SSH key for accessing the production server
+#   - DEPLOY_HOST     : Hostname or IP address of the production server
+#   - DEPLOY_USER     : SSH username on the production server
+#
+# =============================================================================
+
 name: Deploy
 
 on:
@@ -11,6 +23,11 @@ on:
         options:
           - production
           - staging
+      rollback_tag:
+        description: 'Image tag to rollback to (leave empty for normal deploy)'
+        required: false
+        default: ''
+        type: string
   push:
     branches: [main]
 
@@ -106,3 +123,156 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && inputs.rollback_tag == ''
+    environment: production
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "==> Logging in to container registry..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+            echo "==> Navigating to project directory..."
+            cd ~/slop-guesser
+
+            echo "==> Pulling latest Docker images..."
+            docker compose pull
+
+            echo "==> Restarting services..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+
+            echo "==> Checking migration status..."
+            docker compose exec -T server npm run migration:status || echo "Warning: Migration status check failed (non-blocking)"
+
+            echo "==> Deployment complete."
+
+      - name: Health check with retries
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            MAX_RETRIES=5
+            RETRY_DELAY=10
+            RETRY_COUNT=0
+
+            echo "==> Running health check..."
+            until [ $RETRY_COUNT -ge $MAX_RETRIES ]; do
+              RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/api/health 2>/dev/null || true)
+              BODY=$(curl -s http://localhost/api/health 2>/dev/null || true)
+
+              if echo "$BODY" | grep -q '"status":"ok"'; then
+                echo "Health check passed! API is responding with status: ok"
+                exit 0
+              fi
+
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "Health check attempt $RETRY_COUNT/$MAX_RETRIES failed (HTTP $RESPONSE). Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            done
+
+            echo "Health check failed after $MAX_RETRIES attempts"
+            exit 1
+
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    name: Rollback to Specific Tag
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.rollback_tag != ''
+    environment: production
+
+    steps:
+      - name: Rollback via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+
+            TAG="${{ inputs.rollback_tag }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            IMAGE_PREFIX="${{ env.IMAGE_PREFIX }}"
+
+            echo "==> Rolling back to image tag: $TAG"
+
+            echo "==> Logging in to container registry..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login $REGISTRY -u ${{ github.actor }} --password-stdin
+
+            echo "==> Navigating to project directory..."
+            cd ~/slop-guesser
+
+            echo "==> Pulling images with tag: $TAG..."
+            docker pull ${REGISTRY}/${IMAGE_PREFIX}/server:${TAG}
+            docker pull ${REGISTRY}/${IMAGE_PREFIX}/client:${TAG}
+
+            echo "==> Tagging rollback images as latest..."
+            docker tag ${REGISTRY}/${IMAGE_PREFIX}/server:${TAG} ${REGISTRY}/${IMAGE_PREFIX}/server:latest
+            docker tag ${REGISTRY}/${IMAGE_PREFIX}/client:${TAG} ${REGISTRY}/${IMAGE_PREFIX}/client:latest
+
+            echo "==> Restarting services with rollback images..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+
+            echo "==> Rollback complete."
+
+      - name: Rollback health check
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            MAX_RETRIES=5
+            RETRY_DELAY=10
+            RETRY_COUNT=0
+
+            echo "==> Running post-rollback health check..."
+            until [ $RETRY_COUNT -ge $MAX_RETRIES ]; do
+              BODY=$(curl -s http://localhost/api/health 2>/dev/null || true)
+
+              if echo "$BODY" | grep -q '"status":"ok"'; then
+                echo "Health check passed after rollback! API is responding with status: ok"
+                exit 0
+              fi
+
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "Health check attempt $RETRY_COUNT/$MAX_RETRIES failed. Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+              RETRY_DELAY=$((RETRY_DELAY * 2))
+            done
+
+            echo "Health check failed after rollback - manual intervention required"
+            exit 1
+
+      - name: Rollback summary
+        run: |
+          echo "## Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Rolled back successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ inputs.rollback_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
