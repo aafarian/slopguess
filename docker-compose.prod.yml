@@ -1,0 +1,83 @@
+version: "3.8"
+
+# Production override – apply with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Requires a .env.production file at the project root containing at minimum:
+#   POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, DATABASE_URL, JWT_SECRET
+
+services:
+  postgres:
+    # Remove externally-exposed ports (only reachable inside the Docker network)
+    ports: !override []
+    env_file:
+      - .env.production
+    # Override hardcoded credentials – env_file supplies POSTGRES_DB/USER/PASSWORD
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  server:
+    # Remove externally-exposed ports (nginx proxies /api/ to server:3001)
+    ports: !override []
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      IMAGE_PROVIDER: ${IMAGE_PROVIDER:-mock}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-mock}
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  client:
+    ports: !override
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  pgdata:
+    driver: local
