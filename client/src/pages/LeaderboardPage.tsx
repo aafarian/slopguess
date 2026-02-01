@@ -19,7 +19,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getRoundLeaderboard } from '../services/game';
 import type { LeaderboardResponse, LeaderboardEntry } from '../types/game';
 import { useAuth } from '../hooks/useAuth';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { LeaderboardPageSkeleton } from '../components/SkeletonLoader';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 
@@ -79,7 +79,7 @@ export default function LeaderboardPage() {
   // --- Render states ---
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading leaderboard..." />;
+    return <LeaderboardPageSkeleton />;
   }
 
   if (error) {

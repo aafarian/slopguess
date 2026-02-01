@@ -14,7 +14,7 @@ import { Link } from 'react-router-dom';
 
 import { getRoundHistory } from '../services/game';
 import type { RoundHistoryItem, Pagination } from '../types/game';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { HistoryPageSkeleton } from '../components/SkeletonLoader';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 
@@ -63,12 +63,7 @@ export default function HistoryPage() {
 
   // ---- Loading state ----
   if (loading) {
-    return (
-      <div className="history-page">
-        <h1 className="history-page-title">Round History</h1>
-        <LoadingSpinner message="Loading completed rounds..." />
-      </div>
-    );
+    return <HistoryPageSkeleton />;
   }
 
   // ---- Error state ----

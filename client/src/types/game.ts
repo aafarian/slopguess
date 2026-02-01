@@ -14,7 +14,7 @@ export type RoundStatus = 'pending' | 'active' | 'completed';
 // Round types
 // ---------------------------------------------------------------------------
 
-/** Public round shape as returned by the API (prompt hidden for active rounds). */
+/** Public round shape as returned by the API (prompt hidden unless user has guessed). */
 export interface Round {
   id: string;
   imageUrl: string | null;
@@ -22,6 +22,7 @@ export interface Round {
   startedAt: string | null;
   endedAt: string | null;
   guessCount: number;
+  prompt?: string;
 }
 
 /** Completed round — extends Round with the revealed prompt. */
@@ -55,6 +56,7 @@ export interface GuessResult {
   score: number | null;
   rank: number;
   totalGuesses: number;
+  prompt: string | null;
 }
 
 // ---------------------------------------------------------------------------
