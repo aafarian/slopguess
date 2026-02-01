@@ -6,6 +6,7 @@
  * POST /api/rounds/:roundId/guess      — Submit a guess (requireAuth)
  * GET  /api/rounds/:roundId            — Get a specific round (optionalAuth)
  * GET  /api/rounds/:roundId/leaderboard — Round leaderboard (public)
+ * GET  /api/rounds/:roundId/share/:userId — Public shareable score data (no auth)
  * GET  /api/rounds/:roundId/results    — Full results for a completed round (optionalAuth)
  */
 
@@ -16,8 +17,11 @@ import { guessLimiter } from "../middleware/rateLimiter";
 import { roundService } from "../services/roundService";
 import { scoringService } from "../services/scoringService";
 import { leaderboardService } from "../services/leaderboardService";
+import { streakService } from "../services/streakService";
+import { logger } from "../config/logger";
 import { toPublicRound, toCompletedRound } from "../models/round";
 import type { GuessRow } from "../models/guess";
+import type { ElementScoreBreakdown } from "../models/guess";
 
 const roundsRouter = Router();
 
@@ -176,26 +180,38 @@ roundsRouter.post(
         guessText
       );
 
-      // 3. Compute rank: how many guesses scored higher + 1
+      // 3. Fire-and-forget: record the play for streak tracking
+      if (req.user) {
+        streakService.recordPlay(req.user.userId).catch((streakErr: unknown) => {
+          const msg = streakErr instanceof Error ? streakErr.message : String(streakErr);
+          logger.error("rounds", `Failed to record streak for user ${req.user!.userId}`, {
+            userId: req.user!.userId,
+            error: msg,
+          });
+        });
+      }
+
+      // 4. Compute rank: how many guesses scored higher + 1
       const rankResult = await pool.query<{ count: string }>(
         `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1 AND score > $2`,
         [roundId, savedGuess.score]
       );
       const rank = parseInt(rankResult.rows[0].count, 10) + 1;
 
-      // 4. Get total guesses for this round
+      // 5. Get total guesses for this round
       const totalResult = await pool.query<{ count: string }>(
         `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1`,
         [roundId]
       );
       const totalGuesses = parseInt(totalResult.rows[0].count, 10);
 
-      // 5. Fetch the round prompt — once you've guessed, there's no reason to hide it
+      // 6. Fetch the round prompt — once you've guessed, there's no reason to hide it
       const round = await roundService.getRoundById(roundId);
 
       res.status(201).json({
         guessId: savedGuess.id,
         score: savedGuess.score,
+        elementScores: savedGuess.elementScores ?? null,
         rank,
         totalGuesses,
         prompt: round?.prompt ?? null,
@@ -394,8 +410,24 @@ roundsRouter.get(
         return;
       }
 
-      // 3. Get full leaderboard
+      // 3. Get full leaderboard (base entries from leaderboardService)
       const leaderboard = await leaderboardService.getLeaderboard(roundId);
+
+      // 3b. Fetch element_scores for all guesses in this round to augment leaderboard entries
+      const elementScoresResult = await pool.query<{
+        user_id: string;
+        element_scores: Record<string, unknown> | null;
+      }>(
+        `SELECT user_id, element_scores FROM guesses WHERE round_id = $1`,
+        [roundId]
+      );
+      const elementScoresMap = new Map<string, ElementScoreBreakdown | null>();
+      for (const row of elementScoresResult.rows) {
+        elementScoresMap.set(
+          row.user_id,
+          row.element_scores as ElementScoreBreakdown | null
+        );
+      }
 
       // 4. Get round stats
       const stats = await leaderboardService.getRoundStats(roundId);
@@ -404,6 +436,7 @@ roundsRouter.get(
       let userResult: {
         guessText: string;
         score: number | null;
+        elementScores: ElementScoreBreakdown | null;
         rank: number;
         total: number;
       } | null = null;
@@ -417,6 +450,7 @@ roundsRouter.get(
             userResult = {
               guessText: userEntry.guessText,
               score: userEntry.score,
+              elementScores: elementScoresMap.get(req.user!.userId) ?? null,
               rank: userRank.rank,
               total: userRank.total,
             };
@@ -434,6 +468,7 @@ roundsRouter.get(
           username: entry.username,
           guessText: entry.guessText,
           score: entry.score,
+          elementScores: elementScoresMap.get(entry.userId) ?? null,
           submittedAt: entry.submittedAt,
         })),
         stats: stats ?? {
