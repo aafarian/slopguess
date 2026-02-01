@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: slopguesser-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: slopguesser
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d slopguesser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Node.js/Express API server
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: slopguesser-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/slopguesser
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      PORT: "3001"
+      NODE_ENV: ${NODE_ENV:-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      IMAGE_PROVIDER: ${IMAGE_PROVIDER:-mock}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-mock}
+      ROUND_DURATION_HOURS: ${ROUND_DURATION_HOURS:-24}
+      ROUND_CHECK_INTERVAL_MINUTES: ${ROUND_CHECK_INTERVAL_MINUTES:-5}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # React/Vite frontend served via nginx
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: slopguesser-client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
+    driver: local
