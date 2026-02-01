@@ -2,6 +2,7 @@ import "express-async-errors"; // Must be imported before any route handlers
 import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import * as path from "path";
 import { router as apiRouter } from "./routes/index";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
@@ -27,6 +28,9 @@ app.use(
     credentials: true,
   })
 );
+
+// Serve persisted images (and any other static assets) from server/public/
+app.use(express.static(path.join(__dirname, "../public")));
 
 // Body parsing
 app.use(express.json());

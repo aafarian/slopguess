@@ -1,0 +1,6 @@
+# Ignore all downloaded images (they're generated at runtime)
+*.png
+*.jpg
+*.jpeg
+*.webp
+!.gitkeep

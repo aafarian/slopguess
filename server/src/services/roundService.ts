@@ -20,6 +20,7 @@ import { toRound } from "../models/round";
 import { wordBankService } from "./wordBankService";
 import { createImageProvider } from "./imageGeneration";
 import { createEmbeddingProvider } from "./embedding";
+import { persistImage } from "./imageStorage";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -69,9 +70,14 @@ async function createRound(difficulty?: string): Promise<Round> {
   // Step 2: Assemble prompt from word entries (category-aware)
   const prompt = wordBankService.assemblePromptFromEntries(wordEntries);
 
-  // Step 3: Generate image
+  // Step 3: Generate image and persist locally
   const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
   const imageResult = await imageProvider.generate(prompt);
+
+  // Download the image to local disk so the URL never expires.
+  // The stored URL becomes /images/<filename> served by express.static.
+  const imageFilename = await persistImage(imageResult.imageUrl);
+  const persistedImageUrl = `/images/${imageFilename}`;
 
   // Step 4: Compute prompt embedding
   const embeddingProvider = createEmbeddingProvider(env.EMBEDDING_PROVIDER);
@@ -90,7 +96,7 @@ async function createRound(difficulty?: string): Promise<Round> {
     `;
     const roundResult = await client.query<RoundRow>(insertRoundQuery, [
       prompt,
-      imageResult.imageUrl,
+      persistedImageUrl,
       toPostgresFloatArray(embeddingResult.embedding),
       resolvedDifficulty,
       wordEntries.length,
