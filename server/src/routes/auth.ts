@@ -1,0 +1,149 @@
+/**
+ * Authentication routes.
+ * POST /api/auth/register — create a new user account.
+ */
+
+import { Router, Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { env } from "../config/env";
+import * as userService from "../services/userService";
+
+const authRouter = Router();
+
+// ---------------------------------------------------------------------------
+// Validation helpers
+// ---------------------------------------------------------------------------
+
+/** Basic email regex — covers the vast majority of valid addresses. */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+function validateRegistrationInput(body: {
+  username?: string;
+  email?: string;
+  password?: string;
+}): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  // Username: required, 3-20 chars, alphanumeric (plus underscores)
+  if (!body.username || typeof body.username !== "string") {
+    errors.push({ field: "username", message: "Username is required" });
+  } else if (body.username.length < 3 || body.username.length > 20) {
+    errors.push({
+      field: "username",
+      message: "Username must be between 3 and 20 characters",
+    });
+  }
+
+  // Email: required, valid format
+  if (!body.email || typeof body.email !== "string") {
+    errors.push({ field: "email", message: "Email is required" });
+  } else if (!EMAIL_RE.test(body.email)) {
+    errors.push({ field: "email", message: "Invalid email format" });
+  }
+
+  // Password: required, 8+ chars
+  if (!body.password || typeof body.password !== "string") {
+    errors.push({ field: "password", message: "Password is required" });
+  } else if (body.password.length < 8) {
+    errors.push({
+      field: "password",
+      message: "Password must be at least 8 characters",
+    });
+  }
+
+  return errors;
+}
+
+// ---------------------------------------------------------------------------
+// JWT helper
+// ---------------------------------------------------------------------------
+
+function signToken(userId: string, username: string): string {
+  return jwt.sign({ userId, username }, env.JWT_SECRET, { expiresIn: "7d" });
+}
+
+// ---------------------------------------------------------------------------
+// POST /register
+// ---------------------------------------------------------------------------
+
+authRouter.post(
+  "/register",
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // 1. Validate input
+      const errors = validateRegistrationInput(req.body);
+      if (errors.length > 0) {
+        res.status(400).json({
+          error: {
+            message: "Validation failed",
+            code: "VALIDATION_ERROR",
+            details: errors,
+          },
+        });
+        return;
+      }
+
+      const { username, email, password } = req.body as {
+        username: string;
+        email: string;
+        password: string;
+      };
+
+      // 2. Check for duplicate username
+      const existingUsername = await userService.findByUsername(username);
+      if (existingUsername) {
+        res.status(409).json({
+          error: {
+            message: "Username is already taken",
+            code: "DUPLICATE_USERNAME",
+          },
+        });
+        return;
+      }
+
+      // 3. Check for duplicate email
+      const existingEmail = await userService.findByEmail(email);
+      if (existingEmail) {
+        res.status(409).json({
+          error: {
+            message: "Email is already registered",
+            code: "DUPLICATE_EMAIL",
+          },
+        });
+        return;
+      }
+
+      // 4. Create user (password is hashed inside the service)
+      const user = await userService.createUser(username, email, password);
+
+      // 5. Generate JWT
+      const token = signToken(user.id, user.username);
+
+      // 6. Return 201 with user + token
+      res.status(201).json({ user, token });
+    } catch (err: unknown) {
+      // Handle unique-constraint violations that slip through the race window
+      const pgErr = err as { code?: string; detail?: string };
+      if (err instanceof Error && pgErr.code === "23505") {
+        const isDuplicateEmail = pgErr.detail?.includes("email");
+        res.status(409).json({
+          error: {
+            message: isDuplicateEmail
+              ? "Email is already registered"
+              : "Username is already taken",
+            code: isDuplicateEmail ? "DUPLICATE_EMAIL" : "DUPLICATE_USERNAME",
+          },
+        });
+        return;
+      }
+      next(err);
+    }
+  }
+);
+
+export { authRouter };
