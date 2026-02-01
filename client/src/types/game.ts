@@ -45,6 +45,14 @@ export interface ActiveRoundResponse {
 // Guess submission / result
 // ---------------------------------------------------------------------------
 
+/** Breakdown of element-level scoring from the hybrid scoring service. */
+export interface ElementScoreBreakdown {
+  matchedWords: string[];
+  partialMatches: { word: string; similarity: number }[];
+  elementScore: number;
+  overallScore: number;
+}
+
 /** Payload for POST /api/rounds/:roundId/guess. */
 export interface GuessSubmission {
   guess: string;
@@ -57,6 +65,7 @@ export interface GuessResult {
   rank: number;
   totalGuesses: number;
   prompt: string | null;
+  elementScores?: ElementScoreBreakdown;
 }
 
 // ---------------------------------------------------------------------------
