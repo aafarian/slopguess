@@ -2,14 +2,17 @@
 # =============================================================================
 # Smoke Test Suite for Slop Guess API
 #
-# Runs 7 sequential end-to-end tests against the API to verify core flows:
-#   1. Health check
-#   2. User registration
-#   3. User login
-#   4. Fetch active round
-#   5. Submit a guess
-#   6. Verify leaderboard
-#   7. Verify user history
+# Runs 10 sequential end-to-end tests against the API to verify core flows:
+#   1. TLS certificate validation (HTTPS only; skips for localhost/HTTP)
+#   2. DNS resolution check (HTTPS only; skips for localhost/HTTP)
+#   3. Response time assertion (HTTPS only; skips for localhost/HTTP)
+#   4. Health check
+#   5. User registration
+#   6. User login
+#   7. Fetch active round
+#   8. Submit a guess
+#   9. Verify leaderboard
+#  10. Verify user history
 #
 # Usage:
 #   ./scripts/smoke-test.sh                        # defaults to localhost:3001
@@ -69,7 +72,7 @@ log()   { printf "%b\n" "$*"; }
 pass()  { PASSED=$((PASSED + 1)); log "${GREEN}  PASS${RESET} $1"; }
 fail()  { FAILED=$((FAILED + 1)); log "${RED}  FAIL${RESET} $1${2:+ -- $2}"; }
 skip()  { SKIPPED=$((SKIPPED + 1)); log "${YELLOW}  SKIP${RESET} $1${2:+ -- $2}"; }
-step()  { TOTAL=$((TOTAL + 1)); log "\n${CYAN}[$TOTAL/7]${RESET} ${BOLD}$1${RESET}"; }
+step()  { TOTAL=$((TOTAL + 1)); log "\n${CYAN}[$TOTAL/10]${RESET} ${BOLD}$1${RESET}"; }
 
 # Perform a curl request and capture HTTP status + body.
 # Usage: http_request METHOD URL [CURL_EXTRA_ARGS...]
@@ -130,7 +133,160 @@ log " Time:   $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 log "${BOLD}========================================${RESET}"
 
 # ---------------------------------------------------------------------------
-# Test 1: GET /api/health
+# Production-readiness detection
+# ---------------------------------------------------------------------------
+# Determine if we're targeting a real HTTPS domain (not localhost / HTTP).
+# The 3 production-readiness checks (TLS, DNS, response-time) only activate
+# when IS_PROD_TARGET is true; otherwise they are gracefully skipped.
+
+IS_PROD_TARGET=false
+PROD_HOST=""
+
+if [[ "$BASE_URL" == https://* ]]; then
+  # Extract hostname (strip scheme and any trailing path/port)
+  PROD_HOST="${BASE_URL#https://}"
+  PROD_HOST="${PROD_HOST%%/*}"
+  PROD_HOST="${PROD_HOST%%:*}"
+
+  # Skip for localhost / 127.x / [::1]
+  case "$PROD_HOST" in
+    localhost|127.*|"[::1]") IS_PROD_TARGET=false ;;
+    *) IS_PROD_TARGET=true ;;
+  esac
+fi
+
+# ---------------------------------------------------------------------------
+# Test 1: TLS certificate validation (production only)
+# ---------------------------------------------------------------------------
+step "TLS certificate validation"
+
+if [[ "$IS_PROD_TARGET" != "true" ]]; then
+  skip "TLS check" "Skipping -- BASE_URL is not an HTTPS production domain"
+else
+  tls_ok=true
+  tls_reason=""
+
+  # Retrieve certificate details via openssl
+  cert_output="$(echo | openssl s_client -servername "$PROD_HOST" -connect "${PROD_HOST}:443" 2>/dev/null)" || true
+
+  # Check for self-signed certificate
+  if printf '%s' "$cert_output" | grep -qi "self.signed"; then
+    tls_ok=false
+    tls_reason="Certificate is self-signed"
+  fi
+
+  # Check certificate expiry (must be valid for at least 7 days)
+  if [[ "$tls_ok" == "true" ]]; then
+    expiry_date="$(echo | openssl s_client -servername "$PROD_HOST" -connect "${PROD_HOST}:443" 2>/dev/null \
+      | openssl x509 -noout -enddate 2>/dev/null | sed 's/notAfter=//')" || true
+
+    if [[ -n "$expiry_date" ]]; then
+      # Convert expiry to epoch
+      if date -j -f "%b %d %T %Y %Z" "$expiry_date" +%s &>/dev/null; then
+        expiry_epoch="$(date -j -f "%b %d %T %Y %Z" "$expiry_date" +%s 2>/dev/null)"
+      elif date -d "$expiry_date" +%s &>/dev/null; then
+        expiry_epoch="$(date -d "$expiry_date" +%s 2>/dev/null)"
+      else
+        expiry_epoch=""
+      fi
+
+      if [[ -n "$expiry_epoch" ]]; then
+        now_epoch="$(date +%s)"
+        days_left=$(( (expiry_epoch - now_epoch) / 86400 ))
+        if [[ "$days_left" -lt 7 ]]; then
+          tls_ok=false
+          tls_reason="Certificate expires in ${days_left} days (< 7 day threshold)"
+        fi
+      fi
+    else
+      tls_ok=false
+      tls_reason="Could not retrieve certificate expiry date"
+    fi
+  fi
+
+  # Verify certificate is trusted by curl
+  if [[ "$tls_ok" == "true" ]]; then
+    if ! curl -sS --max-time 10 -o /dev/null "https://${PROD_HOST}" 2>/dev/null; then
+      tls_ok=false
+      tls_reason="curl could not verify TLS certificate"
+    fi
+  fi
+
+  if [[ "$tls_ok" == "true" ]]; then
+    pass "TLS certificate is valid, trusted, and not expiring within 7 days"
+  else
+    fail "TLS certificate validation" "$tls_reason"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Test 2: DNS resolution check (production only)
+# ---------------------------------------------------------------------------
+step "DNS resolution check"
+
+if [[ "$IS_PROD_TARGET" != "true" ]]; then
+  skip "DNS check" "Skipping -- BASE_URL is not an HTTPS production domain"
+else
+  resolved_ip=""
+
+  # Try dig first, fall back to nslookup
+  if command -v dig &>/dev/null; then
+    resolved_ip="$(dig +short "$PROD_HOST" A 2>/dev/null | head -1)"
+  elif command -v nslookup &>/dev/null; then
+    resolved_ip="$(nslookup "$PROD_HOST" 2>/dev/null | awk '/^Address: / { print $2 }' | head -1)"
+  fi
+
+  if [[ -n "$resolved_ip" ]]; then
+    pass "Domain '${PROD_HOST}' resolves to ${resolved_ip}"
+  else
+    fail "DNS resolution" "Could not resolve '${PROD_HOST}' to an IP address"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Test 3: Response time assertion (production only)
+# ---------------------------------------------------------------------------
+step "Response time assertion (NFR-001)"
+
+if [[ "$IS_PROD_TARGET" != "true" ]]; then
+  skip "Response time check" "Skipping -- BASE_URL is not an HTTPS production domain"
+else
+  timing_ok=true
+  timing_detail=""
+
+  # Check API health endpoint response time (must be < 1s per NFR-001)
+  api_time="$(curl -s -o /dev/null -w '%{time_total}' --max-time 10 "${BASE_URL}/api/health" 2>/dev/null)" || api_time="99"
+  api_ms="$(printf '%.0f' "$(echo "$api_time * 1000" | bc 2>/dev/null || echo '99000')")"
+
+  if [[ "$api_ms" -ge 1000 ]]; then
+    timing_ok=false
+    timing_detail="API health response took ${api_time}s (limit: 1s)"
+  fi
+
+  # Check frontend root response time (must be < 2s per NFR-001)
+  # Derive frontend URL: strip /api* path if present, or use scheme+host
+  frontend_url="${BASE_URL%%/api*}"
+  frontend_time="$(curl -s -o /dev/null -w '%{time_total}' --max-time 10 "${frontend_url}/" 2>/dev/null)" || frontend_time="99"
+  frontend_ms="$(printf '%.0f' "$(echo "$frontend_time * 1000" | bc 2>/dev/null || echo '99000')")"
+
+  if [[ "$frontend_ms" -ge 2000 ]]; then
+    timing_ok=false
+    if [[ -n "$timing_detail" ]]; then
+      timing_detail="${timing_detail}; Frontend root took ${frontend_time}s (limit: 2s)"
+    else
+      timing_detail="Frontend root took ${frontend_time}s (limit: 2s)"
+    fi
+  fi
+
+  if [[ "$timing_ok" == "true" ]]; then
+    pass "API health: ${api_time}s (< 1s), Frontend root: ${frontend_time}s (< 2s)"
+  else
+    fail "Response time assertion" "$timing_detail"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Test 4: GET /api/health
 # ---------------------------------------------------------------------------
 step "GET /api/health - verify server is up"
 
@@ -150,7 +306,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Test 2: POST /api/auth/register
+# Test 5: POST /api/auth/register
 # ---------------------------------------------------------------------------
 step "POST /api/auth/register - create test user"
 
@@ -173,7 +329,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Test 3: POST /api/auth/login
+# Test 6: POST /api/auth/login
 # ---------------------------------------------------------------------------
 step "POST /api/auth/login - authenticate and capture JWT"
 
@@ -196,7 +352,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Test 4: GET /api/rounds/active
+# Test 7: GET /api/rounds/active
 # ---------------------------------------------------------------------------
 step "GET /api/rounds/active - fetch current round"
 
@@ -232,7 +388,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Test 5: POST /api/rounds/:roundId/guess
+# Test 8: POST /api/rounds/:roundId/guess
 # ---------------------------------------------------------------------------
 step "POST /api/rounds/:roundId/guess - submit a guess"
 
@@ -263,7 +419,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Test 6: GET /api/rounds/:roundId/leaderboard
+# Test 9: GET /api/rounds/:roundId/leaderboard
 # ---------------------------------------------------------------------------
 step "GET /api/rounds/:roundId/leaderboard - verify leaderboard"
 
@@ -303,7 +459,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Test 7: GET /api/users/me/history
+# Test 10: GET /api/users/me/history
 # ---------------------------------------------------------------------------
 step "GET /api/users/me/history - verify user history"
 
