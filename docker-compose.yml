@@ -4,10 +4,10 @@ services:
   # PostgreSQL database
   postgres:
     image: postgres:15-alpine
-    container_name: slopguesser-db
+    container_name: slopguess-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: slopguesser
+      POSTGRES_DB: slopguess
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -15,7 +15,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d slopguesser"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d slopguess"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,13 +26,13 @@ services:
     build:
       context: .
       dockerfile: server/Dockerfile
-    container_name: slopguesser-server
+    container_name: slopguess-server
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
       # Database
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/slopguesser
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/slopguess
       # Auth
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       # Server
@@ -61,7 +61,7 @@ services:
     build:
       context: .
       dockerfile: client/Dockerfile
-    container_name: slopguesser-client
+    container_name: slopguess-client
     restart: unless-stopped
     ports:
       - "80:80"
