@@ -1,5 +1,5 @@
 {
-  "name": "slop-guesser-client",
+  "name": "slop-guess-client",
   "private": true,
   "version": "0.1.0",
   "type": "module",
