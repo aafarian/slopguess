@@ -1,5 +1,5 @@
 -- Migration: 001_initial_schema (DOWN / rollback)
--- Description: Drop all core SlopGuesser tables
+-- Description: Drop all core Slop Guess tables
 
 DROP TABLE IF EXISTS round_words CASCADE;
 DROP TABLE IF EXISTS guesses CASCADE;

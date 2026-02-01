@@ -1,5 +1,5 @@
 /**
- * Simple SQL migration runner for SlopGuesser.
+ * Simple SQL migration runner for Slop Guess.
  *
  * Tracks applied migrations in a `schema_migrations` table.
  * Migrations are .sql files in the migrations/ directory, named with a numeric

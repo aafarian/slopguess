@@ -1,5 +1,5 @@
 -- Migration: 001_initial_schema
--- Description: Create core tables for SlopGuesser (users, word_bank, rounds, guesses, round_words)
+-- Description: Create core tables for Slop Guess (users, word_bank, rounds, guesses, round_words)
 
 -- ============================================================================
 -- UP
