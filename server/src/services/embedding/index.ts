@@ -14,12 +14,14 @@
 
 import { env } from "../../config/env";
 import { MockEmbeddingProvider } from "./mockProvider";
+import { OpenAIEmbeddingProvider } from "./openaiProvider";
 import type { EmbeddingProvider } from "./types";
 
 // Re-export types and utilities
 export type { EmbeddingProvider, EmbeddingResult } from "./types";
 export { cosineSimilarity } from "./similarity";
 export { MockEmbeddingProvider } from "./mockProvider";
+export { OpenAIEmbeddingProvider } from "./openaiProvider";
 
 /**
  * Create an embedding provider by name.
@@ -36,10 +38,7 @@ export function createEmbeddingProvider(
       return new MockEmbeddingProvider();
 
     case "openai":
-      // OpenAI provider will be implemented in Task 1.5
-      throw new Error(
-        'OpenAI embedding provider is not yet implemented. Set EMBEDDING_PROVIDER=mock or implement the OpenAI provider.'
-      );
+      return new OpenAIEmbeddingProvider();
 
     default:
       throw new Error(
