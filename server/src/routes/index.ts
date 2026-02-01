@@ -1,3 +1,26 @@
+/**
+ * API Route Index
+ *
+ * All routes are mounted under the /api prefix (set in app.ts).
+ *
+ * ┌─────────────────────────────────┬────────┬──────────────────────────────────────────┐
+ * │ Endpoint                        │ Method │ Description                              │
+ * ├─────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/health                     │ GET    │ Health check with DB connectivity status  │
+ * ├─────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/auth/register              │ POST   │ Create a new user account; returns JWT    │
+ * │ /api/auth/login                 │ POST   │ Authenticate with email+password; JWT     │
+ * │ /api/auth/me                    │ GET    │ Return current user (requires auth)       │
+ * ├─────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/words                      │ GET    │ List all words (paginated: ?page, ?limit) │
+ * │ /api/words/categories           │ GET    │ List categories with word counts          │
+ * │ /api/words/random               │ GET    │ Get random words (?count=5)               │
+ * └─────────────────────────────────┴────────┴──────────────────────────────────────────┘
+ *
+ * Auth: Routes marked "requires auth" expect an Authorization: Bearer <JWT> header.
+ * Error responses follow the shape: { error: { message, code, details? } }
+ */
+
 import { Router } from "express";
 import { healthRouter } from "./health";
 import { authRouter } from "./auth";

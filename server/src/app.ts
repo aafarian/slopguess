@@ -1,4 +1,5 @@
-import express from "express";
+import "express-async-errors"; // Must be imported before any route handlers
+import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { router as apiRouter } from "./routes/index";
@@ -27,6 +28,16 @@ app.use(requestLogger);
 
 // API routes
 app.use("/api", apiRouter);
+
+// Catch-all 404 for any /api route that was not matched above
+app.use("/api", (_req: Request, res: Response) => {
+  res.status(404).json({
+    error: {
+      message: "Not found",
+      code: "NOT_FOUND",
+    },
+  });
+});
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
