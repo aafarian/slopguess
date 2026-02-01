@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Smoke Test Suite for SlopGuesser API
+# Smoke Test Suite for Slop Guess API
 #
 # Runs 7 sequential end-to-end tests against the API to verify core flows:
 #   1. Health check
@@ -122,7 +122,7 @@ json_value() {
 # ---------------------------------------------------------------------------
 
 log "\n${BOLD}========================================${RESET}"
-log "${BOLD} SlopGuesser Smoke Tests${RESET}"
+log "${BOLD} Slop Guess Smoke Tests${RESET}"
 log "${BOLD}========================================${RESET}"
 log " Target: ${CYAN}${BASE_URL}${RESET}"
 log " User:   ${TEST_USERNAME}"
