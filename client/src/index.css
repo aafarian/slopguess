@@ -69,9 +69,11 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
+  padding: 0.75rem 2rem;
   border-bottom: 1px solid var(--border);
   background: var(--bg-secondary);
+  position: relative;
+  z-index: 100;
 }
 
 .navbar-brand {
@@ -79,13 +81,108 @@ h1 {
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.02em;
+  flex-shrink: 0;
 }
 
 .navbar-brand:hover {
   color: var(--accent);
 }
 
-.navbar-links {
+/* --- Hamburger toggle (mobile only) -------------------------------- */
+
+.navbar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  z-index: 110;
+}
+
+.navbar-toggle-icon {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text-primary);
+  position: relative;
+  transition: background 0.2s;
+}
+
+.navbar-toggle-icon::before,
+.navbar-toggle-icon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 22px;
+  height: 2px;
+  background: var(--text-primary);
+  transition: transform 0.2s;
+}
+
+.navbar-toggle-icon::before {
+  top: -6px;
+}
+
+.navbar-toggle-icon::after {
+  top: 6px;
+}
+
+.navbar-toggle-icon--open {
+  background: transparent;
+}
+
+.navbar-toggle-icon--open::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+
+.navbar-toggle-icon--open::after {
+  top: 0;
+  transform: rotate(-45deg);
+}
+
+/* --- Navbar menu (desktop: inline flex, mobile: collapsible) ------- */
+
+.navbar-menu {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+/* --- Nav links ----------------------------------------------------- */
+
+.navbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.navbar-nav-link {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.navbar-nav-link:hover {
+  color: var(--text-primary);
+  background: rgba(100, 108, 255, 0.08);
+}
+
+.navbar-nav-link--active {
+  color: var(--accent);
+  background: rgba(100, 108, 255, 0.12);
+  font-weight: 600;
+}
+
+/* --- Auth section -------------------------------------------------- */
+
+.navbar-auth {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -95,6 +192,50 @@ h1 {
   color: var(--accent);
   font-weight: 600;
   font-size: 0.95rem;
+}
+
+/* --- Mobile responsive --------------------------------------------- */
+
+@media (max-width: 640px) {
+  .navbar {
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar-toggle {
+    display: block;
+  }
+
+  .navbar-menu {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    width: 100%;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.75rem;
+  }
+
+  .navbar-menu--open {
+    display: flex;
+  }
+
+  .navbar-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .navbar-nav-link {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .navbar-auth {
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    justify-content: center;
+  }
 }
 
 /* ===================================================================
