@@ -283,6 +283,40 @@ async function createAndActivateRound(): Promise<Round> {
   return activatedRound;
 }
 
+/**
+ * Get completed rounds with pagination, ordered by ended_at descending.
+ *
+ * Returns both the page of rounds and total count for pagination metadata.
+ *
+ * @param page - Page number (1-indexed, default: 1)
+ * @param limit - Items per page (default: 10)
+ * @returns Object with rounds array and total count
+ */
+async function getCompletedRoundsPaginated(
+  page: number = 1,
+  limit: number = 10
+): Promise<{ rounds: Round[]; total: number }> {
+  const offset = (page - 1) * limit;
+
+  const countResult = await pool.query<{ count: string }>(
+    `SELECT COUNT(*) AS count FROM rounds WHERE status = 'completed'`
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  const result = await pool.query<RoundRow>(
+    `SELECT * FROM rounds
+     WHERE status = 'completed'
+     ORDER BY ended_at DESC
+     LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  );
+
+  return {
+    rounds: result.rows.map(toRound),
+    total,
+  };
+}
+
 export const roundService = {
   createRound,
   activateRound,
@@ -290,5 +324,6 @@ export const roundService = {
   getActiveRound,
   getRoundById,
   getRecentRounds,
+  getCompletedRoundsPaginated,
   createAndActivateRound,
 };

@@ -2,9 +2,11 @@
  * Round / game routes.
  *
  * GET  /api/rounds/active              — Current active round (public, optionalAuth)
+ * GET  /api/rounds/history             — Completed rounds list (public, paginated)
  * POST /api/rounds/:roundId/guess      — Submit a guess (requireAuth)
  * GET  /api/rounds/:roundId            — Get a specific round (optionalAuth)
  * GET  /api/rounds/:roundId/leaderboard — Round leaderboard (public)
+ * GET  /api/rounds/:roundId/results    — Full results for a completed round (optionalAuth)
  */
 
 import { Router, Request, Response, NextFunction } from "express";
@@ -12,6 +14,7 @@ import { pool } from "../config/database";
 import { requireAuth, optionalAuth } from "../middleware/auth";
 import { roundService } from "../services/roundService";
 import { scoringService } from "../services/scoringService";
+import { leaderboardService } from "../services/leaderboardService";
 import { toPublicRound, toCompletedRound } from "../models/round";
 import type { GuessRow } from "../models/guess";
 
@@ -74,6 +77,53 @@ roundsRouter.get(
           guessCount,
         },
         ...(req.user ? { hasGuessed, userScore } : {}),
+      });
+    } catch (err: unknown) {
+      next(err);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// GET /history — List completed rounds (paginated)
+// ---------------------------------------------------------------------------
+
+roundsRouter.get(
+  "/history",
+  optionalAuth,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string, 10) || 10));
+
+      const { rounds, total } = await roundService.getCompletedRoundsPaginated(page, limit);
+
+      // Build response with basic info + guess counts and top score per round
+      const roundsWithStats = await Promise.all(
+        rounds.map(async (round) => {
+          const stats = await leaderboardService.getRoundStats(round.id);
+          return {
+            id: round.id,
+            imageUrl: round.imageUrl,
+            prompt: round.prompt,
+            startedAt: round.startedAt ? round.startedAt.toISOString() : null,
+            endedAt: round.endedAt ? round.endedAt.toISOString() : null,
+            totalGuesses: stats?.totalGuesses ?? 0,
+            topScore: stats?.highestScore ?? null,
+          };
+        })
+      );
+
+      const totalPages = Math.ceil(total / limit);
+
+      res.status(200).json({
+        rounds: roundsWithStats,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+        },
       });
     } catch (err: unknown) {
       next(err);
@@ -299,6 +349,94 @@ roundsRouter.get(
           })),
         });
       }
+    } catch (err: unknown) {
+      next(err);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// GET /:roundId/results — Full results for a completed round
+// ---------------------------------------------------------------------------
+
+roundsRouter.get(
+  "/:roundId/results",
+  optionalAuth,
+  async (req: Request<{ roundId: string }>, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { roundId } = req.params;
+
+      // 1. Verify round exists
+      const round = await roundService.getRoundById(roundId);
+
+      if (!round) {
+        res.status(404).json({
+          error: { message: "Round not found", code: "ROUND_NOT_FOUND" },
+        });
+        return;
+      }
+
+      // 2. Only allow results for completed rounds
+      if (round.status !== "completed") {
+        res.status(400).json({
+          error: {
+            message: "Results are only available for completed rounds",
+            code: "ROUND_NOT_COMPLETED",
+          },
+        });
+        return;
+      }
+
+      // 3. Get full leaderboard
+      const leaderboard = await leaderboardService.getLeaderboard(roundId);
+
+      // 4. Get round stats
+      const stats = await leaderboardService.getRoundStats(roundId);
+
+      // 5. If user is authenticated, include their rank
+      let userResult: {
+        guessText: string;
+        score: number | null;
+        rank: number;
+        total: number;
+      } | null = null;
+
+      if (req.user) {
+        const userRank = await leaderboardService.getUserRank(roundId, req.user.userId);
+        if (userRank) {
+          // Find user's guess in the leaderboard
+          const userEntry = leaderboard.find((e) => e.userId === req.user!.userId);
+          if (userEntry) {
+            userResult = {
+              guessText: userEntry.guessText,
+              score: userEntry.score,
+              rank: userRank.rank,
+              total: userRank.total,
+            };
+          }
+        }
+      }
+
+      res.status(200).json({
+        round: {
+          ...toCompletedRound(round),
+        },
+        leaderboard: leaderboard.map((entry) => ({
+          rank: entry.rank,
+          userId: entry.userId,
+          username: entry.username,
+          guessText: entry.guessText,
+          score: entry.score,
+          submittedAt: entry.submittedAt,
+        })),
+        stats: stats ?? {
+          totalGuesses: 0,
+          averageScore: 0,
+          highestScore: 0,
+          lowestScore: 0,
+        },
+        ...(req.user ? { userResult } : {}),
+      });
     } catch (err: unknown) {
       next(err);
     }
