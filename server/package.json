@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "migrate": "tsx src/db/migrate.ts",
     "migrate:down": "tsx src/db/migrate.ts down",
-    "migrate:status": "tsx src/db/migrate.ts status"
+    "migrate:status": "tsx src/db/migrate.ts status",
+    "seed": "tsx src/db/seeds/word-bank.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
