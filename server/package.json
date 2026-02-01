@@ -1,8 +1,8 @@
 {
-  "name": "slop-guesser-server",
+  "name": "slop-guess-server",
   "version": "0.1.0",
   "private": true,
-  "description": "Backend API for Slop Guesser",
+  "description": "Backend API for Slop Guess",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon",
