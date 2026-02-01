@@ -6,6 +6,14 @@
  * generate the AI image in a given round.
  */
 
+/** Breakdown of element-level scoring from the hybrid scoring service. */
+export interface ElementScoreBreakdown {
+  matchedWords: string[];
+  partialMatches: { word: string; similarity: number }[];
+  elementScore: number;
+  overallScore: number;
+}
+
 /** Full guess row as stored in PostgreSQL. */
 export interface GuessRow {
   id: string;
@@ -15,6 +23,7 @@ export interface GuessRow {
   score: number | null;
   embedding_similarity: number | null;
   guess_embedding: number[] | null;
+  element_scores: Record<string, unknown> | null;
   submitted_at: Date;
   created_at: Date;
 }
@@ -28,6 +37,7 @@ export interface Guess {
   score: number | null;
   embeddingSimilarity: number | null;
   guessEmbedding: number[] | null;
+  elementScores: ElementScoreBreakdown | null;
   submittedAt: Date;
   createdAt: Date;
 }
@@ -43,6 +53,7 @@ export interface PublicGuess {
   username: string;
   guessText: string;
   score: number | null;
+  elementScores?: ElementScoreBreakdown | null;
   submittedAt: string;
 }
 
@@ -56,6 +67,7 @@ export function toGuess(row: GuessRow): Guess {
     score: row.score,
     embeddingSimilarity: row.embedding_similarity,
     guessEmbedding: row.guess_embedding,
+    elementScores: row.element_scores as ElementScoreBreakdown | null,
     submittedAt: row.submitted_at,
     createdAt: row.created_at,
   };
