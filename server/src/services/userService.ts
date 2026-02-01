@@ -78,3 +78,14 @@ export async function findById(id: string): Promise<UserRow | null> {
 
   return result.rows[0] ?? null;
 }
+
+/**
+ * Verify a plaintext password against a user's stored bcrypt hash.
+ * Returns true if the password matches.
+ */
+export async function verifyPassword(
+  plaintext: string,
+  hash: string
+): Promise<boolean> {
+  return bcrypt.compare(plaintext, hash);
+}

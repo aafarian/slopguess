@@ -1,12 +1,16 @@
 /**
  * Authentication routes.
  * POST /api/auth/register — create a new user account.
+ * POST /api/auth/login    — authenticate and receive JWT.
+ * GET  /api/auth/me       — return current user (requires auth).
  */
 
 import { Router, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import * as userService from "../services/userService";
+import { toPublicUser } from "../models/user";
+import { requireAuth } from "../middleware/auth";
 
 const authRouter = Router();
 
@@ -141,6 +145,112 @@ authRouter.post(
         });
         return;
       }
+      next(err);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// POST /login
+// ---------------------------------------------------------------------------
+
+interface LoginInput {
+  email?: string;
+  password?: string;
+}
+
+function validateLoginInput(body: LoginInput): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  if (!body.email || typeof body.email !== "string") {
+    errors.push({ field: "email", message: "Email is required" });
+  } else if (!EMAIL_RE.test(body.email)) {
+    errors.push({ field: "email", message: "Invalid email format" });
+  }
+
+  if (!body.password || typeof body.password !== "string") {
+    errors.push({ field: "password", message: "Password is required" });
+  }
+
+  return errors;
+}
+
+authRouter.post(
+  "/login",
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // 1. Validate input
+      const errors = validateLoginInput(req.body);
+      if (errors.length > 0) {
+        res.status(400).json({
+          error: {
+            message: "Validation failed",
+            code: "VALIDATION_ERROR",
+            details: errors,
+          },
+        });
+        return;
+      }
+
+      const { email, password } = req.body as {
+        email: string;
+        password: string;
+      };
+
+      // 2. Look up user by email
+      const user = await userService.findByEmail(email);
+      if (!user) {
+        // Generic message — don't reveal whether the email exists
+        res.status(401).json({
+          error: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" },
+        });
+        return;
+      }
+
+      // 3. Verify password
+      const isValid = await userService.verifyPassword(
+        password,
+        user.password_hash
+      );
+      if (!isValid) {
+        res.status(401).json({
+          error: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" },
+        });
+        return;
+      }
+
+      // 4. Generate JWT
+      const token = signToken(user.id, user.username);
+
+      // 5. Return user (safe shape) + token
+      res.status(200).json({ user: toPublicUser(user), token });
+    } catch (err: unknown) {
+      next(err);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// GET /me  (protected)
+// ---------------------------------------------------------------------------
+
+authRouter.get(
+  "/me",
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const user = await userService.findById(userId);
+
+      if (!user) {
+        res.status(404).json({
+          error: { message: "User not found", code: "USER_NOT_FOUND" },
+        });
+        return;
+      }
+
+      res.status(200).json({ user: toPublicUser(user) });
+    } catch (err: unknown) {
       next(err);
     }
   }
