@@ -1,11 +1,11 @@
-# Slop Guesser
+# Slop Guess
 
 A multiplayer AI image guessing game. Players compete to guess the prompt used to generate AI images.
 
 ## Project Structure
 
 ```
-slop-guesser/
+slop-guess/
   client/       # React frontend (Vite + TypeScript)
   server/       # Express backend (Node + TypeScript)
 ```

@@ -1,5 +1,5 @@
 {
-  "name": "slop-guesser",
+  "name": "slop-guess",
   "version": "0.1.0",
   "private": true,
   "description": "A multiplayer AI image guessing game",
