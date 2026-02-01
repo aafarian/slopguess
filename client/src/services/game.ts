@@ -12,6 +12,9 @@ import type {
   RoundResultsResponse,
   UserHistoryResponse,
   UserStatsResponse,
+  StreakResponse,
+  WeeklyStatsResponse,
+  ShareData,
 } from '../types/game';
 
 /**
@@ -118,4 +121,36 @@ export async function getUserHistory(
  */
 export async function getUserStats(): Promise<UserStatsResponse> {
   return request<UserStatsResponse>('/api/users/me/stats');
+}
+
+/**
+ * Fetch the current user's streak data.
+ * Requires authentication.
+ *
+ * GET /api/users/me/streaks
+ */
+export async function getStreaks(): Promise<StreakResponse> {
+  return request<StreakResponse>('/api/users/me/streaks');
+}
+
+/**
+ * Fetch the current user's weekly statistics.
+ * Requires authentication.
+ *
+ * GET /api/users/me/weekly-stats
+ */
+export async function getWeeklyStats(): Promise<WeeklyStatsResponse> {
+  return request<WeeklyStatsResponse>('/api/users/me/weekly-stats');
+}
+
+/**
+ * Fetch share data for a specific user's result in a round.
+ *
+ * GET /api/rounds/:roundId/share/:userId
+ */
+export async function getShareData(
+  roundId: string,
+  userId: string,
+): Promise<ShareData> {
+  return request<ShareData>(`/api/rounds/${roundId}/share/${userId}`);
 }
