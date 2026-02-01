@@ -4,6 +4,12 @@
  * Import this module early to fail fast on missing configuration.
  */
 
+import dotenv from "dotenv";
+import * as path from "path";
+
+// Auto-load .env from the server root directory
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+
 interface EnvConfig {
   /** PostgreSQL connection string */
   DATABASE_URL: string;

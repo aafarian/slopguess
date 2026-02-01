@@ -14,11 +14,6 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import dotenv from "dotenv";
-
-// Load environment variables before importing database config
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
-
 import { pool, closePool } from "../config/database";
 
 const MIGRATIONS_DIR = path.resolve(__dirname, "migrations");
