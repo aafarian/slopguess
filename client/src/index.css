@@ -1114,3 +1114,247 @@ form .btn {
     padding-left: 72px;
   }
 }
+
+/* ===================================================================
+   Leaderboard page
+   =================================================================== */
+
+.leaderboard-page {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+/* --- Header ------------------------------------------------------- */
+
+.leaderboard-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.leaderboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.leaderboard-header-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.leaderboard-round-id {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.leaderboard-status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+}
+
+.leaderboard-status-badge--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.leaderboard-status-badge--completed {
+  background: rgba(160, 160, 176, 0.12);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+/* --- Table -------------------------------------------------------- */
+
+.leaderboard-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-th {
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.leaderboard-th--rank {
+  width: 60px;
+  text-align: center;
+}
+
+.leaderboard-th--score {
+  width: 80px;
+  text-align: right;
+}
+
+.leaderboard-th--guess {
+  min-width: 160px;
+}
+
+.leaderboard-td {
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.leaderboard-td--rank {
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.leaderboard-td--player {
+  font-weight: 500;
+}
+
+.leaderboard-td--score {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-td--guess {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Last row: no bottom border */
+.leaderboard-table tbody tr:last-child .leaderboard-td {
+  border-bottom: none;
+}
+
+/* --- Row variants ------------------------------------------------- */
+
+.leaderboard-row {
+  transition: background-color 0.15s;
+}
+
+.leaderboard-row:hover {
+  background: rgba(100, 108, 255, 0.04);
+}
+
+/* Current user highlight */
+.leaderboard-row--current {
+  background: rgba(100, 108, 255, 0.1);
+  border-left: 3px solid var(--accent);
+}
+
+.leaderboard-row--current:hover {
+  background: rgba(100, 108, 255, 0.16);
+}
+
+/* --- Medal -------------------------------------------------------- */
+
+.leaderboard-medal {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* "you" badge next to username */
+.leaderboard-you-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+/* --- Stats bar ---------------------------------------------------- */
+
+.leaderboard-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding: 1.25rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.leaderboard-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.leaderboard-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+/* --- Back link ---------------------------------------------------- */
+
+.leaderboard-back {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+/* --- Responsive --------------------------------------------------- */
+
+@media (max-width: 600px) {
+  .leaderboard-title {
+    font-size: 1.5rem;
+  }
+
+  .leaderboard-th,
+  .leaderboard-td {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .leaderboard-th--rank,
+  .leaderboard-td--rank {
+    width: 44px;
+  }
+
+  .leaderboard-stats {
+    gap: 1rem;
+    padding: 1rem 0.75rem;
+  }
+
+  .leaderboard-stat-value {
+    font-size: 1.2rem;
+  }
+}
