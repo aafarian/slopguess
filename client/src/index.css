@@ -666,8 +666,179 @@ form .btn {
   padding: 1rem 0;
 }
 
-.game-leaderboard-link {
-  margin-top: 1rem;
+/* --- Result links (post-submission) -------------------------------- */
+
+.game-result-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.game-result-link {
+  width: 100%;
+}
+
+/* --- Fade-in animation for result reveal --------------------------- */
+
+@keyframes game-result-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-result--fade-in {
+  animation: game-result-fade-in 0.5s ease-out both;
+}
+
+/* --- Analyzing state (transition spinner) -------------------------- */
+
+@keyframes analyzing-pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes analyzing-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.game-analyzing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem;
+  gap: 1rem;
+  animation: game-result-fade-in 0.3s ease-out both;
+}
+
+.game-analyzing-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: analyzing-spin 0.8s linear infinite;
+}
+
+.game-analyzing-text {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  animation: analyzing-pulse 1.5s ease-in-out infinite;
+}
+
+/* --- Round ended notice -------------------------------------------- */
+
+.game-round-ended-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  animation: game-result-fade-in 0.4s ease-out both;
+}
+
+.game-round-ended-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.8;
+}
+
+.game-round-ended-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.game-round-ended-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.game-round-ended-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* --- Enhanced guess input ------------------------------------------ */
+
+.game-guess-input-wrapper {
+  position: relative;
+}
+
+.game-guess-input--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Character count color states */
+.game-guess-char-count--near {
+  color: #eab308;
+}
+
+.game-guess-char-count--limit {
+  color: var(--error);
+  font-weight: 600;
+}
+
+/* --- Submit button with inline spinner ----------------------------- */
+
+.game-guess-submit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.game-guess-submit--loading {
+  cursor: wait;
+}
+
+@keyframes guess-submit-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.game-guess-submit-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: guess-submit-spin 0.7s linear infinite;
 }
 
 /* --- Game page responsive ------------------------------------------ */
@@ -698,6 +869,23 @@ form .btn {
 
   .game-result-score-value {
     font-size: 2rem;
+  }
+
+  .game-result-links {
+    max-width: 100%;
+  }
+
+  .game-round-ended-notice {
+    padding: 1.5rem 1rem;
+  }
+
+  .game-round-ended-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .game-round-ended-actions .btn {
+    width: 100%;
   }
 }
 

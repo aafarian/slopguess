@@ -2,30 +2,38 @@
  * GamePage -- the core game experience.
  *
  * Displays the current active round's AI-generated image prominently and
- * manages five distinct view states:
+ * manages distinct view states:
  *
  *  1. Loading        -- spinner while fetching the active round
  *  2. Error          -- fetch error with retry button
  *  3. No active round -- friendly empty state
  *  4. Active round   -- image hero + guess form (or score result)
- *     4a. Not guessed yet (authenticated) -- guess input form
- *     4b. Already guessed (authenticated)  -- ScoreDisplay + leaderboard link
+ *     4a. Not guessed yet (authenticated) -- GuessForm component
+ *     4b. Analyzing  (brief transition)    -- "Analyzing your guess..."
+ *     4c. Already guessed (authenticated)  -- ScoreDisplay + links
  *  5. Not authenticated -- image displayed with login/register CTA
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getActiveRound, submitGuess } from '../services/game';
+import { getActiveRound } from '../services/game';
 import type { Round, GuessResult } from '../types/game';
 import { ApiRequestError } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ScoreDisplay from '../components/ScoreDisplay';
+import GuessForm from '../components/GuessForm';
+
+/** Duration of the "Analyzing your guess..." transition in ms. */
+const ANALYZING_DELAY_MS = 1200;
+
+type SubmissionPhase = 'idle' | 'analyzing' | 'revealed';
 
 export default function GamePage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   // Round data
   const [loading, setLoading] = useState(true);
@@ -35,10 +43,9 @@ export default function GamePage() {
   const [error, setError] = useState<string | null>(null);
 
   // Guess submission state
-  const [guessText, setGuessText] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [guessResult, setGuessResult] = useState<GuessResult | null>(null);
+  const [submissionPhase, setSubmissionPhase] = useState<SubmissionPhase>('idle');
+  const [roundEnded, setRoundEnded] = useState(false);
 
   const fetchRound = useCallback(async () => {
     setLoading(true);
@@ -69,36 +76,34 @@ export default function GamePage() {
     }
   }, [authLoading, fetchRound]);
 
-  // Handle guess submission
-  const handleSubmitGuess = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!round || !guessText.trim() || submitting) return;
+  // Handle successful guess submission with analyzing transition
+  const handleGuessSuccess = useCallback((result: GuessResult) => {
+    setGuessResult(result);
+    setSubmissionPhase('analyzing');
 
-    setSubmitting(true);
-    setSubmitError(null);
-
-    try {
-      const result = await submitGuess(round.id, guessText.trim());
-      setGuessResult(result);
+    // Brief "Analyzing..." state before revealing score
+    setTimeout(() => {
+      setSubmissionPhase('revealed');
       setHasGuessed(true);
       setUserScore(result.score);
-    } catch (err) {
-      if (err instanceof ApiRequestError) {
-        if (err.status === 409) {
-          setSubmitError('You have already submitted a guess for this round.');
-          setHasGuessed(true);
-        } else if (err.status === 400) {
-          setSubmitError('This round is no longer active.');
-        } else {
-          setSubmitError(err.message || 'Something went wrong. Please try again.');
-        }
-      } else {
-        setSubmitError('Something went wrong. Please try again.');
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    }, ANALYZING_DELAY_MS);
+  }, []);
+
+  // Handle duplicate guess (already submitted)
+  const handleAlreadyGuessed = useCallback(() => {
+    setHasGuessed(true);
+  }, []);
+
+  // Handle round ended while user was typing
+  const handleRoundEnded = useCallback(() => {
+    setRoundEnded(true);
+  }, []);
+
+  // Handle unauthenticated user trying to play -- redirect with return URL
+  const handleLoginRedirect = useCallback(() => {
+    const returnUrl = encodeURIComponent(window.location.pathname);
+    navigate(`/login?returnTo=${returnUrl}`);
+  }, [navigate]);
 
   // -----------------------------------------------------------------------
   // Render: Loading
@@ -137,9 +142,51 @@ export default function GamePage() {
   }
 
   // -----------------------------------------------------------------------
+  // Render: Round ended while user was typing
+  // -----------------------------------------------------------------------
+  if (roundEnded) {
+    return (
+      <div className="game-page">
+        {/* Still show the image */}
+        <div className="game-image-container">
+          {round.imageUrl ? (
+            <img
+              src={round.imageUrl}
+              alt="AI-generated image for this round"
+              className="game-image"
+            />
+          ) : (
+            <div className="game-image-placeholder">
+              <span>Image loading...</span>
+            </div>
+          )}
+        </div>
+        <div className="game-round-ended-notice">
+          <div className="game-round-ended-icon" aria-hidden="true">
+            &#9201;
+          </div>
+          <h2 className="game-round-ended-title">Round Has Ended</h2>
+          <p className="game-round-ended-text">
+            This round is no longer accepting guesses. Check back for the next one!
+          </p>
+          <div className="game-round-ended-actions">
+            <Link to={`/rounds/${round.id}`} className="btn btn-outline">
+              View Round Details
+            </Link>
+            <button className="btn btn-primary" onClick={fetchRound}>
+              Check for New Round
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // -----------------------------------------------------------------------
   // Render: Active round
   // -----------------------------------------------------------------------
-  const alreadyGuessed = hasGuessed || guessResult !== null;
+  const alreadyGuessed = hasGuessed || submissionPhase === 'revealed';
+  const isAnalyzing = submissionPhase === 'analyzing';
 
   return (
     <div className="game-page">
@@ -172,9 +219,9 @@ export default function GamePage() {
             Sign in to submit your guess and compete!
           </p>
           <div className="game-auth-cta-actions">
-            <Link to="/login" className="btn btn-primary">
+            <button onClick={handleLoginRedirect} className="btn btn-primary">
               Log In
-            </Link>
+            </button>
             <Link to="/register" className="btn btn-outline">
               Register
             </Link>
@@ -182,9 +229,17 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* ---- State: Authenticated, already guessed ---- */}
-      {isAuthenticated && alreadyGuessed && (
-        <div className="game-result">
+      {/* ---- State: Analyzing (transition) ---- */}
+      {isAuthenticated && isAnalyzing && (
+        <div className="game-analyzing">
+          <div className="game-analyzing-spinner" />
+          <p className="game-analyzing-text">Analyzing your guess...</p>
+        </div>
+      )}
+
+      {/* ---- State: Authenticated, score revealed ---- */}
+      {isAuthenticated && alreadyGuessed && !isAnalyzing && (
+        <div className="game-result game-result--fade-in">
           {guessResult ? (
             <ScoreDisplay
               score={guessResult.score ?? 0}
@@ -201,50 +256,31 @@ export default function GamePage() {
               You have already submitted a guess for this round.
             </p>
           )}
-          <Link
-            to={`/rounds/${round.id}/leaderboard`}
-            className="btn btn-outline game-leaderboard-link"
-          >
-            View Leaderboard
-          </Link>
+          <div className="game-result-links">
+            <Link
+              to={`/rounds/${round.id}/leaderboard`}
+              className="btn btn-primary game-result-link"
+            >
+              View Leaderboard
+            </Link>
+            <Link
+              to={`/rounds/${round.id}`}
+              className="btn btn-outline game-result-link"
+            >
+              View Round Details
+            </Link>
+          </div>
         </div>
       )}
 
       {/* ---- State: Authenticated, not yet guessed ---- */}
-      {isAuthenticated && !alreadyGuessed && (
-        <form className="game-guess-form" onSubmit={handleSubmitGuess}>
-          <div className="form-group">
-            <label htmlFor="guess-input">What prompt generated this image?</label>
-            <input
-              id="guess-input"
-              type="text"
-              className={`game-guess-input${submitError ? ' input-error' : ''}`}
-              placeholder="Enter your guess..."
-              value={guessText}
-              onChange={(e) => setGuessText(e.target.value)}
-              maxLength={200}
-              disabled={submitting}
-              autoComplete="off"
-            />
-            <div className="game-guess-meta">
-              <span className="game-guess-char-count">
-                {guessText.length}/200
-              </span>
-            </div>
-          </div>
-
-          {submitError && (
-            <div className="game-guess-error">{submitError}</div>
-          )}
-
-          <button
-            type="submit"
-            className="btn btn-primary btn-block"
-            disabled={submitting || !guessText.trim()}
-          >
-            {submitting ? 'Submitting...' : 'Submit Guess'}
-          </button>
-        </form>
+      {isAuthenticated && !alreadyGuessed && !isAnalyzing && (
+        <GuessForm
+          roundId={round.id}
+          onSuccess={handleGuessSuccess}
+          onAlreadyGuessed={handleAlreadyGuessed}
+          onRoundEnded={handleRoundEnded}
+        />
       )}
     </div>
   );
