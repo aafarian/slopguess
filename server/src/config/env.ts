@@ -21,6 +21,10 @@ interface EnvConfig {
   NODE_ENV: string;
   /** CORS origin for frontend (default: http://localhost:5173) */
   CORS_ORIGIN: string;
+  /** How long a round stays active, in hours (default: 24) */
+  ROUND_DURATION_HOURS: number;
+  /** How often the scheduler checks for round expiry, in minutes (default: 5) */
+  ROUND_CHECK_INTERVAL_MINUTES: number;
 }
 
 /**
@@ -74,6 +78,12 @@ function loadEnvConfig(): EnvConfig {
     PORT: parseInt(process.env.PORT || "3001", 10),
     NODE_ENV: process.env.NODE_ENV || "development",
     CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:5173",
+    ROUND_DURATION_HOURS: parseFloat(
+      process.env.ROUND_DURATION_HOURS || "24"
+    ),
+    ROUND_CHECK_INTERVAL_MINUTES: parseFloat(
+      process.env.ROUND_CHECK_INTERVAL_MINUTES || "5"
+    ),
   };
 }
 

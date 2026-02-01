@@ -7,6 +7,7 @@ dotenv.config();
 import { env } from "./config/env";
 import { app } from "./app";
 import { testConnection, closePool } from "./config/database";
+import { scheduler } from "./services/scheduler";
 
 async function start(): Promise<void> {
   // Test database connectivity before starting the server
@@ -21,6 +22,19 @@ async function start(): Promise<void> {
     );
   }
 
+  // Start the round scheduler (skip in test environment)
+  if (env.NODE_ENV !== "test") {
+    try {
+      await scheduler.startScheduler();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[server] Failed to start scheduler:", message);
+      console.warn(
+        "[server] Server will continue without automatic round rotation."
+      );
+    }
+  }
+
   const server = app.listen(env.PORT, () => {
     console.log(
       `[server] Server is running on http://localhost:${env.PORT} (${env.NODE_ENV})`
@@ -33,6 +47,7 @@ async function start(): Promise<void> {
   // Graceful shutdown
   const shutdown = async (signal: string) => {
     console.log(`\n[server] ${signal} received. Shutting down gracefully...`);
+    scheduler.stopScheduler();
     server.close(async () => {
       await closePool();
       console.log("[server] Server shut down.");
