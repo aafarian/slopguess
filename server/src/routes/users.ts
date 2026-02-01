@@ -1,13 +1,16 @@
 /**
  * User routes.
  *
- * GET  /api/users/me/history — Current user's game history (requireAuth)
- * GET  /api/users/me/stats   — Current user's statistics (requireAuth)
+ * GET  /api/users/me/history       — Current user's game history (requireAuth)
+ * GET  /api/users/me/stats         — Current user's statistics (requireAuth)
+ * GET  /api/users/me/streaks       — Current user's streak data (requireAuth)
+ * GET  /api/users/me/weekly-stats  — Current user's last-7-day stats (requireAuth)
  */
 
 import { Router, Request, Response, NextFunction } from "express";
 import { requireAuth } from "../middleware/auth";
 import { leaderboardService } from "../services/leaderboardService";
+import { streakService } from "../services/streakService";
 
 const usersRouter = Router();
 
@@ -58,9 +61,52 @@ usersRouter.get(
     try {
       const userId = req.user!.userId;
 
-      const stats = await leaderboardService.getUserStats(userId);
+      const [stats, streak] = await Promise.all([
+        leaderboardService.getUserStats(userId),
+        streakService.getStreak(userId),
+      ]);
 
-      res.status(200).json({ stats });
+      res.status(200).json({ stats: { ...stats, streak } });
+    } catch (err: unknown) {
+      next(err);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// GET /me/streaks — Current user's streak data
+// ---------------------------------------------------------------------------
+
+usersRouter.get(
+  "/me/streaks",
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+
+      const streak = await streakService.getStreak(userId);
+
+      res.status(200).json({ streak });
+    } catch (err: unknown) {
+      next(err);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// GET /me/weekly-stats — Current user's last-7-day stats
+// ---------------------------------------------------------------------------
+
+usersRouter.get(
+  "/me/weekly-stats",
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+
+      const weeklyStats = await streakService.getWeeklyStats(userId);
+
+      res.status(200).json({ weeklyStats });
     } catch (err: unknown) {
       next(err);
     }
