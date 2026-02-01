@@ -33,7 +33,7 @@ export default function Layout() {
     <div className="layout">
       <header className="navbar">
         <Link to="/" className="navbar-brand" onClick={closeMobileMenu}>
-          SlopGuesser
+          Slop Guess
         </Link>
 
         {/* Hamburger toggle for mobile */}
