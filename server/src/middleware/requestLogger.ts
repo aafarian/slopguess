@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../config/logger";
+import { monitoringService } from "../services/monitoringService";
 
 /**
  * Request logging middleware with request ID correlation.
@@ -24,6 +25,9 @@ function requestLogger(req: Request, res: Response, next: NextFunction): void {
 
   res.on("finish", () => {
     const durationMs = Date.now() - start;
+
+    // Track request metrics for monitoring
+    monitoringService.recordRequest(durationMs);
 
     logger.info("http", `${req.method} ${req.originalUrl} ${res.statusCode}`, {
       requestId,

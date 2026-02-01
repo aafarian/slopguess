@@ -8,12 +8,14 @@
  *   POST /api/admin/rounds/rotate            -- Manually trigger a round rotation
  *   GET  /api/admin/rounds/next              -- Get the next scheduled rotation time
  *   GET  /api/admin/prompt-variety/report     -- Prompt variety overlap statistics
+ *   GET  /api/admin/metrics                  -- In-memory application metrics
  */
 
 import { Router, Request, Response } from "express";
 import { logger } from "../config/logger";
 import { scheduler } from "../services/scheduler";
 import { promptVarietyService } from "../services/promptVarietyService";
+import { monitoringService } from "../services/monitoringService";
 
 const adminRouter = Router();
 
@@ -89,5 +91,24 @@ adminRouter.get(
     });
   }
 );
+
+/**
+ * GET /api/admin/metrics
+ *
+ * Returns in-memory application metrics: request count, error count,
+ * average response time, and uptime. Metrics accumulate since last
+ * server restart.
+ */
+adminRouter.get("/metrics", (_req: Request, res: Response) => {
+  const metrics = monitoringService.getMetrics();
+
+  res.json({
+    requestCount: metrics.requestCount,
+    errorCount: metrics.errorCount,
+    avgResponseTimeMs: metrics.avgResponseTimeMs,
+    uptime: metrics.uptime,
+    lastRoundRotationTime: metrics.lastRoundRotationTime,
+  });
+});
 
 export { adminRouter };

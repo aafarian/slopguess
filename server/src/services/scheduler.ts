@@ -18,6 +18,7 @@
 import { env } from "../config/env";
 import { logger } from "../config/logger";
 import { roundService } from "./roundService";
+import { monitoringService } from "./monitoringService";
 
 // ---------------------------------------------------------------------------
 // Module-level scheduler state
@@ -172,6 +173,7 @@ async function rotateRound(): Promise<void> {
   logger.info("scheduler", "Rotating round...");
   const newRound = await roundService.createAndActivateRound();
   nextRotationTime = computeNextRotation(newRound.startedAt!);
+  monitoringService.recordRoundRotation();
   logger.info("scheduler", `Round rotated. New active round: ${newRound.id}`, {
     roundId: newRound.id,
     nextRotation: nextRotationTime.toISOString(),

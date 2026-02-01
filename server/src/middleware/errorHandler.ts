@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../config/logger";
+import { monitoringService } from "../services/monitoringService";
 
 interface AppError extends Error {
   statusCode?: number;
@@ -15,6 +16,9 @@ function errorHandler(
   const statusCode = err.statusCode || 500;
   const message = statusCode === 500 ? "Internal server error" : err.message;
   const requestId = (req as unknown as Record<string, unknown>).requestId as string | undefined;
+
+  // Track error metrics for monitoring
+  monitoringService.recordError();
 
   // Log the error with request context
   if (statusCode === 500) {
