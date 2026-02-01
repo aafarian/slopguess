@@ -23,6 +23,21 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+// ---------------------------------------------------------------------------
+// 401 callback — lets the React auth layer stay in sync
+// ---------------------------------------------------------------------------
+
+type UnauthorizedCallback = () => void;
+let _onUnauthorized: UnauthorizedCallback | null = null;
+
+/**
+ * Register a callback that fires when any API response returns 401.
+ * The auth provider uses this to clear React state in sync with localStorage.
+ */
+export function onUnauthorized(callback: UnauthorizedCallback): void {
+  _onUnauthorized = callback;
+}
+
 /** Error class for API errors with structured data. */
 export class ApiRequestError extends Error {
   status: number;
@@ -76,15 +91,12 @@ export async function request<T>(
     headers,
   });
 
-  // Handle 401 — auto-logout
+  // Handle 401 — notify auth layer so React state stays in sync
   if (response.status === 401) {
-    clearToken();
-    // Only redirect if we're not already on an auth page
-    if (
-      !window.location.pathname.startsWith('/login') &&
-      !window.location.pathname.startsWith('/register')
-    ) {
-      window.location.href = '/login';
+    if (_onUnauthorized) {
+      _onUnauthorized();
+    } else {
+      clearToken();
     }
     throw new ApiRequestError('Unauthorized', 401, 'UNAUTHORIZED');
   }

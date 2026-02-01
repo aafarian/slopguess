@@ -31,6 +31,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ScoreDisplay from '../components/ScoreDisplay';
+import ElementBreakdown from '../components/ElementBreakdown';
 
 /** Unicode medal characters for the top 3. */
 const MEDALS: Record<number, string> = {
@@ -156,7 +157,7 @@ export default function RoundDetailPage() {
           ) : (
             <div className="round-detail-play-cta">
               <p>Think you know what prompt created this image?</p>
-              <Link to="/play" className="btn btn-primary">
+              <Link to="/" className="btn btn-primary">
                 Play Now
               </Link>
             </div>
@@ -205,6 +206,12 @@ export default function RoundDetailPage() {
             <p className="round-detail-your-guess">
               Your guess: <em>&ldquo;{userResult.guessText}&rdquo;</em>
             </p>
+            {userResult.elementScores && (
+              <ElementBreakdown
+                elementScores={userResult.elementScores}
+                promptWords={completedRound.prompt.split(/\s+/).filter(Boolean)}
+              />
+            )}
           </div>
         )}
 

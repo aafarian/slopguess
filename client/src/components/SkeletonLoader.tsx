@@ -187,6 +187,14 @@ export default function SkeletonLoader({
 export function GamePageSkeleton() {
   return (
     <div className="game-page">
+      {/* Reserve dev toolbar space to prevent layout shift */}
+      {import.meta.env.DEV && (
+        <div className="dev-toolbar" aria-hidden="true">
+          <SkeletonBlock width="28px" height="14px" borderRadius="3px" />
+          <SkeletonBlock width="60px" height="22px" borderRadius="4px" />
+          <SkeletonBlock width="72px" height="22px" borderRadius="4px" />
+        </div>
+      )}
       <div className="game-layout">
         {/* Image panel skeleton */}
         <div className="game-image-panel">

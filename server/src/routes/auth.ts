@@ -11,6 +11,7 @@ import { env } from "../config/env";
 import * as userService from "../services/userService";
 import { toPublicUser } from "../models/user";
 import { requireAuth } from "../middleware/auth";
+import { loginLimiter, registerLimiter } from "../middleware/rateLimiter";
 
 const authRouter = Router();
 
@@ -77,6 +78,7 @@ function signToken(userId: string, username: string): string {
 
 authRouter.post(
   "/register",
+  registerLimiter,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // 1. Validate input
@@ -177,6 +179,7 @@ function validateLoginInput(body: LoginInput): ValidationError[] {
 
 authRouter.post(
   "/login",
+  loginLimiter,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // 1. Validate input

@@ -1,14 +1,14 @@
 /**
  * Rate limiting middleware using express-rate-limit.
  *
- * Three tiers:
- *   - generalLimiter  — configurable via RATE_LIMIT_MAX / RATE_LIMIT_WINDOW_MS
- *   - authLimiter     — 5 requests per 1 minute  (applied to /api/auth)
- *   - guessLimiter    — 10 requests per 1 minute (applied to guess endpoint)
+ * Four tiers:
+ *   - generalLimiter   — configurable via RATE_LIMIT_MAX / RATE_LIMIT_WINDOW_MS
+ *   - loginLimiter     — 10 requests per 1 minute (POST /login only)
+ *   - registerLimiter  — 5 requests per 1 minute  (POST /register only)
+ *   - guessLimiter     — 10 requests per 1 minute (POST guess endpoint)
  *
- * The general limiter window and max are configurable via environment variables
- * (RATE_LIMIT_WINDOW_MS and RATE_LIMIT_MAX). Auth and guess limiters use the
- * same window but with stricter maximums.
+ * Login and register have separate instances so their budgets are independent.
+ * GET /me has no dedicated limiter — only the general limiter applies.
  *
  * All limiters use the default in-memory store which is sufficient for
  * single-process deployments. Upgrade to a Redis-backed store when
@@ -43,19 +43,37 @@ export const generalLimiter = rateLimit({
 });
 
 /**
- * Auth route rate limiter (stricter).
- * Applied to /api/auth routes (login, register).
+ * Login rate limiter.
+ * Separate instance from register — registration attempts don't eat into login budget.
+ * 10 requests per 1 minute per IP.
+ */
+export const loginLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: isTest ? testMax : 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: {
+      message: "Too many login attempts, please try again later.",
+      code: "LOGIN_RATE_LIMIT_EXCEEDED",
+    },
+  },
+});
+
+/**
+ * Registration rate limiter.
+ * Separate instance from login — login attempts don't eat into registration budget.
  * 5 requests per 1 minute per IP.
  */
-export const authLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute (always fixed)
+export const registerLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
   max: isTest ? testMax : 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     error: {
-      message: "Too many authentication attempts, please try again later.",
-      code: "AUTH_RATE_LIMIT_EXCEEDED",
+      message: "Too many registration attempts, please try again later.",
+      code: "REGISTER_RATE_LIMIT_EXCEEDED",
     },
   },
 });

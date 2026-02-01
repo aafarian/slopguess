@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './hooks/useAuth'
+import { Routes, Route } from 'react-router-dom'
+import { AuthProvider } from './hooks/useAuth'
 import Layout from './components/Layout'
 import GamePage from './pages/GamePage'
 import LoginPage from './pages/LoginPage'
@@ -8,21 +8,7 @@ import HistoryPage from './pages/HistoryPage'
 import ProfilePage from './pages/ProfilePage'
 import RoundDetailPage from './pages/RoundDetailPage'
 import LeaderboardPage from './pages/LeaderboardPage'
-
-/**
- * Wrapper that redirects unauthenticated users to /login.
- * Shows nothing while the initial auth check is in progress.
- */
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth()
-
-  if (isLoading) return null
-  if (!isAuthenticated) {
-    const returnTo = encodeURIComponent(window.location.pathname)
-    return <Navigate to={`/login?returnTo=${returnTo}`} replace />
-  }
-  return <>{children}</>
-}
+import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
   return (
@@ -43,18 +29,11 @@ function App() {
           <Route path="/rounds/:roundId" element={<RoundDetailPage />} />
           <Route path="/rounds/:roundId/leaderboard" element={<LeaderboardPage />} />
 
-          {/* Protected: player profile */}
-          <Route
-            path="/profile"
-            element={
-              <RequireAuth>
-                <ProfilePage />
-              </RequireAuth>
-            }
-          />
+          {/* Player profile (shows inline login prompt when logged out) */}
+          <Route path="/profile" element={<ProfilePage />} />
 
-          {/* 404 catch-all — redirect to game */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* 404 catch-all */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </AuthProvider>

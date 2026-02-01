@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getUserStats, getUserHistory, getStreaks, getWeeklyStats } from '../services/game';
 import type { UserStats, UserHistoryEntry, Pagination, StreakData, WeeklyStats } from '../types/game';
@@ -52,8 +52,7 @@ function formatDate(dateStr: string): string {
    ----------------------------------------------------------------------- */
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
 
   // Stats state
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -76,13 +75,6 @@ export default function ProfilePage() {
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null);
   const [weeklyLoading, setWeeklyLoading] = useState(true);
   const [weeklyError, setWeeklyError] = useState('');
-
-  // Auth redirect
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate('/login', { replace: true });
-    }
-  }, [authLoading, isAuthenticated, navigate]);
 
   // Fetch stats on mount
   const fetchStats = useCallback(async () => {
@@ -151,15 +143,25 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, fetchStats, fetchHistory, historyPage, fetchStreaks, fetchWeeklyStats]);
 
-  // While auth is resolving, show spinner
-  if (authLoading) {
-    return <LoadingSpinner message="Loading profile..." />;
-  }
-
-  // Safety: if not authenticated the redirect effect will fire, but render
-  // nothing in the meantime.
+  // Show an inline login prompt when not authenticated.
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="profile-page">
+        <div className="game-auth-cta">
+          <p className="game-auth-cta-text">
+            Sign in to view your profile, stats, and game history.
+          </p>
+          <div className="game-auth-cta-actions">
+            <Link to="/login?returnTo=%2Fprofile" className="btn btn-primary">
+              Log In
+            </Link>
+            <Link to="/register" className="btn btn-outline">
+              Register
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   /* ----- Page handlers ------------------------------------------------- */

@@ -154,3 +154,18 @@ export async function getShareData(
 ): Promise<ShareData> {
   return request<ShareData>(`/api/rounds/${roundId}/share/${userId}`);
 }
+
+/**
+ * Manually rotate the round (dev / admin use).
+ * Completes the current active round and creates + activates a new one.
+ *
+ * POST /api/admin/rounds/rotate
+ */
+export async function rotateRound(
+  difficulty?: string,
+): Promise<{ message: string; difficulty: string; nextRotationAt: string | null }> {
+  return request('/api/admin/rounds/rotate', {
+    method: 'POST',
+    body: JSON.stringify(difficulty ? { difficulty } : {}),
+  });
+}

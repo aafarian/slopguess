@@ -15,7 +15,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Layout() {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -69,22 +69,20 @@ export default function Layout() {
             >
               History
             </NavLink>
-            {!isLoading && isAuthenticated && (
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
-                }
-                onClick={closeMobileMenu}
-              >
-                Profile
-              </NavLink>
-            )}
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
+              }
+              onClick={closeMobileMenu}
+            >
+              Profile
+            </NavLink>
           </nav>
 
           {/* Auth section */}
           <div className="navbar-auth">
-            {isLoading ? null : isAuthenticated ? (
+            {isAuthenticated ? (
               <>
                 <span className="navbar-user">
                   {user?.username}

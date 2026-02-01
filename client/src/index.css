@@ -51,13 +51,13 @@
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
   width: 100%;
+  height: 100%;
 }
 
 a {
@@ -74,6 +74,17 @@ a:hover {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+}
+
+/* ===================================================================
+   Layout shell — full-viewport flex column
+   =================================================================== */
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ===================================================================
@@ -274,7 +285,11 @@ h1 {
    =================================================================== */
 
 .main-content {
-  padding: 2rem;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 0.75rem 2rem;
+  overflow-y: auto;
 }
 
 /* ===================================================================
@@ -604,12 +619,12 @@ form .btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.25rem 1rem;
+  padding: 0.75rem 1rem;
   animation: score-fade-in 0.4s ease-out both;
 }
 
 .score-display-number {
-  font-size: 3rem;
+  font-size: 2.75rem;
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -621,10 +636,10 @@ form .btn {
 }
 
 .score-display-label {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  margin-top: 0.5rem;
-  min-height: 1.65rem;
+  margin-top: 0.3rem;
+  min-height: 1.5rem;
   transition: color 0.3s ease;
 }
 
@@ -633,8 +648,8 @@ form .btn {
 }
 
 .score-display-rank {
-  margin-top: 0.75rem;
-  font-size: 0.95rem;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
@@ -659,11 +674,11 @@ form .btn {
 /* Responsive: larger score on wider screens */
 @media (min-width: 768px) {
   .score-display-number {
-    font-size: 4rem;
+    font-size: 3rem;
   }
 
   .score-display-label {
-    font-size: 1.25rem;
+    font-size: 1.05rem;
   }
 }
 
@@ -672,9 +687,64 @@ form .btn {
    =================================================================== */
 
 .game-page {
-  padding: 1.5rem 1rem 3rem;
-  max-width: 1100px;
-  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+
+@media (min-width: 860px) {
+  .game-page {
+    padding: 0 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+/* --- Dev toolbar (visible only in dev mode) ------------------------ */
+
+.dev-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(245, 158, 11, 0.06);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.dev-toolbar-label {
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+.dev-toolbar-btn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  min-height: unset;
+}
+
+.dev-toolbar-toggle {
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.dev-toolbar-toggle--dev {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.dev-toolbar-toggle--prod {
+  background: rgba(100, 108, 255, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(100, 108, 255, 0.25);
 }
 
 /* --- Two-column layout --------------------------------------------- */
@@ -688,8 +758,13 @@ form .btn {
 
 @media (min-width: 860px) {
   .game-layout {
-    grid-template-columns: 1fr 380px;
-    gap: 2rem;
+    grid-template-columns: 1fr 420px;
+    grid-template-rows: 1fr;
+    align-items: stretch;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 }
 
@@ -699,6 +774,15 @@ form .btn {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+}
+
+@media (min-width: 860px) {
+  .game-image-panel {
+    min-height: 0;
+    overflow: hidden;
+    background: #0a0a12;
+    align-items: center;
+  }
 }
 
 .game-image {
@@ -712,7 +796,10 @@ form .btn {
 
 @media (min-width: 860px) {
   .game-image {
-    max-height: 80vh;
+    max-height: 100%;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
   }
 }
 
@@ -737,11 +824,32 @@ form .btn {
   gap: 0.25rem;
 }
 
-/* On desktop, make the panel sticky so it stays visible while scrolling the image */
 @media (min-width: 860px) {
   .game-controls-panel {
-    position: sticky;
-    top: 1.5rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.5rem 1.75rem;
+    border-left: 1px solid var(--border);
+    background: var(--bg-secondary);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .game-controls-panel::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .game-controls-panel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .game-controls-panel::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+
+  .game-controls-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
   }
 }
 
@@ -750,13 +858,43 @@ form .btn {
 .game-round-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .game-guess-count {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+}
+
+/* --- Difficulty badge ---------------------------------------------- */
+
+.game-difficulty-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  line-height: 1.3;
+}
+
+.game-difficulty-badge--easy {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+}
+
+.game-difficulty-badge--hard {
+  background: rgba(251, 146, 60, 0.15);
+  color: #fb923c;
+}
+
+.game-difficulty-badge--expert {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
 /* --- Auth CTA (not logged in) -------------------------------------- */
@@ -844,11 +982,12 @@ form .btn {
   flex-direction: column;
   align-items: center;
   width: 100%;
+  gap: 0.25rem;
 }
 
 .game-result-summary {
   text-align: center;
-  padding: 1rem 0;
+  width: 100%;
 }
 
 .game-result-score-label {
@@ -858,10 +997,11 @@ form .btn {
 }
 
 .game-result-score-value {
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   font-weight: 800;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 
 .game-result-submitted {
@@ -885,54 +1025,69 @@ form .btn {
 
 .game-prompt-reveal {
   width: 100%;
-  padding: 1rem 1.25rem;
-  margin-top: 0.75rem;
-  background: linear-gradient(
-    135deg,
-    rgba(100, 108, 255, 0.12) 0%,
-    rgba(100, 108, 255, 0.04) 100%
-  );
-  border: 1px solid rgba(100, 108, 255, 0.3);
-  border-left: 4px solid var(--accent);
-  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  background: rgba(100, 108, 255, 0.08);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
   animation: prompt-reveal-enter 0.5s ease-out both;
   animation-delay: 0.3s;
 }
 
 .game-prompt-reveal-label {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--accent);
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 }
 
 .game-prompt-reveal-text {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-primary);
-  line-height: 1.5;
+  line-height: 1.45;
   font-style: italic;
   margin: 0;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
+/* --- Prompt teaser (prod view during active rounds) ---------------- */
+
+.game-prompt-teaser {
+  width: 100%;
+  padding: 0.85rem 1.15rem;
+  margin-top: 0.75rem;
+  background: rgba(100, 108, 255, 0.06);
+  border: 1px solid rgba(100, 108, 255, 0.12);
+  border-radius: 8px;
+  text-align: center;
+  animation: prompt-reveal-enter 0.4s ease-out both;
+  animation-delay: 0.2s;
+}
+
+.game-prompt-teaser-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
 /* --- Result links (post-submission) -------------------------------- */
 
 .game-result-links {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 0.5rem;
-  margin-top: 1.25rem;
+  margin-top: 0.75rem;
   width: 100%;
 }
 
 .game-result-link {
-  width: 100%;
+  flex: 1;
+  text-align: center;
 }
 
 /* --- Fade-in animation for result reveal --------------------------- */
@@ -1096,10 +1251,6 @@ form .btn {
 /* --- Game page responsive ------------------------------------------ */
 
 @media (min-width: 860px) {
-  .game-page {
-    padding: 2rem 2rem 4rem;
-  }
-
   .game-guess-form label {
     font-size: 1.05rem;
   }
@@ -2189,9 +2340,10 @@ form .btn {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--accent);
-  background: rgba(100, 108, 255, 0.15);
-  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 3px;
+  vertical-align: middle;
 }
 
 .round-detail-full-leaderboard-link {
@@ -2498,11 +2650,6 @@ form .btn {
     font-size: 0.95rem;
   }
 
-  /* Game image: reduce max height on mobile so controls are accessible */
-  .game-image {
-    max-height: 45vh;
-  }
-
   /* Auth CTA actions: stack buttons at narrow widths */
   .game-auth-cta-actions {
     flex-direction: column;
@@ -2560,7 +2707,7 @@ form .btn {
   }
 
   .game-page {
-    padding: 1rem 0.5rem 2rem;
+    padding: 0.5rem 0.5rem;
   }
 
   .history-page-title {
@@ -2716,8 +2863,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   width: 100%;
+  margin-top: 0.25rem;
 }
 
 .share-button__actions {
@@ -2790,10 +2938,10 @@ body {
 
 .element-breakdown {
   width: 100%;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -2838,10 +2986,10 @@ body {
 /* --- Content area -------------------------------------------------- */
 
 .element-breakdown-content {
-  padding: 0 1rem 1rem;
+  padding: 0 1rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   animation: element-breakdown-enter 0.25s ease-out both;
 }
 
@@ -3226,4 +3374,43 @@ body {
     background: #fff;
     color: #000;
   }
+}
+
+/* ===================================================================
+   404 Not Found Page
+   =================================================================== */
+
+.not-found-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.not-found-content {
+  max-width: 28rem;
+}
+
+.not-found-code {
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 0.75rem;
+  opacity: 0.7;
+}
+
+.not-found-message {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.not-found-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
 }
