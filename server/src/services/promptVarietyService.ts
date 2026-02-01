@@ -13,6 +13,7 @@
  */
 
 import { pool } from "../config/database";
+import { logger } from "../config/logger";
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -146,10 +147,7 @@ async function validateCombination(
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(
-      "[promptVarietyService] validateCombination failed:",
-      message
-    );
+    logger.error("promptVarietyService", "validateCombination failed", { error: message });
     // On error, allow the combination through so we don't block round creation
     return {
       valid: true,
@@ -232,7 +230,7 @@ async function getVarietyReport(
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[promptVarietyService] getVarietyReport failed:", message);
+    logger.error("promptVarietyService", "getVarietyReport failed", { error: message });
     return {
       roundsAnalyzed: 0,
       lookbackWindow: lookback,

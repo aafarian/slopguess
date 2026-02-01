@@ -16,6 +16,7 @@
  */
 
 import { env } from "../config/env";
+import { logger } from "../config/logger";
 import { roundService } from "./roundService";
 
 // ---------------------------------------------------------------------------
@@ -60,9 +61,10 @@ async function tick(): Promise<void> {
       const now = new Date();
 
       if (now >= expiresAt) {
-        console.log(
-          `[scheduler] Active round ${activeRound.id} has expired (started ${activeRound.startedAt!.toISOString()}). Rotating...`
-        );
+        logger.info("scheduler", `Active round ${activeRound.id} has expired. Rotating...`, {
+          roundId: activeRound.id,
+          startedAt: activeRound.startedAt!.toISOString(),
+        });
         await rotateRound();
       } else {
         // Update the next rotation time tracker
@@ -70,14 +72,12 @@ async function tick(): Promise<void> {
       }
     } else {
       // No active round at all -- create and activate one
-      console.log(
-        "[scheduler] No active round found. Creating and activating a new round..."
-      );
+      logger.info("scheduler", "No active round found. Creating and activating a new round...");
       await rotateRound();
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[scheduler] Error during tick:", message);
+    logger.error("scheduler", "Error during tick", { error: message });
     // Do NOT rethrow -- the scheduler must keep running
   }
 }
@@ -96,13 +96,14 @@ async function tick(): Promise<void> {
  */
 async function startScheduler(): Promise<void> {
   if (isRunning) {
-    console.log("[scheduler] Scheduler is already running.");
+    logger.info("scheduler", "Scheduler is already running.");
     return;
   }
 
-  console.log(
-    `[scheduler] Starting scheduler (round duration: ${env.ROUND_DURATION_HOURS}h, check interval: ${env.ROUND_CHECK_INTERVAL_MINUTES}min)`
-  );
+  logger.info("scheduler", "Starting scheduler", {
+    roundDurationHours: env.ROUND_DURATION_HOURS,
+    checkIntervalMinutes: env.ROUND_CHECK_INTERVAL_MINUTES,
+  });
 
   isRunning = true;
 
@@ -112,28 +113,23 @@ async function startScheduler(): Promise<void> {
 
     if (activeRound) {
       nextRotationTime = computeNextRotation(activeRound.startedAt!);
-      console.log(
-        `[scheduler] Found active round ${activeRound.id}. Next rotation at ${nextRotationTime.toISOString()}`
-      );
+      logger.info("scheduler", `Found active round ${activeRound.id}`, {
+        roundId: activeRound.id,
+        nextRotation: nextRotationTime.toISOString(),
+      });
     } else {
-      console.log(
-        "[scheduler] No active round on startup. Creating initial round..."
-      );
+      logger.info("scheduler", "No active round on startup. Creating initial round...");
       const newRound = await roundService.createAndActivateRound();
       nextRotationTime = computeNextRotation(newRound.startedAt!);
-      console.log(
-        `[scheduler] Created initial round ${newRound.id}. Next rotation at ${nextRotationTime.toISOString()}`
-      );
+      logger.info("scheduler", `Created initial round ${newRound.id}`, {
+        roundId: newRound.id,
+        nextRotation: nextRotationTime.toISOString(),
+      });
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(
-      "[scheduler] Failed to initialise active round on startup:",
-      message
-    );
-    console.error(
-      "[scheduler] Scheduler will continue and retry on next tick."
-    );
+    logger.error("scheduler", "Failed to initialise active round on startup", { error: message });
+    logger.warn("scheduler", "Scheduler will continue and retry on next tick.");
   }
 
   // Set up periodic check
@@ -142,7 +138,7 @@ async function startScheduler(): Promise<void> {
     void tick();
   }, intervalMs);
 
-  console.log("[scheduler] Scheduler started.");
+  logger.info("scheduler", "Scheduler started.");
 }
 
 /**
@@ -155,7 +151,7 @@ function stopScheduler(): void {
   }
   isRunning = false;
   nextRotationTime = null;
-  console.log("[scheduler] Scheduler stopped.");
+  logger.info("scheduler", "Scheduler stopped.");
 }
 
 /**
@@ -173,12 +169,13 @@ function getNextRotationTime(): Date | null {
  * a new one, then updates the next rotation time.
  */
 async function rotateRound(): Promise<void> {
-  console.log("[scheduler] Rotating round...");
+  logger.info("scheduler", "Rotating round...");
   const newRound = await roundService.createAndActivateRound();
   nextRotationTime = computeNextRotation(newRound.startedAt!);
-  console.log(
-    `[scheduler] Round rotated. New active round: ${newRound.id}. Next rotation at ${nextRotationTime.toISOString()}`
-  );
+  logger.info("scheduler", `Round rotated. New active round: ${newRound.id}`, {
+    roundId: newRound.id,
+    nextRotation: nextRotationTime.toISOString(),
+  });
 }
 
 export const scheduler = {

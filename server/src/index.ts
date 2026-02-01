@@ -5,21 +5,20 @@ dotenv.config();
 
 // Import env config (validates required vars immediately)
 import { env } from "./config/env";
+import { logger } from "./config/logger";
 import { app } from "./app";
 import { testConnection, closePool } from "./config/database";
 import { scheduler } from "./services/scheduler";
 
 async function start(): Promise<void> {
   // Test database connectivity before starting the server
-  console.log("[server] Testing database connection...");
+  logger.info("server", "Testing database connection...");
   const dbConnected = await testConnection();
 
   if (dbConnected) {
-    console.log("[server] Database connection successful.");
+    logger.info("server", "Database connection successful.");
   } else {
-    console.warn(
-      "[server] WARNING: Database connection failed. Server will start but DB features will be unavailable."
-    );
+    logger.warn("server", "Database connection failed. Server will start but DB features will be unavailable.");
   }
 
   // Start the round scheduler (skip in test environment)
@@ -28,29 +27,26 @@ async function start(): Promise<void> {
       await scheduler.startScheduler();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[server] Failed to start scheduler:", message);
-      console.warn(
-        "[server] Server will continue without automatic round rotation."
-      );
+      logger.error("server", "Failed to start scheduler", { error: message });
+      logger.warn("server", "Server will continue without automatic round rotation.");
     }
   }
 
   const server = app.listen(env.PORT, () => {
-    console.log(
-      `[server] Server is running on http://localhost:${env.PORT} (${env.NODE_ENV})`
-    );
-    console.log(
-      `[server] Health check: http://localhost:${env.PORT}/api/health`
-    );
+    logger.info("server", `Server is running on http://localhost:${env.PORT}`, {
+      port: env.PORT,
+      nodeEnv: env.NODE_ENV,
+    });
+    logger.info("server", `Health check: http://localhost:${env.PORT}/api/health`);
   });
 
   // Graceful shutdown
   const shutdown = async (signal: string) => {
-    console.log(`\n[server] ${signal} received. Shutting down gracefully...`);
+    logger.info("server", `${signal} received. Shutting down gracefully...`);
     scheduler.stopScheduler();
     server.close(async () => {
       await closePool();
-      console.log("[server] Server shut down.");
+      logger.info("server", "Server shut down.");
       process.exit(0);
     });
   };
@@ -60,6 +56,6 @@ async function start(): Promise<void> {
 }
 
 start().catch((err) => {
-  console.error("[server] Failed to start:", err.message || err);
+  logger.error("server", "Failed to start", { error: err.message || String(err) });
   process.exit(1);
 });

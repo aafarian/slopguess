@@ -10,6 +10,7 @@
  */
 
 import { pool } from "../config/database";
+import { logger } from "../config/logger";
 import type { WordBankRow, WordBankEntry } from "../models/wordBank";
 import { toWordBankEntry } from "../models/wordBank";
 import { promptVarietyService } from "./promptVarietyService";
@@ -252,7 +253,7 @@ async function getRandomWords(
     const result = await pool.query<WordBankRow>(query, [count * 3, minutesCutoff]);
 
     if (result.rows.length === 0) {
-      console.warn("[wordBankService] No words found in word bank. Has seed been run?");
+      logger.warn("wordBankService", "No words found in word bank. Has seed been run?");
       return [];
     }
 
@@ -283,16 +284,16 @@ async function getRandomWords(
     }
 
     if (selected.length < count) {
-      console.warn(
-        `[wordBankService] Requested ${count} words but only ${selected.length} available. ` +
-          `Consider adding more words to the bank.`
-      );
+      logger.warn("wordBankService", `Requested ${count} words but only ${selected.length} available. Consider adding more words to the bank.`, {
+        requested: count,
+        available: selected.length,
+      });
     }
 
     return selected.map(toWordBankEntry);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[wordBankService] getRandomWords failed:", message);
+    logger.error("wordBankService", "getRandomWords failed", { error: message });
     throw err;
   }
 }
@@ -452,7 +453,7 @@ async function markWordsUsed(wordIds: number[]): Promise<void> {
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[wordBankService] markWordsUsed failed:", message);
+    logger.error("wordBankService", "markWordsUsed failed", { error: message });
     throw err;
   }
 }
@@ -641,9 +642,7 @@ async function getBalancedWordsWithVarietyCheck(
     lastSelection = words;
 
     if (words.length === 0) {
-      console.warn(
-        "[wordBankService] No words returned from balanced selection, skipping variety check"
-      );
+      logger.warn("wordBankService", "No words returned from balanced selection, skipping variety check");
       return words;
     }
 
@@ -652,26 +651,27 @@ async function getBalancedWordsWithVarietyCheck(
 
     if (validation.valid) {
       if (attempt > 1) {
-        console.log(
-          `[wordBankService] Variety check passed on attempt ${attempt} ` +
-            `(overlap ratio: ${validation.highestOverlapRatio.toFixed(2)})`
-        );
+        logger.info("wordBankService", `Variety check passed on attempt ${attempt}`, {
+          attempt,
+          overlapRatio: validation.highestOverlapRatio,
+        });
       }
       return words;
     }
 
-    console.warn(
-      `[wordBankService] Variety check failed on attempt ${attempt}/${MAX_VARIETY_RETRIES}: ` +
-        `overlap ratio ${validation.highestOverlapRatio.toFixed(2)} with round ` +
-        `${validation.mostOverlappingRoundId} (${validation.overlappingWordCount} words). Retrying...`
-    );
+    logger.warn("wordBankService", `Variety check failed on attempt ${attempt}/${MAX_VARIETY_RETRIES}. Retrying...`, {
+      attempt,
+      maxRetries: MAX_VARIETY_RETRIES,
+      overlapRatio: validation.highestOverlapRatio,
+      mostOverlappingRoundId: validation.mostOverlappingRoundId,
+      overlappingWordCount: validation.overlappingWordCount,
+    });
   }
 
   // All retries exhausted -- use the last selection to avoid blocking round creation
-  console.warn(
-    `[wordBankService] All ${MAX_VARIETY_RETRIES} variety check attempts exhausted. ` +
-      `Proceeding with last selection to avoid blocking round creation.`
-  );
+  logger.warn("wordBankService", `All ${MAX_VARIETY_RETRIES} variety check attempts exhausted. Proceeding with last selection.`, {
+    maxRetries: MAX_VARIETY_RETRIES,
+  });
   return lastSelection;
 }
 

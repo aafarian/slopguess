@@ -11,6 +11,7 @@
  */
 
 import { Router, Request, Response } from "express";
+import { logger } from "../config/logger";
 import { scheduler } from "../services/scheduler";
 import { promptVarietyService } from "../services/promptVarietyService";
 
@@ -33,7 +34,7 @@ adminRouter.post("/rounds/rotate", async (_req: Request, res: Response) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[admin] Manual round rotation failed:", message);
+    logger.error("admin", "Manual round rotation failed", { error: message });
     res.status(500).json({
       error: {
         message: "Failed to rotate round",

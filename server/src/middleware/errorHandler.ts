@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { logger } from "../config/logger";
 
 interface AppError extends Error {
   statusCode?: number;
@@ -7,24 +8,35 @@ interface AppError extends Error {
 
 function errorHandler(
   err: AppError,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void {
   const statusCode = err.statusCode || 500;
   const message = statusCode === 500 ? "Internal server error" : err.message;
+  const requestId = (req as unknown as Record<string, unknown>).requestId as string | undefined;
 
-  // Log the error (always log 500s, conditionally log others)
+  // Log the error with request context
   if (statusCode === 500) {
-    console.error("[server] Unhandled error:", err);
+    logger.error("server", "Unhandled error", {
+      requestId,
+      statusCode,
+      error: err.message,
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    });
   } else {
-    console.warn(`[server] ${statusCode} - ${err.message}`);
+    logger.warn("server", `${statusCode} - ${err.message}`, {
+      requestId,
+      statusCode,
+      code: err.code,
+    });
   }
 
   res.status(statusCode).json({
     error: {
       message,
       code: err.code || "INTERNAL_ERROR",
+      requestId,
       ...(process.env.NODE_ENV === "development" && {
         stack: err.stack,
       }),

@@ -21,6 +21,7 @@
 
 import { pool } from "../config/database";
 import { env } from "../config/env";
+import { logger } from "../config/logger";
 import type { RoundRow } from "../models/round";
 import type { GuessRow, Guess, PublicGuess } from "../models/guess";
 import { toGuess } from "../models/guess";
@@ -120,9 +121,7 @@ async function scoreGuess(
       [toPostgresFloatArray(promptEmbedding), roundId]
     );
 
-    console.log(
-      `[scoringService] Computed and stored missing prompt embedding for round ${roundId}`
-    );
+    logger.info("scoringService", `Computed and stored missing prompt embedding for round ${roundId}`, { roundId });
   }
 
   // 3. Compute the guess embedding
@@ -213,10 +212,12 @@ async function scoreAndSaveGuess(
 
   const savedGuess = toGuess(insertResult.rows[0]);
 
-  console.log(
-    `[scoringService] Scored guess for round ${roundId} by user ${userId}: ` +
-      `score=${score}, similarity=${embeddingSimilarity.toFixed(4)}`
-  );
+  logger.info("scoringService", `Scored guess for round ${roundId}`, {
+    roundId,
+    userId,
+    score,
+    similarity: embeddingSimilarity,
+  });
 
   return savedGuess;
 }

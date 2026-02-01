@@ -6,6 +6,7 @@
 
 import { Pool } from "pg";
 import { env } from "./env";
+import { logger } from "./logger";
 
 /**
  * PostgreSQL connection pool with sensible defaults.
@@ -22,7 +23,7 @@ const pool = new Pool({
 
 // Log pool-level errors (e.g., unexpected disconnects)
 pool.on("error", (err) => {
-  console.error("[database] Unexpected error on idle client:", err.message);
+  logger.error("database", "Unexpected error on idle client", { error: err.message });
 });
 
 /**
@@ -40,7 +41,7 @@ async function testConnection(): Promise<boolean> {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[database] Connection test failed:", message);
+    logger.error("database", "Connection test failed", { error: message });
     return false;
   }
 }
@@ -50,9 +51,9 @@ async function testConnection(): Promise<boolean> {
  * Call this during server shutdown.
  */
 async function closePool(): Promise<void> {
-  console.log("[database] Closing connection pool...");
+  logger.info("database", "Closing connection pool...");
   await pool.end();
-  console.log("[database] Connection pool closed.");
+  logger.info("database", "Connection pool closed.");
 }
 
 export { pool, testConnection, closePool };

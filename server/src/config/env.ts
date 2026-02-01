@@ -31,6 +31,8 @@ interface EnvConfig {
   ROUND_DURATION_HOURS: number;
   /** How often the scheduler checks for round expiry, in minutes (default: 5) */
   ROUND_CHECK_INTERVAL_MINUTES: number;
+  /** Minimum log level: debug, info, warn, error (default: info) */
+  LOG_LEVEL: string;
 }
 
 /**
@@ -90,6 +92,7 @@ function loadEnvConfig(): EnvConfig {
     ROUND_CHECK_INTERVAL_MINUTES: parseFloat(
       process.env.ROUND_CHECK_INTERVAL_MINUTES || "5"
     ),
+    LOG_LEVEL: (process.env.LOG_LEVEL || "info").toLowerCase(),
   };
 }
 
