@@ -6,6 +6,7 @@ import { router as apiRouter } from "./routes/index";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
 import { generalLimiter } from "./middleware/rateLimiter";
+import { sanitizeBody } from "./middleware/sanitize";
 import { env } from "./config/env";
 
 const app = express();
@@ -24,6 +25,9 @@ app.use(
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Input sanitization (trim, strip HTML, enforce field length limits)
+app.use(sanitizeBody);
 
 // Request logging
 app.use(requestLogger);
