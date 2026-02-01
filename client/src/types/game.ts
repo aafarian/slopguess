@@ -23,6 +23,8 @@ export interface Round {
   endedAt: string | null;
   guessCount: number;
   prompt?: string;
+  difficulty?: string;
+  wordCount?: number;
 }
 
 /** Completed round — extends Round with the revealed prompt. */
@@ -199,4 +201,51 @@ export interface Pagination {
   limit: number;
   total: number;
   totalPages: number;
+}
+
+// ---------------------------------------------------------------------------
+// Streaks
+// ---------------------------------------------------------------------------
+
+/** User streak data as returned by the API. */
+export interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastPlayedDate: string | null;
+}
+
+/** Response from GET /api/users/me/streaks. */
+export interface StreakResponse {
+  streak: StreakData;
+}
+
+// ---------------------------------------------------------------------------
+// Weekly stats
+// ---------------------------------------------------------------------------
+
+/** Weekly statistics for the current user. */
+export interface WeeklyStats {
+  gamesPlayed: number;
+  averageScore: number;
+  bestScore: number;
+}
+
+/** Response from GET /api/users/me/weekly-stats. */
+export interface WeeklyStatsResponse {
+  weeklyStats: WeeklyStats;
+}
+
+// ---------------------------------------------------------------------------
+// Share data
+// ---------------------------------------------------------------------------
+
+/** Data for sharing a user's round result. */
+export interface ShareData {
+  username: string;
+  score: number;
+  rank: number;
+  totalGuesses: number;
+  roundImageUrl: string | null;
+  prompt: string | null;
+  roundId: string;
 }
