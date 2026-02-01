@@ -3,7 +3,7 @@
  *
  * Three tiers:
  *   - generalLimiter  — configurable via RATE_LIMIT_MAX / RATE_LIMIT_WINDOW_MS
- *   - authLimiter     — 20 requests per window  (applied to /api/auth)
+ *   - authLimiter     — 5 requests per 1 minute  (applied to /api/auth)
  *   - guessLimiter    — 10 requests per 1 minute (applied to guess endpoint)
  *
  * The general limiter window and max are configurable via environment variables
@@ -18,6 +18,11 @@
 import rateLimit from "express-rate-limit";
 import { env } from "../config/env";
 
+const isTest = process.env.NODE_ENV === "test";
+
+/** In test mode, set limits high enough to avoid interfering with test suites. */
+const testMax = 10000;
+
 /**
  * General API rate limiter.
  * Applied globally to all /api routes.
@@ -26,7 +31,7 @@ import { env } from "../config/env";
  */
 export const generalLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
-  max: env.RATE_LIMIT_MAX,
+  max: isTest ? testMax : env.RATE_LIMIT_MAX,
   standardHeaders: true, // Return rate limit info in RateLimit-* headers
   legacyHeaders: false, // Disable X-RateLimit-* headers
   message: {
@@ -40,11 +45,11 @@ export const generalLimiter = rateLimit({
 /**
  * Auth route rate limiter (stricter).
  * Applied to /api/auth routes (login, register).
- * 20 requests per window per IP.
+ * 5 requests per 1 minute per IP.
  */
 export const authLimiter = rateLimit({
-  windowMs: env.RATE_LIMIT_WINDOW_MS,
-  max: 20,
+  windowMs: 1 * 60 * 1000, // 1 minute (always fixed)
+  max: isTest ? testMax : 5,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -62,7 +67,7 @@ export const authLimiter = rateLimit({
  */
 export const guessLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute (always fixed)
-  max: 10,
+  max: isTest ? testMax : 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
