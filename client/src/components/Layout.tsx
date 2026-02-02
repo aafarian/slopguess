@@ -4,6 +4,8 @@
  * Shows:
  *  - App title (links to home / game)
  *  - Nav links: Play, History, Profile (auth only)
+ *  - Social nav links: Friends, Challenges, Messages (auth only)
+ *  - NotificationBell (auth only)
  *  - Login / Register links when logged out
  *  - Username + Logout button when logged in
  *
@@ -13,6 +15,7 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import NotificationBell from './NotificationBell';
 
 export default function Layout() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -78,12 +81,46 @@ export default function Layout() {
             >
               Profile
             </NavLink>
+
+            {/* Social feature links (auth only) */}
+            {isAuthenticated && (
+              <>
+                <NavLink
+                  to="/friends"
+                  className={({ isActive }) =>
+                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
+                  }
+                  onClick={closeMobileMenu}
+                >
+                  Friends
+                </NavLink>
+                <NavLink
+                  to="/challenges"
+                  className={({ isActive }) =>
+                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
+                  }
+                  onClick={closeMobileMenu}
+                >
+                  Challenges
+                </NavLink>
+                <NavLink
+                  to="/messages"
+                  className={({ isActive }) =>
+                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
+                  }
+                  onClick={closeMobileMenu}
+                >
+                  Messages
+                </NavLink>
+              </>
+            )}
           </nav>
 
           {/* Auth section */}
           <div className="navbar-auth">
             {isAuthenticated ? (
               <>
+                <NotificationBell />
                 <span className="navbar-user">
                   {user?.username}
                 </span>
