@@ -303,32 +303,55 @@ export async function getPendingRequests(
 
 /**
  * Search users by username prefix.
- * Excludes the current user and any users who already have a friendship
- * (in any status) with the current user.
+ * Excludes the current user. Includes friendship status so the UI can
+ * show "Pending", "Friends", etc. instead of hiding matched users.
  */
 export async function searchUsers(
   query: string,
   currentUserId: string,
-): Promise<Array<{ id: string; username: string }>> {
-  const result = await pool.query<{ id: string; username: string }>(
-    `SELECT u.id, u.username
+): Promise<Array<{ id: string; username: string; friendshipStatus: string | null }>> {
+  const result = await pool.query<{ id: string; username: string; friendship_status: string | null }>(
+    `SELECT u.id, u.username, f.status AS friendship_status
      FROM users u
+     LEFT JOIN friendships f
+       ON ((f.sender_id = $2 AND f.receiver_id = u.id)
+        OR (f.sender_id = u.id AND f.receiver_id = $2))
      WHERE u.username ILIKE $1
        AND u.id != $2
-       AND u.id NOT IN (
-         SELECT CASE
-           WHEN f.sender_id = $2 THEN f.receiver_id
-           ELSE f.sender_id
-         END
-         FROM friendships f
-         WHERE f.sender_id = $2 OR f.receiver_id = $2
-       )
      ORDER BY u.username ASC
      LIMIT 20`,
     [query + "%", currentUserId],
   );
 
-  return result.rows;
+  return result.rows.map((row) => ({
+    id: row.id,
+    username: row.username,
+    friendshipStatus: row.friendship_status,
+  }));
+}
+
+/**
+ * Get pending friend requests sent by the user (outgoing).
+ */
+export async function getSentRequests(
+  userId: string,
+): Promise<PublicFriendship[]> {
+  const result = await pool.query<FriendshipRow & { friend_id: string; friend_username: string }>(
+    `SELECT
+       f.id, f.sender_id, f.receiver_id, f.status, f.created_at, f.updated_at,
+       u.id AS friend_id,
+       u.username AS friend_username
+     FROM friendships f
+     JOIN users u ON u.id = f.receiver_id
+     WHERE f.sender_id = $1
+       AND f.status = 'pending'
+     ORDER BY f.created_at DESC`,
+    [userId],
+  );
+
+  return result.rows.map((row) =>
+    toPublicFriendship(row, row.friend_id, row.friend_username),
+  );
 }
 
 /**

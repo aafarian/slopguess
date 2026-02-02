@@ -17,6 +17,7 @@ import { useAuth } from '../hooks/useAuth';
 import {
   getFriends,
   getPendingRequests,
+  getSentRequests,
   searchUsers,
   sendFriendRequest,
   acceptFriendRequest,
@@ -44,8 +45,9 @@ export default function FriendsPage() {
   const [friendsLoading, setFriendsLoading] = useState(true);
   const [friendsError, setFriendsError] = useState('');
 
-  // Pending requests state
+  // Pending requests state (incoming + sent)
   const [pending, setPending] = useState<Friendship[]>([]);
+  const [sent, setSent] = useState<Friendship[]>([]);
   const [pendingLoading, setPendingLoading] = useState(true);
   const [pendingError, setPendingError] = useState('');
 
@@ -83,8 +85,12 @@ export default function FriendsPage() {
     setPendingLoading(true);
     setPendingError('');
     try {
-      const res = await getPendingRequests();
-      setPending(res.requests);
+      const [incomingRes, sentRes] = await Promise.all([
+        getPendingRequests(),
+        getSentRequests(),
+      ]);
+      setPending(incomingRes.requests);
+      setSent(sentRes.requests);
     } catch {
       setPendingError('Failed to load pending requests.');
     } finally {
@@ -268,7 +274,7 @@ export default function FriendsPage() {
           className={`friends-tab ${activeTab === 'pending' ? 'friends-tab--active' : ''}`}
           onClick={() => setActiveTab('pending')}
         >
-          Pending{pending.length > 0 && ` (${pending.length})`}
+          Pending{(pending.length + sent.length) > 0 && ` (${pending.length + sent.length})`}
         </button>
         <button
           type="button"
@@ -352,46 +358,74 @@ export default function FriendsPage() {
             <ErrorMessage message={pendingError} onRetry={fetchPending} />
           )}
 
-          {!pendingLoading && !pendingError && pending.length === 0 && (
+          {!pendingLoading && !pendingError && pending.length === 0 && sent.length === 0 && (
             <EmptyState
               title="No pending requests"
-              message="You don't have any incoming friend requests right now."
+              message="You don't have any pending friend requests right now."
             />
           )}
 
           {!pendingLoading && !pendingError && pending.length > 0 && (
-            <ul className="friends-list">
-              {pending.map((req) => (
-                <li key={req.id} className="friends-list-item">
-                  <div className="friends-list-item-info">
-                    <span className="friends-list-item-username">
-                      {req.friendUsername}
-                    </span>
-                    <span className="friends-list-item-meta">
-                      wants to be your friend
-                    </span>
-                  </div>
-                  <div className="friends-list-item-actions">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-primary"
-                      disabled={mutatingIds.has(req.id)}
-                      onClick={() => handleAccept(req.id)}
-                    >
-                      {mutatingIds.has(req.id) ? 'Accepting...' : 'Accept'}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline friends-btn-danger"
-                      disabled={mutatingIds.has(req.id)}
-                      onClick={() => handleDecline(req.id)}
-                    >
-                      Decline
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <>
+              <h3 className="friends-section-label">Incoming</h3>
+              <ul className="friends-list">
+                {pending.map((req) => (
+                  <li key={req.id} className="friends-list-item">
+                    <div className="friends-list-item-info">
+                      <span className="friends-list-item-username">
+                        {req.friendUsername}
+                      </span>
+                      <span className="friends-list-item-meta">
+                        wants to be your friend
+                      </span>
+                    </div>
+                    <div className="friends-list-item-actions">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-primary"
+                        disabled={mutatingIds.has(req.id)}
+                        onClick={() => handleAccept(req.id)}
+                      >
+                        {mutatingIds.has(req.id) ? 'Accepting...' : 'Accept'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline friends-btn-danger"
+                        disabled={mutatingIds.has(req.id)}
+                        onClick={() => handleDecline(req.id)}
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {!pendingLoading && !pendingError && sent.length > 0 && (
+            <>
+              <h3 className="friends-section-label">Sent</h3>
+              <ul className="friends-list">
+                {sent.map((req) => (
+                  <li key={req.id} className="friends-list-item">
+                    <div className="friends-list-item-info">
+                      <span className="friends-list-item-username">
+                        {req.friendUsername}
+                      </span>
+                      <span className="friends-list-item-meta">
+                        request sent
+                      </span>
+                    </div>
+                    <div className="friends-list-item-actions">
+                      <span className="friends-status-badge friends-status-badge--pending">
+                        Pending
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </section>
       )}
@@ -438,14 +472,36 @@ export default function FriendsPage() {
                     </span>
                   </div>
                   <div className="friends-list-item-actions">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-primary"
-                      disabled={mutatingIds.has(user.id)}
-                      onClick={() => handleAddFriend(user.id)}
-                    >
-                      {mutatingIds.has(user.id) ? 'Adding...' : 'Add Friend'}
-                    </button>
+                    {user.friendshipStatus === 'accepted' && (
+                      <span className="friends-status-badge friends-status-badge--accepted">
+                        Friends
+                      </span>
+                    )}
+                    {user.friendshipStatus === 'pending' && (
+                      <span className="friends-status-badge friends-status-badge--pending">
+                        Pending
+                      </span>
+                    )}
+                    {user.friendshipStatus === 'declined' && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-primary"
+                        disabled={mutatingIds.has(user.id)}
+                        onClick={() => handleAddFriend(user.id)}
+                      >
+                        {mutatingIds.has(user.id) ? 'Adding...' : 'Add Friend'}
+                      </button>
+                    )}
+                    {!user.friendshipStatus && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-primary"
+                        disabled={mutatingIds.has(user.id)}
+                        onClick={() => handleAddFriend(user.id)}
+                      >
+                        {mutatingIds.has(user.id) ? 'Adding...' : 'Add Friend'}
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}

@@ -295,6 +295,25 @@ friendsRouter.get(
 );
 
 // ---------------------------------------------------------------------------
+// GET /sent — List pending sent requests (outgoing)
+// ---------------------------------------------------------------------------
+
+friendsRouter.get(
+  "/sent",
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+
+      const requests = await friendshipService.getSentRequests(userId);
+
+      res.status(200).json({ requests });
+    } catch (err: unknown) {
+      next(err);
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
 // GET /search?q=query — Search users by username prefix
 // ---------------------------------------------------------------------------
 

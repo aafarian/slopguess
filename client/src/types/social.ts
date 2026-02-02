@@ -110,6 +110,7 @@ export interface ConversationPreview {
 export interface UserSearchResult {
   id: string;
   username: string;
+  friendshipStatus: string | null;
 }
 
 // ---------------------------------------------------------------------------

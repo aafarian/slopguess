@@ -105,6 +105,16 @@ export async function getPendingRequests(): Promise<PendingRequestsResponse> {
 }
 
 /**
+ * Get pending friend requests sent by the current user (outgoing).
+ * Requires authentication.
+ *
+ * GET /api/friends/sent
+ */
+export async function getSentRequests(): Promise<PendingRequestsResponse> {
+  return request<PendingRequestsResponse>('/api/friends/sent');
+}
+
+/**
  * Search users by username prefix.
  * Requires authentication.
  *
