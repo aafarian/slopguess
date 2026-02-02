@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {
   getFriends,
@@ -36,9 +36,11 @@ const DEBOUNCE_MS = 300;
 export default function FriendsPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  // Active tab
-  const [activeTab, setActiveTab] = useState<Tab>('friends');
+  // Active tab — default from ?tab= query param
+  const initialTab = (searchParams.get('tab') as Tab) || 'friends';
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
   // Friends list state
   const [friends, setFriends] = useState<Friendship[]>([]);
@@ -317,7 +319,7 @@ export default function FriendsPage() {
                       type="button"
                       className="btn btn-sm btn-primary"
                       onClick={() =>
-                        navigate(`/challenges/create?friendId=${friend.friendId}`)
+                        navigate(`/challenges?friendId=${friend.friendId}`)
                       }
                     >
                       Challenge

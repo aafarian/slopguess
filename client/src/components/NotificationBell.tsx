@@ -67,6 +67,7 @@ function notificationRoute(notification: Notification): string {
 
   switch (notification.type) {
     case 'friend_request':
+      return '/friends?tab=pending';
     case 'friend_accepted':
       return '/friends';
     case 'challenge_received':
