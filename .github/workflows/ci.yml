@@ -46,12 +46,10 @@ jobs:
             ${{ runner.os }}-client-node-modules-
 
       - name: Install server dependencies
-        if: steps.cache-server.outputs.cache-hit != 'true'
         working-directory: server
         run: npm ci
 
       - name: Install client dependencies
-        if: steps.cache-client.outputs.cache-hit != 'true'
         working-directory: client
         run: npm ci
 
