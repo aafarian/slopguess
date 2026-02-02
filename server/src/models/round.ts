@@ -51,6 +51,7 @@ export interface PublicRound {
   imageUrl: string | null;
   status: RoundStatus;
   difficulty: string;
+  wordCount: number | null;
   startedAt: string | null;
   endedAt: string | null;
 }
@@ -89,6 +90,7 @@ export function toPublicRound(round: Round): PublicRound {
     imageUrl: round.imageUrl,
     status: round.status,
     difficulty: round.difficulty,
+    wordCount: round.wordCount,
     startedAt: round.startedAt ? round.startedAt.toISOString() : null,
     endedAt: round.endedAt ? round.endedAt.toISOString() : null,
   };

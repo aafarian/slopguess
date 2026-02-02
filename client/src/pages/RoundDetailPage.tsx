@@ -135,9 +135,15 @@ export default function RoundDetailPage() {
         <div className="round-detail-body">
           <StatusBadge status="active" />
 
-          <p className="round-detail-guess-count">
-            {round.guessCount} {round.guessCount === 1 ? 'guess' : 'guesses'} so far
-          </p>
+          {/* Round info */}
+          <div className="round-detail-stats">
+            <div className="round-detail-stats-grid">
+              <StatCard label="Difficulty" value={capitalize(round.difficulty ?? 'normal')} />
+              <StatCard label="Words to Guess" value={round.wordCount ?? '--'} />
+              <StatCard label="Guesses So Far" value={round.guessCount ?? 0} />
+              <StatCard label="Started" value={timeAgo(round.startedAt)} />
+            </div>
+          </div>
 
           {userGuess ? (
             <div className="round-detail-user-result">
@@ -322,7 +328,15 @@ function RoundImage({ imageUrl }: { imageUrl: string | null }) {
         src={imageUrl}
         alt="AI-generated round image"
         className="round-detail-image"
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+          e.currentTarget.parentElement?.querySelector('.round-detail-image-placeholder')
+            ?.removeAttribute('style');
+        }}
       />
+      <div className="round-detail-image-placeholder" style={{ display: 'none' }}>
+        <span>Image expired</span>
+      </div>
     </div>
   );
 }
@@ -337,7 +351,7 @@ function StatusBadge({ status }: { status: 'active' | 'completed' }) {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="round-detail-stat-card">
       <span className="round-detail-stat-value">{value}</span>
@@ -359,6 +373,22 @@ function BackToHistory() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return '--';
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 function scoreColorClass(score: number | null): string {
   if (score === null) return '';

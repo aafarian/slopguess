@@ -111,6 +111,14 @@ export default function HistoryPage() {
                   alt={round.prompt}
                   className="history-card-image"
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'history-card-image-placeholder';
+                    placeholder.textContent = 'Image expired';
+                    target.parentElement?.appendChild(placeholder);
+                  }}
                 />
               ) : (
                 <div className="history-card-image-placeholder">No Image</div>

@@ -325,6 +325,13 @@ roundsRouter.get(
           ? toCompletedRound(round)
           : toPublicRound(round);
 
+      // Add guess count
+      const countResult = await pool.query<{ count: string }>(
+        `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1`,
+        [roundId]
+      );
+      const guessCount = parseInt(countResult.rows[0].count, 10);
+
       // If user is authenticated, include their guess info
       let userGuess: { guessText: string; score: number | null; submittedAt: string } | null = null;
 
@@ -348,7 +355,7 @@ roundsRouter.get(
       }
 
       res.status(200).json({
-        round: roundData,
+        round: { ...roundData, guessCount },
         ...(req.user ? { userGuess } : {}),
       });
     } catch (err: unknown) {
