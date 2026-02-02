@@ -45,6 +45,8 @@ export interface ActiveRoundResponse {
   userGuessText?: string | null;
   /** Dev-only: element scores for the user's guess (present when NODE_ENV !== 'production'). */
   elementScores?: ElementScoreBreakdown | null;
+  /** ISO timestamp of when the next round rotation is scheduled, if known. */
+  nextRotationAt?: string | null;
 }
 
 // ---------------------------------------------------------------------------

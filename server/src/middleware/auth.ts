@@ -84,4 +84,28 @@ function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   next();
 }
 
-export { requireAuth, optionalAuth };
+/**
+ * Middleware that requires a valid admin API key via the X-Admin-Key header.
+ * If ADMIN_API_KEY is not configured, all admin requests are rejected.
+ */
+function requireAdminKey(req: Request, res: Response, next: NextFunction): void {
+  const key = req.headers["x-admin-key"] as string | undefined;
+
+  if (!env.ADMIN_API_KEY) {
+    res.status(403).json({
+      error: { message: "Admin access is not configured", code: "ADMIN_NOT_CONFIGURED" },
+    });
+    return;
+  }
+
+  if (!key || key !== env.ADMIN_API_KEY) {
+    res.status(401).json({
+      error: { message: "Invalid admin key", code: "INVALID_ADMIN_KEY" },
+    });
+    return;
+  }
+
+  next();
+}
+
+export { requireAuth, optionalAuth, requireAdminKey };

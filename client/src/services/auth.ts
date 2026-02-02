@@ -24,13 +24,13 @@ export async function register(
 }
 
 /**
- * Log in with existing credentials.
+ * Log in with existing credentials (email or username).
  * Stores the JWT on success and returns the user.
  */
-export async function login(email: string, password: string): Promise<User> {
+export async function login(login: string, password: string): Promise<User> {
   const data = await request<AuthResponse>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ login, password }),
     skipAuth: true,
   });
   setToken(data.token);

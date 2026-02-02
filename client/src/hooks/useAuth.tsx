@@ -58,8 +58,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   /** Register a new account. Throws on failure. */
   register: (username: string, email: string, password: string) => Promise<void>;
-  /** Log in. Throws on failure. */
-  login: (email: string, password: string) => Promise<void>;
+  /** Log in with email or username. Throws on failure. */
+  login: (login: string, password: string) => Promise<void>;
   /** Log out (synchronous). */
   logout: () => void;
 }
@@ -125,8 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const login = useCallback(async (email: string, password: string) => {
-    const loggedInUser = await authService.login(email, password);
+  const login = useCallback(async (loginId: string, password: string) => {
+    const loggedInUser = await authService.login(loginId, password);
     setUser(loggedInUser);
   }, []);
 

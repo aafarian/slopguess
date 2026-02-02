@@ -57,18 +57,17 @@ const NOUN_CATEGORIES = new Set([
   "nature",
 ]);
 
-/** Categories that provide tangible modifiers (materials, colors, body parts) */
+/** Categories that provide tangible modifiers (materials, colors, body parts, clothing) */
 const EXTRA_CATEGORIES = new Set([
   "colors",
   "materials",
   "body parts",
-  "abstract concepts",
+  "clothing",
 ]);
 
-/** Categories that set atmosphere / era */
+/** Categories that set atmosphere / mood */
 const ATMOSPHERE_CATEGORIES = new Set([
   "weather",
-  "time periods",
 ]);
 
 /** Return "an" if the next word starts with a vowel sound, otherwise "a". */
@@ -105,11 +104,6 @@ function inSetting(word: string): string {
 
 /** Wrap an atmosphere word with appropriate preposition + article. */
 function duringAtmosphere(word: string): string {
-  const lower = word.toLowerCase();
-  // Time periods sound better with "in" or "set in"
-  if (ATMOSPHERE_CATEGORIES.has("time periods") && /^(medieval|victorian|jurassic|neolithic|futuristic|cyberpunk|post-apocalyptic|retro|bronze age|stone age|ice age|wild west|roaring twenties|renaissance|prohibition|ancient|steampunk|disco|space age|[0-9])/i.test(lower)) {
-    return `set in ${withArticle(word)}`;
-  }
   return `during ${withArticle(word)}`;
 }
 

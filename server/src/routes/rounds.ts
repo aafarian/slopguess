@@ -20,6 +20,7 @@ import { leaderboardService } from "../services/leaderboardService";
 import { streakService } from "../services/streakService";
 import { logger } from "../config/logger";
 import { containsBlockedContent } from "../services/contentFilter";
+import { scheduler } from "../services/scheduler";
 import { toPublicRound, toCompletedRound } from "../models/round";
 import type { GuessRow } from "../models/guess";
 import type { ElementScoreBreakdown } from "../models/guess";
@@ -97,6 +98,7 @@ roundsRouter.get(
           ...publicRound,
           guessCount,
         },
+        nextRotationAt: scheduler.getNextRotationTime()?.toISOString() ?? null,
         ...(req.user ? {
           hasGuessed,
           userScore,

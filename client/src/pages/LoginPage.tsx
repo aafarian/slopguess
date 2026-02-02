@@ -1,5 +1,5 @@
 /**
- * Login page — email + password form.
+ * Login page — email or username + password form.
  * Redirects to home on success.
  */
 
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -20,10 +20,8 @@ export default function LoginPage() {
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!email.trim()) {
-      errs.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errs.email = 'Invalid email format';
+    if (!loginId.trim()) {
+      errs.login = 'Email or username is required';
     }
     if (!password) {
       errs.password = 'Password is required';
@@ -39,7 +37,7 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      await login(email, password);
+      await login(loginId, password);
       navigate('/');
     } catch (err) {
       if (err instanceof ApiRequestError) {
@@ -69,18 +67,18 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="login">Email or Username</label>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-              className={fieldErrors.email ? 'input-error' : ''}
+              id="login"
+              type="text"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
+              placeholder="you@example.com or username"
+              autoComplete="username"
+              className={fieldErrors.login ? 'input-error' : ''}
             />
-            {fieldErrors.email && (
-              <span className="field-error">{fieldErrors.email}</span>
+            {fieldErrors.login && (
+              <span className="field-error">{fieldErrors.login}</span>
             )}
           </div>
 

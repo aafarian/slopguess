@@ -1,8 +1,8 @@
 /**
  * Admin routes.
  *
- * Development and admin-only endpoints for managing the game.
- * No authentication is required for now (future: admin-only access).
+ * Protected by a static API key (ADMIN_API_KEY env var).
+ * Requests must include an X-Admin-Key header with the correct key.
  *
  * Endpoints:
  *   POST /api/admin/rounds/rotate            -- Manually trigger a round rotation
@@ -17,8 +17,12 @@ import { logger } from "../config/logger";
 import { scheduler } from "../services/scheduler";
 import { promptVarietyService } from "../services/promptVarietyService";
 import { monitoringService } from "../services/monitoringService";
+import { requireAdminKey } from "../middleware/auth";
 
 const adminRouter = Router();
+
+// All admin routes require a valid admin API key
+adminRouter.use(requireAdminKey);
 
 /**
  * POST /api/admin/rounds/rotate

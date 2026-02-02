@@ -28,6 +28,7 @@ import ScoreDisplay from '../components/ScoreDisplay';
 import GuessForm from '../components/GuessForm';
 import ElementBreakdown from '../components/ElementBreakdown';
 import ShareButton from '../components/ShareButton';
+import CountdownTimer from '../components/CountdownTimer';
 
 /** Duration of the "Analyzing your guess..." transition in ms. */
 const ANALYZING_DELAY_MS = 1200;
@@ -51,6 +52,7 @@ export default function GamePage() {
   const [roundEnded, setRoundEnded] = useState(false);
   const [savedGuessText, setSavedGuessText] = useState<string | null>(null);
   const [savedElementScores, setSavedElementScores] = useState<ElementScoreBreakdown | null>(null);
+  const [nextRotationAt, setNextRotationAt] = useState<string | null>(null);
 
   // Dev toolbar state
   const [rotating, setRotating] = useState(false);
@@ -66,6 +68,7 @@ export default function GamePage() {
       setUserScore(data.userScore ?? null);
       setSavedGuessText(data.userGuessText ?? null);
       setSavedElementScores(data.elementScores ?? null);
+      setNextRotationAt(data.nextRotationAt ?? null);
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {
         setRound(null);
@@ -118,6 +121,7 @@ export default function GamePage() {
       setUserScore(null);
       setSavedGuessText(null);
       setSavedElementScores(null);
+      setNextRotationAt(null);
       setRoundEnded(false);
       await fetchRound();
     } catch (err) {
@@ -341,6 +345,11 @@ export default function GamePage() {
                     <p className="game-prompt-teaser-text">
                       The prompt and word breakdown will be revealed when this round ends.
                     </p>
+                    {nextRotationAt && (
+                      <p className="game-prompt-teaser-countdown">
+                        <CountdownTimer targetDate={nextRotationAt} />
+                      </p>
+                    )}
                   </div>
                 )}
 

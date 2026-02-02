@@ -35,14 +35,14 @@ const RECENT_PROMPT_COUNT = 10;
 // ---------------------------------------------------------------------------
 
 const PERSONAS: string[] = [
-  "You are a photographer describing a striking everyday scene.",
-  "You are a film director pitching a striking single scene.",
-  "You are a photojournalist captioning an award-winning photograph.",
-  "You are a children's book illustrator dreaming up a whimsical page.",
-  "You are a travel blogger describing a memorable moment from a trip.",
-  "You are a nature documentary narrator describing a never-before-seen moment.",
-  "You are a street artist planning an eye-catching mural.",
-  "You are an animator storyboarding a key frame for a short film.",
+  "You describe weird, funny scenes like something out of a random dream.",
+  "You make up silly, absurd situations that would make someone laugh out loud.",
+  "You come up with bizarre scenes like a kid with a wild imagination.",
+  "You describe chaotic, goofy moments like a cartoon that makes no sense.",
+  "You think up random scenes that are so weird they're hilarious.",
+  "You describe the strangest things happening in totally normal places.",
+  "You make up ridiculous scenes that feel like a fever dream.",
+  "You describe impossible, funny moments like a surreal picture book.",
 ];
 
 let personaIndex = 0;
@@ -239,13 +239,14 @@ async function generatePromptFromWords(
     const systemPrompt = nextPersona();
 
     const userPrompt =
-      `Compose an image-generation prompt (2-3 sentences, 150-350 characters) ` +
-      `that naturally incorporates ALL of these words: ${wordList}. ` +
-      `Describe a busy, detailed scene with lots of things happening that someone could point to and name. ` +
-      `Use simple, normal, everyday words — the kind a 10-year-old would use. ` +
-      `Fill the scene with specific, recognizable objects, people, animals, and actions. ` +
-      `No fancy vocabulary, no metaphors, no abstract ideas. Just a packed scene described in plain English. ` +
-      `Output ONLY the prompt text, nothing else.${blacklistSection}`;
+      `Create a weird, funny image prompt (1-2 sentences, 100-300 characters) that uses ALL of these words: ${wordList}. ` +
+      `Describe a bizarre, dream-like scene — like a penguin riding a motorcycle through a library, ` +
+      `or a whale wearing a top hat in a grocery store playing guitar while frogs rain from the sky. ` +
+      `The weirder and more random the combination, the better. ` +
+      `Rules: Use ONLY simple, everyday words a kid would understand. ` +
+      `Every object, animal, and action should be something you can clearly see and point to in a picture. ` +
+      `No poetry, no metaphors, no fancy vocabulary — just describe what's literally happening in the scene. ` +
+      `Output ONLY the prompt, nothing else.${blacklistSection}`;
 
     const messages: ChatMessage[] = [
       { role: "system", content: systemPrompt },

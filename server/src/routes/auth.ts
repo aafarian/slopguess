@@ -157,17 +157,15 @@ authRouter.post(
 // ---------------------------------------------------------------------------
 
 interface LoginInput {
-  email?: string;
+  login?: string;
   password?: string;
 }
 
 function validateLoginInput(body: LoginInput): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  if (!body.email || typeof body.email !== "string") {
-    errors.push({ field: "email", message: "Email is required" });
-  } else if (!EMAIL_RE.test(body.email)) {
-    errors.push({ field: "email", message: "Invalid email format" });
+  if (!body.login || typeof body.login !== "string" || !body.login.trim()) {
+    errors.push({ field: "login", message: "Email or username is required" });
   }
 
   if (!body.password || typeof body.password !== "string") {
@@ -195,15 +193,19 @@ authRouter.post(
         return;
       }
 
-      const { email, password } = req.body as {
-        email: string;
+      const { login, password } = req.body as {
+        login: string;
         password: string;
       };
 
-      // 2. Look up user by email
-      const user = await userService.findByEmail(email);
+      // 2. Look up user by email or username
+      const isEmail = EMAIL_RE.test(login);
+      const user = isEmail
+        ? await userService.findByEmail(login)
+        : await userService.findByUsername(login);
+
       if (!user) {
-        // Generic message — don't reveal whether the email exists
+        // Generic message — don't reveal whether the account exists
         res.status(401).json({
           error: { message: "Invalid credentials", code: "INVALID_CREDENTIALS" },
         });

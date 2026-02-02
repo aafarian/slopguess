@@ -43,6 +43,8 @@ interface EnvConfig {
   DEFAULT_DIFFICULTY: string;
   /** JSON mapping of difficulty names to word counts (default: {"easy":4,"normal":7,"hard":10}) */
   DIFFICULTY_WORD_COUNTS: Record<string, number>;
+  /** Secret key for admin API access. If set, admin routes require X-Admin-Key header. */
+  ADMIN_API_KEY: string;
 }
 
 /**
@@ -115,6 +117,7 @@ function loadEnvConfig(): EnvConfig {
       process.env.DIFFICULTY_WORD_COUNTS ||
         '{"easy":4,"normal":7,"hard":10}'
     ),
+    ADMIN_API_KEY: process.env.ADMIN_API_KEY || "",
   };
 }
 
