@@ -138,7 +138,7 @@ export default function ChallengePage() {
 
       try {
         await createChallenge(selectedFriendId, promptText.trim());
-        setCreateSuccess('Challenge sent! Image is being generated.');
+        setCreateSuccess('Challenge sent! Your friend will be notified once the image is ready.');
         setPromptText('');
         setSelectedFriendId('');
         // Refresh the sent list
@@ -277,7 +277,7 @@ export default function ChallengePage() {
               {creating ? (
                 <>
                   <span className="game-guess-submit-spinner" aria-hidden="true" />
-                  Generating Image...
+                  Sending...
                 </>
               ) : (
                 'Send Challenge'

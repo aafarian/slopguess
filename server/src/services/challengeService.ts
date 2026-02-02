@@ -134,53 +134,92 @@ async function createChallenge(
     throw new Error("[challengeService] Prompt contains blocked content");
   }
 
-  // 3. Generate image
-  const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
-  const imageResult = await imageProvider.generate(prompt);
-
-  // 4. Persist image locally
-  const imageFilename = await persistImage(imageResult.imageUrl);
-  const persistedImageUrl = `/images/${imageFilename}`;
-
-  // 5. Compute prompt embedding
-  const embeddingProvider = createEmbeddingProvider(env.EMBEDDING_PROVIDER);
-  const embeddingResult = await embeddingProvider.embed(prompt);
-
-  // 6. Insert challenge
+  // 3. Insert challenge with 'pending' status (no image yet) — returns immediately
   const result = await pool.query<ChallengeRow>(
-    `INSERT INTO challenges (challenger_id, challenged_id, prompt, image_url, prompt_embedding, status)
-     VALUES ($1, $2, $3, $4, $5::float[], 'active')
+    `INSERT INTO challenges (challenger_id, challenged_id, prompt, status)
+     VALUES ($1, $2, $3, 'pending')
      RETURNING *`,
-    [
-      challengerId,
-      challengedId,
-      prompt,
-      persistedImageUrl,
-      toPostgresFloatArray(embeddingResult.embedding),
-    ],
+    [challengerId, challengedId, prompt],
   );
 
   const row = result.rows[0];
 
-  // Look up usernames for the public response
   const [challengerUsername, challengedUsername] = await Promise.all([
     getUsernameById(challengerId),
     getUsernameById(challengedId),
   ]);
 
-  logger.info("challengeService", `Created challenge ${row.id}`, {
+  logger.info("challengeService", `Created pending challenge ${row.id}`, {
     challengeId: row.id,
     challengerId,
     challengedId,
   });
 
-  // Notify the challenged user about the new challenge
-  await notificationService.addNotification(challengedId, "challenge_received", {
-    fromUsername: challengerUsername,
-    challengeId: row.id,
-  });
+  // 4. Process image generation in the background (fire-and-forget)
+  processChallengeBackground(row.id, prompt, challengedId, challengerUsername).catch(
+    (err) => {
+      logger.error("challengeService", `Background processing failed for challenge ${row.id}`, {
+        challengeId: row.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    },
+  );
 
   return toPublicChallenge(row, challengerUsername, challengedUsername, challengerId);
+}
+
+/**
+ * Background processing for a challenge: generate image, compute embedding,
+ * update the challenge to 'active', and notify the challenged user.
+ *
+ * Runs as a fire-and-forget promise. On failure the challenge remains 'pending'
+ * and can be retried or cleaned up later.
+ */
+async function processChallengeBackground(
+  challengeId: string,
+  prompt: string,
+  challengedId: string,
+  challengerUsername: string,
+): Promise<void> {
+  try {
+    // Generate image
+    const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
+    const imageResult = await imageProvider.generate(prompt);
+
+    // Persist image locally
+    const imageFilename = await persistImage(imageResult.imageUrl);
+    const persistedImageUrl = `/images/${imageFilename}`;
+
+    // Compute prompt embedding
+    const embeddingProvider = createEmbeddingProvider(env.EMBEDDING_PROVIDER);
+    const embeddingResult = await embeddingProvider.embed(prompt);
+
+    // Update challenge to active with image and embedding
+    await pool.query(
+      `UPDATE challenges
+       SET image_url = $1, prompt_embedding = $2::float[], status = 'active', updated_at = NOW()
+       WHERE id = $3`,
+      [persistedImageUrl, toPostgresFloatArray(embeddingResult.embedding), challengeId],
+    );
+
+    logger.info("challengeService", `Challenge ${challengeId} is now active`, {
+      challengeId,
+    });
+
+    // Notify the challenged user now that the image is ready
+    await notificationService.addNotification(challengedId, "challenge_received", {
+      fromUsername: challengerUsername,
+      challengeId,
+    });
+  } catch (err) {
+    // Mark challenge as failed so it doesn't sit in pending forever
+    await pool.query(
+      `UPDATE challenges SET status = 'expired', updated_at = NOW() WHERE id = $1`,
+      [challengeId],
+    ).catch(() => { /* best-effort */ });
+
+    throw err;
+  }
 }
 
 /**

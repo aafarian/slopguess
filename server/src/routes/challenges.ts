@@ -105,7 +105,7 @@ challengesRouter.post(
         promptText,
       );
 
-      res.status(201).json({ challenge });
+      res.status(202).json({ challenge });
     } catch (err: unknown) {
       if (err instanceof Error) {
         if (err.message.includes("non-friend")) {
