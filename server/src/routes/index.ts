@@ -37,6 +37,14 @@
  * │ /api/friends/:friendshipId/decline  │ POST   │ Decline a friend request (auth)           │
  * │ /api/friends/:friendshipId          │ DELETE │ Remove a friend (auth)                    │
  * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/challenges                     │ POST   │ Create a new challenge (auth)              │
+ * │ /api/challenges/incoming            │ GET    │ Pending challenges for user (auth)         │
+ * │ /api/challenges/sent                │ GET    │ Challenges sent by user (auth)             │
+ * │ /api/challenges/history/:friendId   │ GET    │ Challenge history with friend (auth)       │
+ * │ /api/challenges/:challengeId        │ GET    │ Get challenge detail (auth)                │
+ * │ /api/challenges/:challengeId/guess  │ POST   │ Submit a guess for challenge (auth)        │
+ * │ /api/challenges/:challengeId/decline│ POST   │ Decline a challenge (auth)                 │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
  * │ /api/messages                       │ POST   │ Send a message to a friend (auth)         │
  * │ /api/messages/conversations         │ GET    │ List conversations with latest msg (auth)  │
  * │ /api/messages/:userId               │ GET    │ Paginated conversation with user (auth)    │
