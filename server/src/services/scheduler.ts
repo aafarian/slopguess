@@ -17,6 +17,7 @@
 
 import { env } from "../config/env";
 import { logger } from "../config/logger";
+import { pool } from "../config/database";
 import { roundService } from "./roundService";
 import { monitoringService } from "./monitoringService";
 
@@ -62,11 +63,27 @@ async function tick(): Promise<void> {
       const now = new Date();
 
       if (now >= expiresAt) {
-        logger.info("scheduler", `Active round ${activeRound.id} has expired. Rotating...`, {
-          roundId: activeRound.id,
-          startedAt: activeRound.startedAt!.toISOString(),
-        });
-        await rotateRound();
+        // Check if anyone guessed before spending money on a new round
+        const countResult = await pool.query<{ count: string }>(
+          `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1`,
+          [activeRound.id]
+        );
+        const guessCount = parseInt(countResult.rows[0].count, 10);
+
+        if (guessCount === 0) {
+          // No guesses — keep the round active, check again next tick
+          logger.info("scheduler", `Round ${activeRound.id} expired but has no guesses. Skipping rotation.`, {
+            roundId: activeRound.id,
+          });
+          nextRotationTime = new Date(now.getTime() + env.ROUND_CHECK_INTERVAL_MINUTES * 60 * 1000);
+        } else {
+          logger.info("scheduler", `Active round ${activeRound.id} has expired (${guessCount} guesses). Rotating...`, {
+            roundId: activeRound.id,
+            guessCount,
+            startedAt: activeRound.startedAt!.toISOString(),
+          });
+          await rotateRound();
+        }
       } else {
         // Update the next rotation time tracker
         nextRotationTime = expiresAt;

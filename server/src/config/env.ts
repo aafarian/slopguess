@@ -97,7 +97,7 @@ function loadEnvConfig(): EnvConfig {
     NODE_ENV: process.env.NODE_ENV || "development",
     CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:5173",
     ROUND_DURATION_HOURS: parseFloat(
-      process.env.ROUND_DURATION_HOURS || "24"
+      process.env.ROUND_DURATION_HOURS || "1"
     ),
     ROUND_CHECK_INTERVAL_MINUTES: parseFloat(
       process.env.ROUND_CHECK_INTERVAL_MINUTES || "5"
