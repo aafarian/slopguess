@@ -26,8 +26,8 @@ import { containsBlockedContent } from "./contentFilter";
 const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL = "gpt-4o-mini";
 const TEMPERATURE = 1.0;
-const MAX_TOKENS = 80;
-const MAX_PROMPT_LENGTH = 200;
+const MAX_TOKENS = 200;
+const MAX_PROMPT_LENGTH = 500;
 const RECENT_PROMPT_COUNT = 10;
 
 // ---------------------------------------------------------------------------
@@ -239,11 +239,12 @@ async function generatePromptFromWords(
     const systemPrompt = nextPersona();
 
     const userPrompt =
-      `Compose a single image-generation prompt (one sentence, 80-150 characters) ` +
+      `Compose an image-generation prompt (2-3 sentences, 150-350 characters) ` +
       `that naturally incorporates ALL of these words: ${wordList}. ` +
-      `The prompt should describe a clear, literal visual scene using plain, everyday language. ` +
-      `Someone looking at the generated image should be able to guess most of the key words. ` +
-      `Avoid metaphors, abstract concepts, and obscure vocabulary. ` +
+      `Describe a busy, detailed scene with lots of things happening that someone could point to and name. ` +
+      `Use simple, normal, everyday words — the kind a 10-year-old would use. ` +
+      `Fill the scene with specific, recognizable objects, people, animals, and actions. ` +
+      `No fancy vocabulary, no metaphors, no abstract ideas. Just a packed scene described in plain English. ` +
       `Output ONLY the prompt text, nothing else.${blacklistSection}`;
 
     const messages: ChatMessage[] = [

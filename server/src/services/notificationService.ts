@@ -10,6 +10,7 @@
  * the new one.
  */
 
+import { randomUUID } from "node:crypto";
 import { logger } from "../config/logger";
 
 // ---------------------------------------------------------------------------
@@ -68,7 +69,7 @@ function addNotification(
   data: Record<string, unknown>
 ): Notification {
   const notification: Notification = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     type,
     data,
     read: false,

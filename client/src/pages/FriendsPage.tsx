@@ -239,10 +239,12 @@ export default function FriendsPage() {
     addMutating(userId);
     try {
       await sendFriendRequest(userId);
-      // Refetch search to update state and also pending
-      if (searchQuery.trim()) {
-        await executeSearch(searchQuery);
-      }
+      // Optimistically update the search result to show pending status
+      setSearchResults((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, friendshipStatus: 'pending' } : u
+        )
+      );
       await fetchPending();
     } catch {
       // Error will be visible on refetch
