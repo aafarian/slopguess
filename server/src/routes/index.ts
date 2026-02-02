@@ -28,6 +28,14 @@
  * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
  * │ /api/admin/rounds/rotate            │ POST   │ Manually trigger round rotation           │
  * │ /api/admin/rounds/next              │ GET    │ Next scheduled rotation time              │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/friends                        │ GET    │ List accepted friends (auth)              │
+ * │ /api/friends/request                │ POST   │ Send a friend request (auth)              │
+ * │ /api/friends/requests               │ GET    │ List pending received requests (auth)     │
+ * │ /api/friends/search?q=              │ GET    │ Search users by username prefix (auth)    │
+ * │ /api/friends/:friendshipId/accept   │ POST   │ Accept a friend request (auth)            │
+ * │ /api/friends/:friendshipId/decline  │ POST   │ Decline a friend request (auth)           │
+ * │ /api/friends/:friendshipId          │ DELETE │ Remove a friend (auth)                    │
  * └─────────────────────────────────────┴────────┴──────────────────────────────────────────┘
  *
  * Auth: Routes marked "requires auth" expect an Authorization: Bearer <JWT> header.
@@ -41,6 +49,7 @@ import { wordBankRouter } from "./wordBank";
 import { adminRouter } from "./admin";
 import { roundsRouter } from "./rounds";
 import { usersRouter } from "./users";
+import { friendsRouter } from "./friends";
 const router = Router();
 
 // Health check
@@ -57,6 +66,9 @@ router.use("/rounds", roundsRouter);
 
 // Users (game history, stats)
 router.use("/users", usersRouter);
+
+// Friends (friend requests, search, management)
+router.use("/friends", friendsRouter);
 
 // Admin (round management, dev tools)
 router.use("/admin", adminRouter);
