@@ -40,6 +40,8 @@ services:
   server:
     # Remove externally-exposed ports (nginx proxies /api/ to server:3001)
     ports: !override []
+    volumes:
+      - uploaded-images:/app/public/images
     env_file:
       - .env.production
     environment:
@@ -103,4 +105,6 @@ volumes:
   letsencrypt:
     driver: local
   certbot-webroot:
+    driver: local
+  uploaded-images:
     driver: local
