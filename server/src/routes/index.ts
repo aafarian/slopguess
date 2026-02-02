@@ -59,6 +59,7 @@ import { adminRouter } from "./admin";
 import { roundsRouter } from "./rounds";
 import { usersRouter } from "./users";
 import { friendsRouter } from "./friends";
+import { challengesRouter } from "./challenges";
 import { messagesRouter } from "./messages";
 import { notificationsRouter } from "./notifications";
 const router = Router();
@@ -80,6 +81,9 @@ router.use("/users", usersRouter);
 
 // Friends (friend requests, search, management)
 router.use("/friends", friendsRouter);
+
+// Challenges (1v1 image challenges between friends)
+router.use("/challenges", challengesRouter);
 
 // Messages (direct messages between friends)
 router.use("/messages", messagesRouter);
