@@ -1,0 +1,313 @@
+/* =========================================================================
+   MessagesPage styles
+   ========================================================================= */
+
+.messages-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+
+.messages-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+
+/* -----------------------------------------------------------------------
+   Conversation List
+   ----------------------------------------------------------------------- */
+
+.messages-conversation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.messages-conversation-item {
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.messages-conversation-item:last-child {
+  border-bottom: none;
+}
+
+.messages-conversation-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.messages-conversation-link:hover {
+  background-color: var(--color-surface-hover, rgba(0, 0, 0, 0.04));
+}
+
+/* Avatar circle */
+.messages-conversation-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--color-primary, #6366f1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-transform: uppercase;
+}
+
+.messages-conversation-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.messages-conversation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.messages-conversation-username {
+  font-weight: 600;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messages-conversation-time {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.messages-conversation-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.messages-conversation-preview {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Unread badge */
+.messages-unread-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background-color: var(--color-primary, #6366f1);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* -----------------------------------------------------------------------
+   Conversation Detail
+   ----------------------------------------------------------------------- */
+
+.messages-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.messages-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.messages-back-btn {
+  font-size: 0.9rem;
+  color: var(--color-primary, #6366f1);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.messages-back-btn:hover {
+  text-decoration: underline;
+}
+
+.messages-detail-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Load older button */
+.messages-load-older {
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+/* Messages body (scrollable area) */
+.messages-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  max-height: 60vh;
+}
+
+.messages-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Message bubble */
+.messages-bubble {
+  display: flex;
+  max-width: 75%;
+}
+
+.messages-bubble--sent {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.messages-bubble--received {
+  margin-right: auto;
+  justify-content: flex-start;
+}
+
+.messages-bubble-content {
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  max-width: 100%;
+}
+
+.messages-bubble--sent .messages-bubble-content {
+  background-color: var(--color-primary, #6366f1);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.messages-bubble--received .messages-bubble-content {
+  background-color: var(--color-surface-alt, #f3f4f6);
+  color: var(--color-text, #111827);
+  border-bottom-left-radius: 4px;
+}
+
+.messages-bubble-sender {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+  opacity: 0.8;
+}
+
+.messages-bubble-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.messages-bubble-time {
+  display: block;
+  font-size: 0.65rem;
+  margin-top: 0.25rem;
+  opacity: 0.65;
+  text-align: right;
+}
+
+.messages-bubble--received .messages-bubble-time {
+  text-align: left;
+}
+
+/* -----------------------------------------------------------------------
+   Compose area
+   ----------------------------------------------------------------------- */
+
+.messages-compose {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.messages-compose-error {
+  color: var(--color-error, #ef4444);
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.messages-compose-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.messages-compose-input {
+  flex: 1;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #111827);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.messages-compose-input:focus {
+  border-color: var(--color-primary, #6366f1);
+}
+
+.messages-compose-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.messages-compose-send {
+  flex-shrink: 0;
+  padding: 0.6rem 1.25rem;
+}
+
+/* -----------------------------------------------------------------------
+   Responsive
+   ----------------------------------------------------------------------- */
+
+@media (max-width: 480px) {
+  .messages-page {
+    padding: 1rem 0.5rem 1.5rem;
+  }
+
+  .messages-bubble {
+    max-width: 88%;
+  }
+
+  .messages-detail-body {
+    max-height: 55vh;
+  }
+}
