@@ -27,7 +27,7 @@ interface EnvConfig {
   NODE_ENV: string;
   /** CORS origin for frontend (default: http://localhost:5173) */
   CORS_ORIGIN: string;
-  /** How long a round stays active, in hours (default: 24) */
+  /** How long a round stays active, in hours (default: 1) */
   ROUND_DURATION_HOURS: number;
   /** How often the scheduler checks for round expiry, in minutes (default: 5) */
   ROUND_CHECK_INTERVAL_MINUTES: number;
@@ -45,6 +45,16 @@ interface EnvConfig {
   DIFFICULTY_WORD_COUNTS: Record<string, number>;
   /** Secret key for admin API access. If set, admin routes require X-Admin-Key header. */
   ADMIN_API_KEY: string;
+  /** Stripe secret key for server-side API calls. Leave empty to disable Stripe in dev. */
+  STRIPE_SECRET_KEY: string;
+  /** Stripe publishable key for client-side usage. */
+  STRIPE_PUBLISHABLE_KEY: string;
+  /** Stripe webhook signing secret for verifying webhook events. */
+  STRIPE_WEBHOOK_SECRET: string;
+  /** Stripe Price ID for the Pro monthly subscription plan. */
+  STRIPE_PRO_PRICE_ID: string;
+  /** Number of daily challenges available on the free tier (default: 3). */
+  FREE_TIER_DAILY_CHALLENGES: number;
 }
 
 /**
@@ -118,11 +128,27 @@ function loadEnvConfig(): EnvConfig {
         '{"easy":4,"normal":7,"hard":10}'
     ),
     ADMIN_API_KEY: process.env.ADMIN_API_KEY || "",
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
+    STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "",
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "",
+    STRIPE_PRO_PRICE_ID: process.env.STRIPE_PRO_PRICE_ID || "",
+    FREE_TIER_DAILY_CHALLENGES: parseInt(
+      process.env.FREE_TIER_DAILY_CHALLENGES || "3",
+      10
+    ),
   };
 }
 
 // Validate and export config as a singleton
 const env = loadEnvConfig();
 
-export { env };
+/**
+ * Returns true when the Stripe secret key is configured,
+ * indicating that Stripe payment features are available.
+ */
+function isStripeConfigured(): boolean {
+  return env.STRIPE_SECRET_KEY.trim().length > 0;
+}
+
+export { env, isStripeConfigured };
 export type { EnvConfig };
