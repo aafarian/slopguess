@@ -489,22 +489,21 @@ describe("API Routes — User endpoints", () => {
 
 describe("API Routes — Admin endpoints", () => {
   describe("POST /api/admin/rounds/rotate", () => {
-    it("route exists and responds (may be 200 or 500 depending on DB)", async () => {
+    it("returns 401 without admin key", async () => {
       const res = await request(app).post("/api/admin/rounds/rotate");
 
-      // The route exists — should not be the catch-all 404
-      expect(res.status).not.toBe(404);
       expect(res.headers["content-type"]).toMatch(/json/);
+      // Without ADMIN_API_KEY configured, returns 403; without valid key, returns 401
+      expect([401, 403]).toContain(res.status);
     });
   });
 
   describe("GET /api/admin/rounds/next", () => {
-    it("returns scheduler info", async () => {
+    it("returns 401 without admin key", async () => {
       const res = await request(app).get("/api/admin/rounds/next");
 
-      expect(res.status).toBe(200);
       expect(res.headers["content-type"]).toMatch(/json/);
-      expect(res.body).toHaveProperty("schedulerRunning");
+      expect([401, 403]).toContain(res.status);
     });
   });
 });

@@ -139,16 +139,15 @@ describe("POST /api/auth/login", () => {
     );
   });
 
-  it("returns 400 for invalid email format", async () => {
+  it("returns 400 for missing login field", async () => {
     const res = await request(app).post("/api/auth/login").send({
-      email: "bad-email",
       password: "somepassword",
     });
 
     expect(res.status).toBe(400);
     expect(res.body.error.details).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ field: "email" }),
+        expect.objectContaining({ field: "login" }),
       ])
     );
   });
