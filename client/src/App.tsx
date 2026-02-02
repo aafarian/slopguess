@@ -8,6 +8,10 @@ import HistoryPage from './pages/HistoryPage'
 import ProfilePage from './pages/ProfilePage'
 import RoundDetailPage from './pages/RoundDetailPage'
 import LeaderboardPage from './pages/LeaderboardPage'
+import FriendsPage from './pages/FriendsPage'
+import ChallengePage from './pages/ChallengePage'
+import ChallengeDetailPage from './pages/ChallengeDetailPage'
+import MessagesPage from './pages/MessagesPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
@@ -31,6 +35,12 @@ function App() {
 
           {/* Player profile (shows inline login prompt when logged out) */}
           <Route path="/profile" element={<ProfilePage />} />
+
+          {/* Social */}
+          <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/challenges" element={<ChallengePage />} />
+          <Route path="/challenges/:challengeId" element={<ChallengeDetailPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
 
           {/* 404 catch-all */}
           <Route path="*" element={<NotFoundPage />} />
