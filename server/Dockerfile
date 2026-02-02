@@ -38,6 +38,9 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy compiled JavaScript from build stage
 COPY --from=builder /app/dist ./dist
 
+# Copy SQL migration files (not handled by tsc)
+COPY server/src/db/migrations/ ./dist/db/migrations/
+
 # Set ownership to non-root user
 RUN chown -R appuser:appgroup /app
 
