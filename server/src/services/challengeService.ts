@@ -175,7 +175,7 @@ async function createChallenge(
   });
 
   // Notify the challenged user about the new challenge
-  notificationService.addNotification(challengedId, "challenge_received", {
+  await notificationService.addNotification(challengedId, "challenge_received", {
     fromUsername: challengerUsername,
     challengeId: row.id,
   });
@@ -311,7 +311,7 @@ async function submitGuess(
   });
 
   // Notify the challenger that their challenge has been guessed
-  notificationService.addNotification(updatedRow.challenger_id, "challenge_guessed", {
+  await notificationService.addNotification(updatedRow.challenger_id, "challenge_guessed", {
     fromUsername: challengedUsername,
     challengeId,
     score,

@@ -95,7 +95,7 @@ async function sendMessage(
   );
 
   // Notify the receiver about the new message
-  notificationService.addNotification(receiverId, "new_message", {
+  await notificationService.addNotification(receiverId, "new_message", {
     fromUsername: senderResult.rows[0].username,
     messageId: result.rows[0].id,
   });

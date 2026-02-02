@@ -25,7 +25,7 @@ notificationsRouter.get(
     try {
       const userId = req.user!.userId;
 
-      const notifications = notificationService.getNotifications(userId);
+      const notifications = await notificationService.getNotifications(userId);
 
       res.status(200).json({ notifications });
     } catch (err: unknown) {
@@ -44,7 +44,7 @@ notificationsRouter.get(
     try {
       const userId = req.user!.userId;
 
-      const count = notificationService.getUnreadCount(userId);
+      const count = await notificationService.getUnreadCount(userId);
 
       res.status(200).json({ count });
     } catch (err: unknown) {
@@ -68,7 +68,7 @@ notificationsRouter.patch(
       const { notificationId } = req.params;
       const userId = req.user!.userId;
 
-      const success = notificationService.markRead(notificationId, userId);
+      const success = await notificationService.markRead(notificationId, userId);
 
       if (!success) {
         res.status(404).json({

@@ -61,7 +61,7 @@ export async function sendRequest(
   );
 
   // Notify the receiver about the friend request
-  notificationService.addNotification(receiverId, "friend_request", {
+  await notificationService.addNotification(receiverId, "friend_request", {
     fromUsername: senderResult.rows[0].username,
     friendshipId: result.rows[0].id,
   });
@@ -123,7 +123,7 @@ export async function acceptRequest(
   );
 
   // Notify the original sender that their request was accepted
-  notificationService.addNotification(row.sender_id, "friend_accepted", {
+  await notificationService.addNotification(row.sender_id, "friend_accepted", {
     fromUsername: accepterResult.rows[0].username,
     friendshipId,
   });

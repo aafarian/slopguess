@@ -1,16 +1,12 @@
 /**
- * In-memory notification service (v1).
+ * Database-backed notification service.
  *
- * Stores notifications per-user in a Map keyed by userId. Notifications are
- * lost on server restart, which is acceptable for v1. A future phase can
- * persist notifications to a database table.
- *
- * Limits: Each user retains at most MAX_NOTIFICATIONS_PER_USER (50) entries.
- * When the limit is reached the oldest notification is evicted before adding
- * the new one.
+ * Stores notifications in the `notifications` table (migration 006).
+ * Each user retains at most MAX_NOTIFICATIONS_PER_USER (50) entries;
+ * older ones are pruned on insert.
  */
 
-import { randomUUID } from "node:crypto";
+import { pool } from "../config/database";
 import { logger } from "../config/logger";
 
 // ---------------------------------------------------------------------------
@@ -41,11 +37,19 @@ export interface Notification {
 const MAX_NOTIFICATIONS_PER_USER = 50;
 
 // ---------------------------------------------------------------------------
-// Storage
+// Helpers
 // ---------------------------------------------------------------------------
 
-/** In-memory store: userId -> notification list. */
-const store = new Map<string, Notification[]>();
+/** Map a database row to a Notification object. */
+function rowToNotification(row: Record<string, unknown>): Notification {
+  return {
+    id: row.id as string,
+    type: row.type as NotificationType,
+    data: (row.data as Record<string, unknown>) ?? {},
+    read: row.read as boolean,
+    createdAt: new Date(row.created_at as string),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Service methods
@@ -54,40 +58,34 @@ const store = new Map<string, Notification[]>();
 /**
  * Add a notification for a user.
  *
- * Creates a new notification with a unique ID (crypto.randomUUID) and appends
- * it to the user's list. If the list exceeds MAX_NOTIFICATIONS_PER_USER the
- * oldest notification is evicted.
- *
- * @param userId - UUID of the recipient user
- * @param type   - Notification type
- * @param data   - Arbitrary payload (enough for the frontend to render/link)
- * @returns The newly created notification
+ * Inserts a row into the notifications table and prunes old entries
+ * if the user exceeds MAX_NOTIFICATIONS_PER_USER.
  */
-function addNotification(
+async function addNotification(
   userId: string,
   type: NotificationType,
-  data: Record<string, unknown>
-): Notification {
-  const notification: Notification = {
-    id: randomUUID(),
-    type,
-    data,
-    read: false,
-    createdAt: new Date(),
-  };
+  data: Record<string, unknown>,
+): Promise<Notification> {
+  const result = await pool.query(
+    `INSERT INTO notifications (user_id, type, data)
+     VALUES ($1, $2, $3)
+     RETURNING id, type, data, read, created_at`,
+    [userId, type, JSON.stringify(data)],
+  );
 
-  let list = store.get(userId);
-  if (!list) {
-    list = [];
-    store.set(userId, list);
-  }
+  const notification = rowToNotification(result.rows[0]);
 
-  list.push(notification);
-
-  // Evict oldest when over limit
-  if (list.length > MAX_NOTIFICATIONS_PER_USER) {
-    list.shift();
-  }
+  // Prune oldest notifications beyond the limit
+  await pool.query(
+    `DELETE FROM notifications
+     WHERE id IN (
+       SELECT id FROM notifications
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       OFFSET $2
+     )`,
+    [userId, MAX_NOTIFICATIONS_PER_USER],
+  );
 
   logger.debug("notificationService", `Added ${type} notification for user ${userId}`, {
     userId,
@@ -100,67 +98,59 @@ function addNotification(
 
 /**
  * Get all notifications for a user, sorted by createdAt DESC (newest first).
- *
- * @param userId - UUID of the user
- * @returns Array of Notification, newest first. Empty array if none exist.
+ * Returns at most MAX_NOTIFICATIONS_PER_USER entries.
  */
-function getNotifications(userId: string): Notification[] {
-  const list = store.get(userId);
-  if (!list || list.length === 0) {
-    return [];
-  }
-
-  // Return a copy sorted DESC by createdAt
-  return [...list].sort(
-    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+async function getNotifications(userId: string): Promise<Notification[]> {
+  const result = await pool.query(
+    `SELECT id, type, data, read, created_at
+     FROM notifications
+     WHERE user_id = $1
+     ORDER BY created_at DESC
+     LIMIT $2`,
+    [userId, MAX_NOTIFICATIONS_PER_USER],
   );
+
+  return result.rows.map(rowToNotification);
 }
 
 /**
  * Mark a notification as read.
  *
- * Validates that the notification belongs to the specified user before
- * marking it. Returns false if the notification is not found or does not
- * belong to the user.
- *
- * @param notificationId - UUID of the notification
- * @param userId         - UUID of the user claiming ownership
- * @returns true if marked successfully, false otherwise
+ * Validates that the notification belongs to the specified user.
+ * Returns false if not found or doesn't belong to the user.
  */
-function markRead(notificationId: string, userId: string): boolean {
-  const list = store.get(userId);
-  if (!list) {
-    return false;
+async function markRead(notificationId: string, userId: string): Promise<boolean> {
+  const result = await pool.query(
+    `UPDATE notifications
+     SET read = TRUE
+     WHERE id = $1 AND user_id = $2`,
+    [notificationId, userId],
+  );
+
+  const success = (result.rowCount ?? 0) > 0;
+
+  if (success) {
+    logger.debug("notificationService", `Marked notification ${notificationId} as read`, {
+      userId,
+      notificationId,
+    });
   }
 
-  const notification = list.find((n) => n.id === notificationId);
-  if (!notification) {
-    return false;
-  }
-
-  notification.read = true;
-
-  logger.debug("notificationService", `Marked notification ${notificationId} as read`, {
-    userId,
-    notificationId,
-  });
-
-  return true;
+  return success;
 }
 
 /**
  * Get the count of unread notifications for a user.
- *
- * @param userId - UUID of the user
- * @returns Number of unread notifications
  */
-function getUnreadCount(userId: string): number {
-  const list = store.get(userId);
-  if (!list) {
-    return 0;
-  }
+async function getUnreadCount(userId: string): Promise<number> {
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS count
+     FROM notifications
+     WHERE user_id = $1 AND read = FALSE`,
+    [userId],
+  );
 
-  return list.filter((n) => !n.read).length;
+  return result.rows[0].count;
 }
 
 // ---------------------------------------------------------------------------
