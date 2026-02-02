@@ -9,6 +9,7 @@
 import { pool } from "../config/database";
 import { MessageRow, PublicMessage, toPublicMessage } from "../models/message";
 import { areFriends } from "./friendshipService";
+import { notificationService } from "./notificationService";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -92,6 +93,12 @@ async function sendMessage(
     `SELECT username FROM users WHERE id = $1`,
     [senderId],
   );
+
+  // Notify the receiver about the new message
+  notificationService.addNotification(receiverId, "new_message", {
+    fromUsername: senderResult.rows[0].username,
+    messageId: result.rows[0].id,
+  });
 
   return toPublicMessage(result.rows[0], senderResult.rows[0].username);
 }

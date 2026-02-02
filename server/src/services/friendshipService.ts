@@ -5,6 +5,7 @@
 
 import { pool } from "../config/database";
 import { FriendshipRow, PublicFriendship, toPublicFriendship } from "../models/friendship";
+import { notificationService } from "./notificationService";
 
 /**
  * Send a friend request from sender to receiver.
@@ -52,6 +53,18 @@ export async function sendRequest(
      RETURNING id, sender_id, receiver_id, status, created_at, updated_at`,
     [senderId, receiverId],
   );
+
+  // Look up sender username for the notification
+  const senderResult = await pool.query<{ username: string }>(
+    `SELECT username FROM users WHERE id = $1`,
+    [senderId],
+  );
+
+  // Notify the receiver about the friend request
+  notificationService.addNotification(receiverId, "friend_request", {
+    fromUsername: senderResult.rows[0].username,
+    friendshipId: result.rows[0].id,
+  });
 
   return toPublicFriendship(
     result.rows[0],
@@ -102,6 +115,18 @@ export async function acceptRequest(
     `SELECT username FROM users WHERE id = $1`,
     [row.sender_id],
   );
+
+  // Look up the receiver (accepter) username for the notification
+  const accepterResult = await pool.query<{ username: string }>(
+    `SELECT username FROM users WHERE id = $1`,
+    [userId],
+  );
+
+  // Notify the original sender that their request was accepted
+  notificationService.addNotification(row.sender_id, "friend_accepted", {
+    fromUsername: accepterResult.rows[0].username,
+    friendshipId,
+  });
 
   return toPublicFriendship(
     updated.rows[0],
