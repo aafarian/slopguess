@@ -141,20 +141,17 @@ jobs:
           script: |
             set -e
 
-            echo "==> Logging in to container registry..."
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
-
             echo "==> Navigating to project directory..."
-            cd ~/slop-guesser
+            cd /opt/slopguess
 
-            echo "==> Pulling latest Docker images..."
-            docker compose pull
+            echo "==> Pulling latest code..."
+            git pull origin main
 
-            echo "==> Restarting services..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            echo "==> Rebuilding and restarting services..."
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
 
-            echo "==> Checking migration status..."
-            docker compose exec -T server npm run migrate:status || echo "Warning: Migration status check failed (non-blocking)"
+            echo "==> Running migrations..."
+            docker exec slopguess-server node dist/db/migrate.js || echo "Warning: Migration failed (non-blocking)"
 
             echo "==> Deployment complete."
 
@@ -172,7 +169,6 @@ jobs:
 
             echo "==> Running health check..."
             until [ $RETRY_COUNT -ge $MAX_RETRIES ]; do
-              RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/api/health 2>/dev/null || true)
               BODY=$(curl -s http://localhost/api/health 2>/dev/null || true)
 
               if echo "$BODY" | grep -q '"status":"ok"'; then
@@ -181,7 +177,7 @@ jobs:
               fi
 
               RETRY_COUNT=$((RETRY_COUNT + 1))
-              echo "Health check attempt $RETRY_COUNT/$MAX_RETRIES failed (HTTP $RESPONSE). Retrying in ${RETRY_DELAY}s..."
+              echo "Health check attempt $RETRY_COUNT/$MAX_RETRIES failed. Retrying in ${RETRY_DELAY}s..."
               sleep $RETRY_DELAY
               RETRY_DELAY=$((RETRY_DELAY * 2))
             done
@@ -224,7 +220,7 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login $REGISTRY -u ${{ github.actor }} --password-stdin
 
             echo "==> Navigating to project directory..."
-            cd ~/slop-guesser
+            cd /opt/slopguess
 
             echo "==> Pulling images with tag: $TAG..."
             docker pull ${REGISTRY}/${IMAGE_PREFIX}/server:${TAG}
