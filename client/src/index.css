@@ -3445,3 +3445,203 @@ body {
   gap: 0.75rem;
   justify-content: center;
 }
+
+/* ===================================================================
+   Friends page
+   =================================================================== */
+
+.friends-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+.friends-header {
+  margin-bottom: 1.5rem;
+}
+
+.friends-title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* --- Tabs ---------------------------------------------------------- */
+
+.friends-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.friends-tab {
+  padding: 0.65rem 1.25rem;
+  min-height: var(--touch-target-min);
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -1px;
+}
+
+.friends-tab:hover {
+  color: var(--text-primary);
+}
+
+.friends-tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* --- Section container --------------------------------------------- */
+
+.friends-section {
+  min-height: 200px;
+}
+
+/* --- Friends list -------------------------------------------------- */
+
+.friends-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.friends-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.2s, background-color 0.2s;
+  gap: 1rem;
+}
+
+.friends-list-item:hover {
+  border-color: rgba(100, 108, 255, 0.3);
+  background: rgba(100, 108, 255, 0.04);
+}
+
+.friends-list-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.friends-list-item-username {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friends-list-item-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.friends-list-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* --- Danger button variant ----------------------------------------- */
+
+.friends-btn-danger {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.friends-btn-danger:hover:not(:disabled) {
+  background: var(--error);
+  color: #fff;
+  border-color: var(--error);
+}
+
+/* --- Search input -------------------------------------------------- */
+
+.friends-search-input-wrapper {
+  margin-bottom: 1.25rem;
+}
+
+.friends-search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  min-height: var(--touch-target-min);
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.friends-search-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.friends-search-input:focus {
+  border-color: var(--accent);
+}
+
+/* --- Friends page responsive --------------------------------------- */
+
+@media (max-width: 640px) {
+  .friends-list-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .friends-list-item-actions {
+    flex-wrap: wrap;
+  }
+
+  .friends-list-item-actions .btn {
+    flex: 1;
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .friends-title {
+    font-size: 1.5rem;
+  }
+
+  .friends-tabs {
+    gap: 0;
+  }
+
+  .friends-tab {
+    padding: 0.55rem 0.75rem;
+    font-size: 0.85rem;
+    flex: 1;
+    text-align: center;
+  }
+
+  .friends-list-item {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .friends-tab {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
