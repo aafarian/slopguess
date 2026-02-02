@@ -36,6 +36,15 @@
  * │ /api/friends/:friendshipId/accept   │ POST   │ Accept a friend request (auth)            │
  * │ /api/friends/:friendshipId/decline  │ POST   │ Decline a friend request (auth)           │
  * │ /api/friends/:friendshipId          │ DELETE │ Remove a friend (auth)                    │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/messages                       │ POST   │ Send a message to a friend (auth)         │
+ * │ /api/messages/conversations         │ GET    │ List conversations with latest msg (auth)  │
+ * │ /api/messages/:userId               │ GET    │ Paginated conversation with user (auth)    │
+ * │ /api/messages/:messageId/read       │ PATCH  │ Mark a message as read (auth)              │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/notifications                  │ GET    │ Get user's notifications (auth)           │
+ * │ /api/notifications/unread-count     │ GET    │ Get unread notification count (auth)      │
+ * │ /api/notifications/:id/read        │ PATCH  │ Mark notification as read (auth)          │
  * └─────────────────────────────────────┴────────┴──────────────────────────────────────────┘
  *
  * Auth: Routes marked "requires auth" expect an Authorization: Bearer <JWT> header.
@@ -50,6 +59,8 @@ import { adminRouter } from "./admin";
 import { roundsRouter } from "./rounds";
 import { usersRouter } from "./users";
 import { friendsRouter } from "./friends";
+import { messagesRouter } from "./messages";
+import { notificationsRouter } from "./notifications";
 const router = Router();
 
 // Health check
@@ -69,6 +80,12 @@ router.use("/users", usersRouter);
 
 // Friends (friend requests, search, management)
 router.use("/friends", friendsRouter);
+
+// Messages (direct messages between friends)
+router.use("/messages", messagesRouter);
+
+// Notifications (user notifications, unread count, mark read)
+router.use("/notifications", notificationsRouter);
 
 // Admin (round management, dev tools)
 router.use("/admin", adminRouter);
