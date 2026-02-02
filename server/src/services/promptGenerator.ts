@@ -25,7 +25,7 @@ import { containsBlockedContent } from "./contentFilter";
 
 const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL = "gpt-4o-mini";
-const TEMPERATURE = 1.2;
+const TEMPERATURE = 1.0;
 const MAX_TOKENS = 80;
 const MAX_PROMPT_LENGTH = 200;
 const RECENT_PROMPT_COUNT = 10;
@@ -35,14 +35,14 @@ const RECENT_PROMPT_COUNT = 10;
 // ---------------------------------------------------------------------------
 
 const PERSONAS: string[] = [
-  "You are a surrealist painter describing your next masterpiece.",
+  "You are a photographer describing a striking everyday scene.",
   "You are a film director pitching a striking single scene.",
   "You are a photojournalist captioning an award-winning photograph.",
   "You are a children's book illustrator dreaming up a whimsical page.",
-  "You are a sci-fi concept artist briefing a 3D modeler.",
+  "You are a travel blogger describing a memorable moment from a trip.",
   "You are a nature documentary narrator describing a never-before-seen moment.",
-  "You are a street artist planning a thought-provoking mural.",
-  "You are a fashion designer describing an avant-garde editorial shot.",
+  "You are a street artist planning an eye-catching mural.",
+  "You are an animator storyboarding a key frame for a short film.",
 ];
 
 let personaIndex = 0;
@@ -239,9 +239,11 @@ async function generatePromptFromWords(
     const systemPrompt = nextPersona();
 
     const userPrompt =
-      `Compose a single short image-generation prompt (one sentence, under 150 characters) ` +
-      `that creatively incorporates ALL of these words: ${wordList}. ` +
-      `The prompt should describe a vivid, specific visual scene. ` +
+      `Compose a single image-generation prompt (one sentence, 80-150 characters) ` +
+      `that naturally incorporates ALL of these words: ${wordList}. ` +
+      `The prompt should describe a clear, literal visual scene using plain, everyday language. ` +
+      `Someone looking at the generated image should be able to guess most of the key words. ` +
+      `Avoid metaphors, abstract concepts, and obscure vocabulary. ` +
       `Output ONLY the prompt text, nothing else.${blacklistSection}`;
 
     const messages: ChatMessage[] = [

@@ -154,7 +154,7 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
 
             echo "==> Checking migration status..."
-            docker compose exec -T server npm run migration:status || echo "Warning: Migration status check failed (non-blocking)"
+            docker compose exec -T server npm run migrate:status || echo "Warning: Migration status check failed (non-blocking)"
 
             echo "==> Deployment complete."
 

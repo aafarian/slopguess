@@ -180,7 +180,7 @@ run_pg_dump() {
       -f "$BACKUP_PATH"
   elif command -v docker &>/dev/null && docker compose version &>/dev/null 2>&1; then
     log "pg_dump not found locally; falling back to docker compose exec"
-    docker compose -f "$PROJECT_ROOT/docker-compose.prod.yml" exec -T postgres \
+    docker compose -f "$PROJECT_ROOT/docker-compose.yml" -f "$PROJECT_ROOT/docker-compose.prod.yml" exec -T postgres \
       pg_dump \
         -h "$PGHOST" \
         -p "$PGPORT" \

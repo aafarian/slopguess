@@ -61,6 +61,10 @@ docker --version
 docker compose version
 ```
 
+> **Minimum version required**: Docker Compose **v2.24.0+** is required because the
+> production compose override (`docker-compose.prod.yml`) uses the `!override` YAML tag
+> to reset port mappings. Older versions will fail to parse the file.
+
 ### 1.2 Clone the Repository
 
 ```bash
@@ -470,6 +474,17 @@ No action is needed for routine renewals. The Certbot container must be running:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml ps certbot
+```
+
+**Important**: After Certbot renews a certificate, nginx must reload to pick up the new
+files. Add a cron job on the host to reload nginx every 12 hours (matching Certbot's
+renewal schedule):
+
+```bash
+crontab -e
+
+# Reload nginx every 12 hours to pick up renewed TLS certificates
+0 */12 * * * cd ~/slop-guesser && docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T client nginx -s reload >> /var/log/nginx-reload.log 2>&1
 ```
 
 ### 7.2 Manual Renewal

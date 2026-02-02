@@ -41,6 +41,10 @@ export interface ActiveRoundResponse {
   round: Round;
   hasGuessed?: boolean;
   userScore?: number | null;
+  /** The user's guess text (if they've already guessed). */
+  userGuessText?: string | null;
+  /** Dev-only: element scores for the user's guess (present when NODE_ENV !== 'production'). */
+  elementScores?: ElementScoreBreakdown | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,9 +67,14 @@ export interface GuessSubmission {
 /** Response from POST /api/rounds/:roundId/guess. */
 export interface GuessResult {
   guessId: string;
+  guessText: string;
   score: number | null;
   rank: number;
   totalGuesses: number;
+  /** Dev-only: original prompt (present when NODE_ENV !== 'production'). */
+  prompt?: string | null;
+  /** Dev-only: element score breakdown (present when NODE_ENV !== 'production'). */
+  elementScores?: ElementScoreBreakdown;
 }
 
 // ---------------------------------------------------------------------------

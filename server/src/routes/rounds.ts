@@ -33,6 +33,9 @@ const roundsRouter = Router();
 /** Maximum length for guess text. */
 const MAX_GUESS_LENGTH = 200;
 
+/** True outside production — gates debug fields (prompt, elementScores) in responses. */
+const isDev = process.env.NODE_ENV !== "production";
+
 // ---------------------------------------------------------------------------
 // GET /active — Get the current active round
 // ---------------------------------------------------------------------------
@@ -61,27 +64,44 @@ roundsRouter.get(
       // If user is authenticated, check if they've already guessed
       let hasGuessed = false;
       let userScore: number | null = null;
+      let userGuessText: string | null = null;
+      let userElementScores: Record<string, unknown> | null = null;
 
       if (req.user) {
-        const guessResult = await pool.query<{ score: number }>(
-          `SELECT score FROM guesses WHERE round_id = $1 AND user_id = $2`,
+        const guessResult = await pool.query<{
+          score: number;
+          guess_text: string;
+          element_scores: Record<string, unknown> | null;
+        }>(
+          `SELECT score, guess_text, element_scores FROM guesses WHERE round_id = $1 AND user_id = $2`,
           [round.id, req.user.userId]
         );
 
         if (guessResult.rows.length > 0) {
           hasGuessed = true;
           userScore = guessResult.rows[0].score;
+          userGuessText = guessResult.rows[0].guess_text;
+          if (isDev) {
+            userElementScores = guessResult.rows[0].element_scores;
+          }
         }
       }
 
+      // In dev mode, reveal prompt after guessing for debugging; in prod always hide it
+      const publicRound = (isDev && hasGuessed)
+        ? toCompletedRound(round)
+        : toPublicRound(round);
+
       res.status(200).json({
         round: {
-          ...toPublicRound(round),
+          ...publicRound,
           guessCount,
         },
         ...(req.user ? {
           hasGuessed,
           userScore,
+          userGuessText,
+          ...(isDev ? { elementScores: userElementScores ?? null } : {}),
         } : {}),
       });
     } catch (err: unknown) {
@@ -216,11 +236,21 @@ roundsRouter.post(
       );
       const totalGuesses = parseInt(totalResult.rows[0].count, 10);
 
+      // Dev-only: include prompt and element scores for debugging
+      const devFields: Record<string, unknown> = {};
+      if (isDev) {
+        const round = await roundService.getRoundById(roundId);
+        devFields.prompt = round?.prompt ?? null;
+        devFields.elementScores = savedGuess.elementScores ?? null;
+      }
+
       res.status(201).json({
         guessId: savedGuess.id,
+        guessText,
         score: savedGuess.score,
         rank,
         totalGuesses,
+        ...devFields,
       });
     } catch (err: unknown) {
       // Map service-level errors to proper HTTP status codes

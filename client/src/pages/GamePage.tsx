@@ -19,13 +19,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getActiveRound, rotateRound } from '../services/game';
-import type { Round, GuessResult } from '../types/game';
+import type { Round, GuessResult, ElementScoreBreakdown } from '../types/game';
 import { ApiRequestError } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ScoreDisplay from '../components/ScoreDisplay';
 import GuessForm from '../components/GuessForm';
+import ElementBreakdown from '../components/ElementBreakdown';
 import ShareButton from '../components/ShareButton';
 
 /** Duration of the "Analyzing your guess..." transition in ms. */
@@ -48,9 +49,12 @@ export default function GamePage() {
   const [guessResult, setGuessResult] = useState<GuessResult | null>(null);
   const [submissionPhase, setSubmissionPhase] = useState<SubmissionPhase>('idle');
   const [roundEnded, setRoundEnded] = useState(false);
+  const [savedGuessText, setSavedGuessText] = useState<string | null>(null);
+  const [savedElementScores, setSavedElementScores] = useState<ElementScoreBreakdown | null>(null);
 
   // Dev toolbar state
   const [rotating, setRotating] = useState(false);
+  const [devViewMode, setDevViewMode] = useState<'dev' | 'prod'>('dev');
 
   const fetchRound = useCallback(async () => {
     setLoading(true);
@@ -60,6 +64,8 @@ export default function GamePage() {
       setRound(data.round ?? null);
       setHasGuessed(data.hasGuessed ?? false);
       setUserScore(data.userScore ?? null);
+      setSavedGuessText(data.userGuessText ?? null);
+      setSavedElementScores(data.elementScores ?? null);
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 404) {
         setRound(null);
@@ -110,6 +116,8 @@ export default function GamePage() {
       setSubmissionPhase('idle');
       setHasGuessed(false);
       setUserScore(null);
+      setSavedGuessText(null);
+      setSavedElementScores(null);
       setRoundEnded(false);
       await fetchRound();
     } catch (err) {
@@ -211,6 +219,12 @@ export default function GamePage() {
         <div className="dev-toolbar">
           <span className="dev-toolbar-label">DEV</span>
           <button
+            className={`btn btn-sm dev-toolbar-btn dev-toolbar-toggle dev-toolbar-toggle--${devViewMode}`}
+            onClick={() => setDevViewMode(devViewMode === 'dev' ? 'prod' : 'dev')}
+          >
+            {devViewMode === 'dev' ? 'Dev View' : 'Prod View'}
+          </button>
+          <button
             className="btn btn-sm btn-outline dev-toolbar-btn"
             onClick={handleRotateRound}
             disabled={rotating}
@@ -275,58 +289,89 @@ export default function GamePage() {
           )}
 
           {/* ---- State: Authenticated, score revealed ---- */}
-          {isAuthenticated && alreadyGuessed && !isAnalyzing && (
-            <div className="game-result game-result--fade-in">
-              {guessResult ? (
-                <ScoreDisplay
-                  score={guessResult.score ?? 0}
-                  rank={guessResult.rank}
-                  totalGuesses={guessResult.totalGuesses}
-                />
-              ) : userScore !== null && userScore !== undefined ? (
-                <div className="game-result-summary">
-                  <div className="game-result-score-label">Your score</div>
-                  <div className="game-result-score-value">{userScore}</div>
+          {isAuthenticated && alreadyGuessed && !isAnalyzing && (() => {
+            const showDevView = import.meta.env.DEV && devViewMode === 'dev';
+            const activeElementScores = guessResult?.elementScores ?? savedElementScores;
+            const activePrompt = guessResult?.prompt ?? round.prompt;
+            const activeGuessText = guessResult?.guessText ?? savedGuessText;
+
+            return (
+              <div className="game-result game-result--fade-in">
+                {guessResult ? (
+                  <ScoreDisplay
+                    score={guessResult.score ?? 0}
+                    rank={guessResult.rank}
+                    totalGuesses={guessResult.totalGuesses}
+                  />
+                ) : userScore !== null && userScore !== undefined ? (
+                  <div className="game-result-summary">
+                    <div className="game-result-score-label">Your score</div>
+                    <div className="game-result-score-value">{userScore}</div>
+                  </div>
+                ) : (
+                  <p className="game-result-submitted">
+                    You have already submitted a guess for this round.
+                  </p>
+                )}
+
+                {activeGuessText && (
+                  <div className="game-guess-reveal">
+                    <span className="game-guess-reveal-label">Your guess</span>
+                    <p className="game-guess-reveal-text">&ldquo;{activeGuessText}&rdquo;</p>
+                  </div>
+                )}
+
+                {showDevView ? (
+                  <>
+                    {activeElementScores && (
+                      <ElementBreakdown
+                        elementScores={activeElementScores}
+                        promptWords={activePrompt?.split(/\s+/).filter(Boolean)}
+                      />
+                    )}
+                    {activePrompt && (
+                      <div className="game-prompt-reveal">
+                        <span className="game-prompt-reveal-label">The prompt was</span>
+                        <p className="game-prompt-reveal-text">{activePrompt}</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="game-prompt-teaser">
+                    <p className="game-prompt-teaser-text">
+                      The prompt and word breakdown will be revealed when this round ends.
+                    </p>
+                  </div>
+                )}
+
+                {/* Share actions */}
+                {user && (
+                  <ShareButton
+                    score={guessResult?.score ?? userScore ?? 0}
+                    rank={guessResult?.rank ?? 0}
+                    totalGuesses={guessResult?.totalGuesses ?? round.guessCount}
+                    roundId={round.id}
+                    userId={user.id}
+                  />
+                )}
+
+                <div className="game-result-links">
+                  <Link
+                    to={`/rounds/${round.id}/leaderboard`}
+                    className="btn btn-primary game-result-link"
+                  >
+                    View Leaderboard
+                  </Link>
+                  <Link
+                    to={`/rounds/${round.id}`}
+                    className="btn btn-outline game-result-link"
+                  >
+                    Round Details
+                  </Link>
                 </div>
-              ) : (
-                <p className="game-result-submitted">
-                  You have already submitted a guess for this round.
-                </p>
-              )}
-
-              <div className="game-prompt-teaser">
-                <p className="game-prompt-teaser-text">
-                  The prompt and word breakdown will be revealed when this round ends.
-                </p>
               </div>
-
-              {/* Share actions */}
-              {user && (
-                <ShareButton
-                  score={guessResult?.score ?? userScore ?? 0}
-                  rank={guessResult?.rank ?? 0}
-                  totalGuesses={guessResult?.totalGuesses ?? round.guessCount}
-                  roundId={round.id}
-                  userId={user.id}
-                />
-              )}
-
-              <div className="game-result-links">
-                <Link
-                  to={`/rounds/${round.id}/leaderboard`}
-                  className="btn btn-primary game-result-link"
-                >
-                  View Leaderboard
-                </Link>
-                <Link
-                  to={`/rounds/${round.id}`}
-                  className="btn btn-outline game-result-link"
-                >
-                  Round Details
-                </Link>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ---- State: Authenticated, not yet guessed ---- */}
           {isAuthenticated && !alreadyGuessed && !isAnalyzing && (

@@ -1055,6 +1055,37 @@ form .btn {
   word-break: break-word;
 }
 
+/* --- Guess reveal (shows user's guess after submission) ------------- */
+
+.game-guess-reveal {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid var(--text-secondary);
+  border-radius: 0 6px 6px 0;
+}
+
+.game-guess-reveal-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.game-guess-reveal-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.45;
+  margin: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 /* --- Prompt teaser (prod view during active rounds) ---------------- */
 
 .game-prompt-teaser {
