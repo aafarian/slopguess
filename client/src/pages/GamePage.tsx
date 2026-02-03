@@ -198,7 +198,7 @@ export default function GamePage() {
     // Kick off async streak fetch when guess is submitted
     fetchStreakData();
     // Kick off async personal best check
-    checkPersonalBest(result.score);
+    if (result.score !== null) checkPersonalBest(result.score);
 
     setTimeout(() => {
       setSubmissionPhase('revealed');
