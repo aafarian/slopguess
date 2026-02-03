@@ -58,6 +58,9 @@
  * │ /api/subscriptions/checkout         │ POST   │ Create Stripe Checkout session (auth)     │
  * │ /api/subscriptions/portal           │ POST   │ Create Stripe Customer Portal (auth)      │
  * │ /api/subscriptions/webhook          │ POST   │ Stripe webhook endpoint (raw body)        │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/activity/feed                  │ GET    │ Friend activity feed (auth)               │
+ * │ /api/activity/user/:username        │ GET    │ Public activity for a user (optionalAuth)  │
  * └─────────────────────────────────────┴────────┴──────────────────────────────────────────┘
  *
  * Auth: Routes marked "requires auth" expect an Authorization: Bearer <JWT> header.
@@ -78,6 +81,7 @@ import { notificationsRouter } from "./notifications";
 import { achievementsRouter } from "./achievements";
 import { leaderboardsRouter } from "./leaderboards";
 import { subscriptionsRouter } from "./subscriptions";
+import { activityRouter } from "./activity";
 const router = Router();
 
 // Health check
@@ -115,6 +119,9 @@ router.use("/leaderboards", leaderboardsRouter);
 
 // Subscriptions (subscription status, Stripe checkout, portal, webhook)
 router.use("/subscriptions", subscriptionsRouter);
+
+// Activity feed (friend feed, per-user activity)
+router.use("/activity", activityRouter);
 
 // Admin (round management, dev tools)
 router.use("/admin", adminRouter);
