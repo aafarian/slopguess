@@ -14,6 +14,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useSubscription } from '../hooks/useSubscription';
 import {
   getFriends,
   getPendingRequests,
@@ -35,6 +36,7 @@ const DEBOUNCE_MS = 300;
 
 export default function FriendsPage() {
   const { isAuthenticated } = useAuth();
+  const { isPro, challengeLimit, canSendChallenge } = useSubscription();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -317,15 +319,26 @@ export default function FriendsPage() {
                     </span>
                   </div>
                   <div className="friends-list-item-actions">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-primary"
-                      onClick={() =>
-                        navigate(`/challenges?friendId=${friend.friendId}`)
-                      }
-                    >
-                      Challenge
-                    </button>
+                    {canSendChallenge ? (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-primary"
+                        onClick={() =>
+                          navigate(`/challenges?friendId=${friend.friendId}`)
+                        }
+                      >
+                        {isPro
+                          ? 'Challenge'
+                          : `Challenge (${challengeLimit.remaining}/${challengeLimit.allowed} left)`}
+                      </button>
+                    ) : (
+                      <Link
+                        to="/pricing"
+                        className="btn btn-sm btn-outline friends-btn-upgrade"
+                      >
+                        Upgrade to Pro for unlimited
+                      </Link>
+                    )}
                     <button
                       type="button"
                       className="btn btn-sm btn-outline"
