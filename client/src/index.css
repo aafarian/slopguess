@@ -7779,3 +7779,478 @@ body {
     text-align: center;
   }
 }
+
+/* ===================================================================
+   Print Shop -- Orders list page
+   =================================================================== */
+
+.ps-orders-page {
+  padding-bottom: 2rem;
+}
+
+.ps-orders-page-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+/* Responsive grid: 1 col mobile, 2 col tablet, 3 col desktop */
+.ps-orders-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .ps-orders-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ps-orders-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Order card */
+.ps-order-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ps-order-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgba(100, 108, 255, 0.15);
+  color: inherit;
+}
+
+.ps-order-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.ps-order-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.ps-order-card:hover .ps-order-card-image {
+  transform: scale(1.05);
+}
+
+.ps-order-card-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  background: var(--bg-secondary);
+}
+
+.ps-order-card-overlay {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.ps-order-card-body {
+  padding: 0.75rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.ps-order-card-sku {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ps-order-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.ps-order-card-price {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.ps-order-card-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Status badges */
+.ps-order-status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+}
+
+.ps-order-status-badge--pending {
+  background: rgba(160, 160, 180, 0.2);
+  color: #b0b0c8;
+}
+
+.ps-order-status-badge--paid {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.ps-order-status-badge--submitted {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.ps-order-status-badge--in_production {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+}
+
+.ps-order-status-badge--shipped {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+
+.ps-order-status-badge--delivered {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.ps-order-status-badge--cancelled {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+.ps-order-status-badge--failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+/* Pagination */
+.ps-orders-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.ps-orders-pagination-indicator {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  min-width: 8rem;
+  text-align: center;
+}
+
+/* ===================================================================
+   Print Shop -- Order detail page
+   =================================================================== */
+
+.ps-order-detail {
+  max-width: 700px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+/* Stripe redirect banners */
+.ps-order-banner {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.ps-order-banner--success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.ps-order-banner--info {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+/* Large image */
+.ps-order-detail-image-container {
+  width: 100%;
+  max-height: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  background: var(--bg-secondary);
+}
+
+.ps-order-detail-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  display: block;
+}
+
+.ps-order-detail-image-placeholder {
+  width: 100%;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Body */
+.ps-order-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ps-order-detail-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.ps-order-detail-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+/* Info grid (label-value pairs) */
+.ps-order-detail-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ps-order-detail-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+}
+
+.ps-order-detail-info-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.ps-order-detail-info-value {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Price breakdown */
+.ps-order-detail-price-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ps-order-detail-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.ps-order-detail-price-row--total {
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+  margin-top: 0.2rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+/* Shipping address */
+.ps-order-detail-address {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.ps-order-detail-address p {
+  margin: 0;
+}
+
+/* Order status timeline */
+.ps-order-timeline {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.ps-order-timeline-track {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
+
+.ps-order-timeline-step {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  padding-left: 2rem;
+  padding-bottom: 1.25rem;
+}
+
+.ps-order-timeline-step:last-child {
+  padding-bottom: 0;
+}
+
+.ps-order-timeline-dot {
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-secondary);
+  z-index: 1;
+}
+
+.ps-order-timeline-line {
+  position: absolute;
+  left: 6px;
+  top: 16px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--border);
+}
+
+.ps-order-timeline-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+/* Done step */
+.ps-order-timeline-step--done .ps-order-timeline-dot {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.ps-order-timeline-step--done .ps-order-timeline-line {
+  background: var(--success);
+}
+
+.ps-order-timeline-step--done .ps-order-timeline-label {
+  color: var(--text-primary);
+}
+
+/* Current step */
+.ps-order-timeline-step--current .ps-order-timeline-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(124, 131, 255, 0.25);
+}
+
+.ps-order-timeline-step--current .ps-order-timeline-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Upcoming step stays default styling */
+
+/* Terminal state (cancelled/failed) label below timeline */
+.ps-order-timeline-terminal {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.ps-order-timeline-terminal--cancelled {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+.ps-order-timeline-terminal--failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+/* Back link */
+.ps-order-detail-back {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+/* ===================================================================
+   Print Shop Orders/Detail -- Responsive overrides
+   =================================================================== */
+
+@media (max-width: 480px) {
+  .ps-orders-page-title {
+    font-size: 1.4rem;
+  }
+
+  .ps-order-detail-image-container {
+    border-radius: 8px;
+    max-height: 300px;
+  }
+
+  .ps-order-detail-image {
+    max-height: 300px;
+  }
+
+  .ps-order-detail-section {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+
+  .ps-order-timeline {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+
+  .ps-order-card-image-wrapper {
+    aspect-ratio: 4 / 3;
+  }
+}
