@@ -952,11 +952,16 @@ form .btn {
   overflow: hidden;
 }
 
-/* When game page is active, prevent the parent .main-content from
-   adding padding or allowing scroll — the game manages its own layout. */
+/* When game page is active, lock the parent containers so the game
+   fills exactly the remaining viewport — no outer scroll. */
 .main-content:has(.game-page) {
   padding: 0;
   overflow: hidden;
+}
+
+.ptr-content:has(.game-page) {
+  min-height: 0;
+  height: 100%;
 }
 
 /* --- Dev toolbar (visible only in dev mode) ------------------------ */
