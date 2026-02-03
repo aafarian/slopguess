@@ -5403,3 +5403,319 @@ body {
     max-width: none;
   }
 }
+
+/* ====================================================================== */
+/*  Seasonal Leaderboard Page  (sl- prefix)                               */
+/* ====================================================================== */
+
+.sl-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* --- Header ---------------------------------------------------------- */
+
+.sl-header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.sl-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+/* --- Period type toggle (pill style) --------------------------------- */
+
+.sl-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sl-toggle-btn {
+  padding: 0.45rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.sl-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.sl-toggle-btn--active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.sl-toggle-btn--active:hover {
+  color: #fff;
+}
+
+/* --- Period navigation ----------------------------------------------- */
+
+.sl-period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sl-period-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.sl-period-arrow:hover:not(:disabled) {
+  background: rgba(100, 108, 255, 0.08);
+  border-color: var(--accent);
+}
+
+.sl-period-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sl-period-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 180px;
+  text-align: center;
+}
+
+.sl-period-current-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--score-excellent);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+/* --- User rank summary ----------------------------------------------- */
+
+.sl-rank-summary {
+  text-align: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(100, 108, 255, 0.08);
+  border: 1px solid rgba(100, 108, 255, 0.2);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.sl-rank-summary strong {
+  color: var(--accent);
+}
+
+.sl-rank-summary--none {
+  background: rgba(160, 160, 176, 0.08);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+/* --- Table ----------------------------------------------------------- */
+
+.sl-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  -webkit-overflow-scrolling: touch;
+}
+
+.sl-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sl-th {
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.sl-th--rank {
+  width: 56px;
+  text-align: center;
+}
+
+.sl-th--games,
+.sl-th--avg,
+.sl-th--total {
+  width: 80px;
+  text-align: right;
+}
+
+.sl-td {
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sl-td--rank {
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sl-td--player {
+  font-weight: 500;
+}
+
+.sl-td--games,
+.sl-td--avg,
+.sl-td--total {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sl-td--total {
+  font-weight: 700;
+}
+
+/* Last row: no bottom border */
+.sl-table tbody tr:last-child .sl-td {
+  border-bottom: none;
+}
+
+/* --- Row variants ---------------------------------------------------- */
+
+.sl-row {
+  transition: background-color 0.2s;
+}
+
+.sl-row:hover {
+  background: rgba(100, 108, 255, 0.06);
+}
+
+/* Current user highlight */
+.sl-row--current {
+  background: rgba(100, 108, 255, 0.1);
+  border-left: 3px solid var(--accent);
+}
+
+.sl-row--current:hover {
+  background: rgba(100, 108, 255, 0.16);
+}
+
+/* --- Medal ----------------------------------------------------------- */
+
+.sl-medal {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* --- Player cell (avatar + name) ------------------------------------- */
+
+.sl-player-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sl-player-name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* --- Avatar (replicates FriendsPage pattern) ------------------------- */
+
+.sl-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* --- Responsive ------------------------------------------------------ */
+
+@media (max-width: 600px) {
+  .sl-title {
+    font-size: 1.5rem;
+  }
+
+  .sl-toggle-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .sl-period-label {
+    font-size: 0.9rem;
+    min-width: 140px;
+  }
+
+  .sl-th,
+  .sl-td {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .sl-th--rank {
+    width: 44px;
+  }
+
+  .sl-th--games,
+  .sl-th--avg,
+  .sl-th--total {
+    width: 60px;
+  }
+
+  .sl-avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 0.7rem;
+  }
+
+  .sl-rank-summary {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+  }
+}

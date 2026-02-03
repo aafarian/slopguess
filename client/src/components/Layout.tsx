@@ -12,10 +12,11 @@
  * Uses NavLink for active link highlighting.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
+import { fetchXPStatus } from '../services/achievements';
 import NotificationBell from './NotificationBell';
 import ProBadge from './ProBadge';
 
@@ -24,6 +25,18 @@ export default function Layout() {
   const { isPro, monetizationEnabled } = useSubscription();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userLevel, setUserLevel] = useState<number | null>(null);
+
+  // Fetch the user's level for the header badge
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUserLevel(null);
+      return;
+    }
+    fetchXPStatus()
+      .then((status) => setUserLevel(status.level))
+      .catch(() => {/* Non-critical — silently ignore */});
+  }, [isAuthenticated]);
 
   function handleLogout() {
     logout();
@@ -74,6 +87,15 @@ export default function Layout() {
               onClick={closeMobileMenu}
             >
               History
+            </NavLink>
+            <NavLink
+              to="/leaderboards"
+              className={({ isActive }) =>
+                `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
+              }
+              onClick={closeMobileMenu}
+            >
+              Leaderboards
             </NavLink>
             <NavLink
               to="/profile"
@@ -146,6 +168,9 @@ export default function Layout() {
                 <NotificationBell />
                 <span className="navbar-user">
                   {user?.username}
+                  {userLevel !== null && (
+                    <span className="navbar-level-badge">Lv.&nbsp;{userLevel}</span>
+                  )}
                   {monetizationEnabled && <ProBadge isPro={isPro} />}
                 </span>
                 <button

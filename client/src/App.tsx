@@ -14,6 +14,7 @@ import ChallengePage from './pages/ChallengePage'
 import ChallengeDetailPage from './pages/ChallengeDetailPage'
 import MessagesPage from './pages/MessagesPage'
 import AchievementsPage from './pages/AchievementsPage'
+import SeasonalLeaderboardPage from './pages/SeasonalLeaderboardPage'
 import PricingPage from './pages/PricingPage'
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage'
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage'
@@ -38,6 +39,9 @@ function App() {
             {/* Round detail and leaderboard */}
             <Route path="/rounds/:roundId" element={<RoundDetailPage />} />
             <Route path="/rounds/:roundId/leaderboard" element={<LeaderboardPage />} />
+
+            {/* Seasonal leaderboards (public, user rank requires auth) */}
+            <Route path="/leaderboards" element={<SeasonalLeaderboardPage />} />
 
             {/* Player profile (shows inline login prompt when logged out) */}
             <Route path="/profile" element={<ProfilePage />} />
