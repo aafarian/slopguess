@@ -13,6 +13,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { requireAuth } from "../middleware/auth";
 import * as friendshipService from "../services/friendshipService";
+import { achievementService } from "../services/achievements";
 
 const friendsRouter = Router();
 
@@ -111,6 +112,9 @@ friendsRouter.post(
         friendshipId,
         userId,
       );
+
+      // Fire-and-forget: check social achievements for both users
+      achievementService.checkAndUnlock(userId, { type: 'friend' }).catch(() => {});
 
       res.status(200).json({ friendship });
     } catch (err: unknown) {

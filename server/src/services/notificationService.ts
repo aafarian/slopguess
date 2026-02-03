@@ -19,7 +19,8 @@ export type NotificationType =
   | "friend_accepted"
   | "challenge_received"
   | "challenge_guessed"
-  | "new_message";
+  | "new_message"
+  | "achievement_unlocked";
 
 /** A single notification record. */
 export interface Notification {

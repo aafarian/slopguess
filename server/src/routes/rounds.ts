@@ -18,6 +18,7 @@ import { roundService } from "../services/roundService";
 import { scoringService } from "../services/scoringService";
 import { leaderboardService } from "../services/leaderboardService";
 import { streakService } from "../services/streakService";
+import { achievementService } from "../services/achievements";
 import { logger } from "../config/logger";
 import { containsBlockedContent } from "../services/contentFilter";
 import { scheduler } from "../services/scheduler";
@@ -213,15 +214,30 @@ roundsRouter.post(
         guessText
       );
 
-      // 3. Fire-and-forget: record the play for streak tracking
+      // 3. Fire-and-forget: record the play for streak tracking + achievement checks
       if (req.user) {
-        streakService.recordPlay(req.user.userId).catch((streakErr: unknown) => {
-          const msg = streakErr instanceof Error ? streakErr.message : String(streakErr);
-          logger.error("rounds", `Failed to record streak for user ${req.user!.userId}`, {
-            userId: req.user!.userId,
-            error: msg,
+        const userId = req.user.userId;
+
+        // Streak tracking (also feeds streak achievement check)
+        streakService.recordPlay(userId)
+          .then((streakData) => {
+            // Check streak achievements with the updated streak count
+            achievementService.checkAndUnlock(userId, { type: 'streak', count: streakData.currentStreak })
+              .catch(() => {});
+          })
+          .catch((streakErr: unknown) => {
+            const msg = streakErr instanceof Error ? streakErr.message : String(streakErr);
+            logger.error("rounds", `Failed to record streak for user ${userId}`, {
+              userId,
+              error: msg,
+            });
           });
-        });
+
+        // Check score + volume achievements based on this guess
+        if (savedGuess.score !== null) {
+          achievementService.checkAndUnlock(userId, { type: 'guess', score: savedGuess.score })
+            .catch(() => {});
+        }
       }
 
       // 4. Compute rank: how many guesses scored higher + 1

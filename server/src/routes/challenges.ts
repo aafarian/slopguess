@@ -15,6 +15,7 @@ import { requireAuth } from "../middleware/auth";
 import { challengeService } from "../services/challengeService";
 import { containsBlockedContent } from "../services/contentFilter";
 import * as friendshipService from "../services/friendshipService";
+import { achievementService } from "../services/achievements";
 
 const challengesRouter = Router();
 
@@ -104,6 +105,9 @@ challengesRouter.post(
         friendId,
         promptText,
       );
+
+      // Fire-and-forget: check challenge_sent achievement
+      achievementService.checkAndUnlock(userId, { type: 'challenge_sent' }).catch(() => {});
 
       res.status(202).json({ challenge });
     } catch (err: unknown) {
@@ -337,6 +341,15 @@ challengesRouter.post(
         userId,
         guessText,
       );
+
+      // Fire-and-forget: check if the challenged user won (their score > challenger score)
+      if (
+        challenge.challengedScore !== null &&
+        challenge.challengerScore !== null &&
+        challenge.challengedScore > challenge.challengerScore
+      ) {
+        achievementService.checkAndUnlock(userId, { type: 'challenge_won' }).catch(() => {});
+      }
 
       res.status(200).json({ challenge });
     } catch (err: unknown) {

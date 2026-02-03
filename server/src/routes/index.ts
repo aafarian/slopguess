@@ -75,6 +75,7 @@ import { friendsRouter } from "./friends";
 import { challengesRouter } from "./challenges";
 import { messagesRouter } from "./messages";
 import { notificationsRouter } from "./notifications";
+import { achievementsRouter } from "./achievements";
 import { subscriptionsRouter } from "./subscriptions";
 const router = Router();
 
@@ -104,6 +105,9 @@ router.use("/messages", messagesRouter);
 
 // Notifications (user notifications, unread count, mark read)
 router.use("/notifications", notificationsRouter);
+
+// Achievements (achievement definitions, user progress, recent unlocks)
+router.use("/achievements", achievementsRouter);
 
 // Subscriptions (subscription status, Stripe checkout, portal, webhook)
 router.use("/subscriptions", subscriptionsRouter);
