@@ -71,6 +71,27 @@ export interface CreateOrderParams {
 }
 
 // ---------------------------------------------------------------------------
+// SKU mapping — translate our internal SKUs to Prodigi catalog SKUs
+// ---------------------------------------------------------------------------
+
+/**
+ * Our internal SKU format: `GLOBAL-CFPM-{SIZE}-{COLOR}`
+ * Prodigi SKU format:      `GLOBAL-CFPM-{SIZE}` + attributes: { color }
+ *
+ * Parses the internal SKU and returns the Prodigi SKU and color attribute.
+ */
+function parseInternalSku(internalSku: string): { prodigiSku: string; color: string } {
+  // Expected format: GLOBAL-CFPM-16X20-BLACK
+  const parts = internalSku.split("-");
+  if (parts.length < 4) {
+    throw new Error(`Invalid internal SKU format: ${internalSku}`);
+  }
+  const color = parts[parts.length - 1].toLowerCase();
+  const prodigiSku = parts.slice(0, -1).join("-");
+  return { prodigiSku, color };
+}
+
+// ---------------------------------------------------------------------------
 // Guard
 // ---------------------------------------------------------------------------
 
@@ -219,13 +240,16 @@ async function getQuote(sku: string, quantity: number): Promise<ProdigiQuote> {
     }>;
   }
 
+  const { prodigiSku, color } = parseInternalSku(sku);
+
   const data = await prodigiFetch<ProdigiQuoteResponse>("POST", "/quotes", {
     shippingMethod: "standard",
     destinationCountryCode: "US",
     items: [
       {
-        sku,
+        sku: prodigiSku,
         copies: quantity,
+        attributes: { color },
         assets: [{ printArea: "default" }],
       },
     ],
@@ -274,6 +298,8 @@ async function createOrder(params: CreateOrderParams): Promise<{ orderId: string
     };
   }
 
+  const { prodigiSku, color } = parseInternalSku(params.sku);
+
   const requestBody: Record<string, unknown> = {
     shippingMethod: "standard",
     recipient: {
@@ -289,8 +315,10 @@ async function createOrder(params: CreateOrderParams): Promise<{ orderId: string
     },
     items: [
       {
-        sku: params.sku,
+        sku: prodigiSku,
         copies: params.quantity,
+        attributes: { color },
+        sizing: "fillPrintArea",
         assets: [{ printArea: "default", url: params.imageUrl }],
       },
     ],

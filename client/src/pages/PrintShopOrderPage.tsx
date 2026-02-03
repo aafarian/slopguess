@@ -24,12 +24,11 @@ import ErrorMessage from '../components/ErrorMessage';
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Available frame sizes with display labels. */
+/** Available frame sizes mapped to Prodigi CFPM SKU sizes. */
 const FRAME_SIZES: { value: string; label: string }[] = [
-  { value: '8x10', label: '8" x 10"' },
-  { value: '11x14', label: '11" x 14"' },
-  { value: '16x20', label: '16" x 20"' },
-  { value: '24x36', label: '24" x 36"' },
+  { value: '12X16', label: '12" x 16"' },
+  { value: '16X20', label: '16" x 20"' },
+  { value: '20X28', label: '20" x 28"' },
 ];
 
 /** Available frame styles with display labels. */
@@ -119,10 +118,10 @@ export default function PrintShopOrderPage() {
   const [error, setError] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  // Derived SKU from selections
+  // Derived SKU from selections (format: GLOBAL-CFPM-{SIZE}-{COLOR})
   const selectedSku = useMemo(() => {
     if (!selectedSize || !selectedStyle) return '';
-    return `FRAME-${selectedSize}-${selectedStyle}`.toUpperCase();
+    return `GLOBAL-CFPM-${selectedSize}-${selectedStyle.toUpperCase()}`;
   }, [selectedSize, selectedStyle]);
 
   // -------------------------------------------------------------------------
@@ -364,26 +363,31 @@ export default function PrintShopOrderPage() {
 
       {/* ---- Step 1: Preview ---- */}
       {step === 1 && (
-        <div className="ps-order-step-content ps-order-step-content--centered">
-          <div className="ps-order-preview">
-            <img
-              src={round.imageUrl}
-              alt="AI-generated image to be framed"
-              className="ps-order-preview-img ps-order-preview-img--clickable"
-              onClick={() => setLightboxOpen(true)}
-              title="Click to enlarge"
-            />
-          </div>
-          <p className="ps-order-preview-caption">
-            Printed on high-quality paper and professionally framed. Click image to enlarge.
-          </p>
-          <div className="ps-order-actions ps-order-actions--centered">
-            <button className="btn btn-primary" onClick={() => setStep(2)}>
-              Choose Frame Options
-            </button>
-            <Link to={`/rounds/${round.id}`} className="btn btn-outline">
-              Back to Round
-            </Link>
+        <div className="ps-order-step-content">
+          <div className="ps-order-customize">
+            <div className="ps-order-customize-preview">
+              <img
+                src={round.imageUrl}
+                alt="AI-generated image to be framed"
+                className="ps-order-preview-img ps-order-preview-img--clickable"
+                onClick={() => setLightboxOpen(true)}
+                title="Click to enlarge"
+              />
+            </div>
+            <div className="ps-order-customize-options">
+              <h2 className="ps-order-preview-heading">Frame This Image</h2>
+              <p className="ps-order-preview-caption">
+                Printed on high-quality fine art paper and professionally mounted in a classic frame. Click the image to see it full size.
+              </p>
+              <div className="ps-order-actions">
+                <button className="btn btn-primary" onClick={() => setStep(2)}>
+                  Choose Frame Options
+                </button>
+                <Link to={`/rounds/${round.id}`} className="btn btn-outline">
+                  Back to Round
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       )}
