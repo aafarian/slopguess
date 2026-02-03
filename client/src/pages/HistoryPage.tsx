@@ -166,17 +166,17 @@ export default function HistoryPage() {
                     {round.topScore ?? '--'}
                   </span>
                 </span>
+                {printShopEnabled && round.imageUrl && (
+                  <Link
+                    to={`/print-shop/order?roundId=${round.id}`}
+                    className="frame-this-btn frame-this-btn--card"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="frame-this-btn-icon" aria-hidden="true">&#128444;&#65039;</span>
+                    Frame
+                  </Link>
+                )}
               </div>
-              {printShopEnabled && round.imageUrl && (
-                <Link
-                  to={`/print-shop/order?roundId=${round.id}`}
-                  className="frame-this-btn frame-this-btn--card"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <span className="frame-this-btn-icon" aria-hidden="true">&#128444;&#65039;</span>
-                  Frame This
-                </Link>
-              )}
             </div>
           </Link>
         ))}

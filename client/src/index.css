@@ -7220,10 +7220,16 @@ body {
   line-height: 1;
 }
 
-/* Variant inside history cards — align to the right */
+/* Variant inside history cards — compact inline in stats row */
 .frame-this-btn--card {
-  margin-top: 0.5rem;
-  align-self: flex-end;
+  margin-left: auto;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  border-color: transparent;
+}
+
+.frame-this-btn--card:hover {
+  border-color: var(--accent);
 }
 
 /* Container for the button on the round detail page */
