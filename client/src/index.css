@@ -654,6 +654,38 @@ form .btn {
   color: var(--text-secondary);
 }
 
+.score-display-percentile {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  animation: score-percentile-fade-in 0.5s ease-out both;
+}
+
+.score-display-percentile-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.score-display-percentile-encouragement {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+@keyframes score-percentile-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Score color classes (use CSS variables) */
 
 .score-excellent {

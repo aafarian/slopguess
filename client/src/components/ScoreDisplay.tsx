@@ -33,6 +33,17 @@ function getScoreLabel(score: number): string {
   return 'Keep trying';
 }
 
+function getPercentileMessage(rank: number, totalGuesses: number): { text: string; encouragement: string } | null {
+  if (totalGuesses <= 1) return null;
+  const percentile = Math.round(((totalGuesses - rank) / totalGuesses) * 100);
+  let encouragement: string;
+  if (percentile >= 90) encouragement = 'Amazing!';
+  else if (percentile >= 75) encouragement = 'Well done!';
+  else if (percentile >= 50) encouragement = 'Not bad!';
+  else encouragement = 'Keep it up!';
+  return { text: `You beat ${percentile}% of players!`, encouragement };
+}
+
 const ANIMATION_DURATION_MS = 1000;
 
 export default function ScoreDisplay({ score, rank, totalGuesses }: ScoreDisplayProps) {
@@ -91,6 +102,25 @@ export default function ScoreDisplay({ score, rank, totalGuesses }: ScoreDisplay
       <div className="score-display-rank">
         Rank #{rank} of {totalGuesses}
       </div>
+      {animationDone && (
+        <div className="score-display-percentile">
+          {totalGuesses === 1 ? (
+            <span className="score-display-percentile-text">
+              You're the first to guess!
+            </span>
+          ) : (
+            (() => {
+              const msg = getPercentileMessage(rank, totalGuesses);
+              return msg ? (
+                <>
+                  <span className="score-display-percentile-text">{msg.text}</span>
+                  <span className="score-display-percentile-encouragement">{msg.encouragement}</span>
+                </>
+              ) : null;
+            })()
+          )}
+        </div>
+      )}
     </div>
   );
 }
