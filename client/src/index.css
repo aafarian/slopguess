@@ -3646,6 +3646,20 @@ body {
   border-color: var(--error);
 }
 
+/* --- Inline remove confirmation ------------------------------------ */
+
+.friends-list-item--confirming {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.friends-confirm-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--error);
+  white-space: nowrap;
+}
+
 .friends-section-label {
   font-size: 0.85rem;
   text-transform: uppercase;

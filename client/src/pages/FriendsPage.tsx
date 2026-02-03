@@ -102,6 +102,9 @@ export default function FriendsPage() {
   // Mutation loading states
   const [mutatingIds, setMutatingIds] = useState<Set<string>>(new Set());
 
+  // Confirmation dialog state -- only one at a time
+  const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
+
   // Debounce timer ref
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -355,7 +358,10 @@ export default function FriendsPage() {
                   })
                 )
                 .map((friend) => (
-                <li key={friend.id} className="friends-list-item">
+                <li
+                  key={friend.id}
+                  className={`friends-list-item${confirmingRemoveId === friend.id ? ' friends-list-item--confirming' : ''}`}
+                >
                   <Avatar username={friend.friendUsername} />
                   <div className="friends-list-item-info">
                     <span className="friends-list-item-username">
@@ -363,32 +369,60 @@ export default function FriendsPage() {
                     </span>
                   </div>
                   <div className="friends-list-item-actions">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-primary"
-                      onClick={() =>
-                        navigate(`/challenges?friendId=${friend.friendId}`)
-                      }
-                    >
-                      Challenge
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline"
-                      onClick={() =>
-                        navigate(`/messages?userId=${friend.friendId}`)
-                      }
-                    >
-                      Message
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline friends-btn-danger"
-                      disabled={mutatingIds.has(friend.id)}
-                      onClick={() => handleRemove(friend.id)}
-                    >
-                      {mutatingIds.has(friend.id) ? 'Removing...' : 'Remove'}
-                    </button>
+                    {confirmingRemoveId === friend.id ? (
+                      <>
+                        <span className="friends-confirm-label">
+                          Remove {friend.friendUsername}?
+                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline"
+                          onClick={() => setConfirmingRemoveId(null)}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline friends-btn-danger"
+                          disabled={mutatingIds.has(friend.id)}
+                          onClick={() => {
+                            handleRemove(friend.id);
+                            setConfirmingRemoveId(null);
+                          }}
+                        >
+                          {mutatingIds.has(friend.id) ? 'Removing...' : 'Confirm Remove'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary"
+                          onClick={() =>
+                            navigate(`/challenges?friendId=${friend.friendId}`)
+                          }
+                        >
+                          Challenge
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline"
+                          onClick={() =>
+                            navigate(`/messages?userId=${friend.friendId}`)
+                          }
+                        >
+                          Message
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline friends-btn-danger"
+                          disabled={mutatingIds.has(friend.id)}
+                          onClick={() => setConfirmingRemoveId(friend.id)}
+                        >
+                          {mutatingIds.has(friend.id) ? 'Removing...' : 'Remove'}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </li>
               ))}
