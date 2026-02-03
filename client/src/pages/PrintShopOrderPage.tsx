@@ -24,7 +24,14 @@ import ErrorMessage from '../components/ErrorMessage';
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Available frame sizes mapped to Prodigi CFPM SKU sizes. */
+/** Available product types with SKU prefix and frame info. */
+const PRODUCT_TYPES: { value: string; label: string; prefix: string; description: string; hasFrame: boolean }[] = [
+  { value: 'FAP', label: 'Fine Art Print', prefix: 'GLOBAL-FAP', description: 'Museum-quality print, no frame', hasFrame: false },
+  { value: 'CFP', label: 'Classic Frame', prefix: 'GLOBAL-CFP', description: 'Framed print, no mount', hasFrame: true },
+  { value: 'CFPM', label: 'Premium Frame', prefix: 'GLOBAL-CFPM', description: 'Framed with mount — our best option', hasFrame: true },
+];
+
+/** Available frame sizes mapped to Prodigi SKU sizes. */
 const FRAME_SIZES: { value: string; label: string }[] = [
   { value: '12X16', label: '12" x 16"' },
   { value: '16X20', label: '16" x 20"' },
@@ -96,6 +103,7 @@ export default function PrintShopOrderPage() {
   const [quote, setQuote] = useState<PrintQuote | null>(null);
 
   // Selections
+  const [selectedType, setSelectedType] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
 
@@ -118,11 +126,20 @@ export default function PrintShopOrderPage() {
   const [error, setError] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  // Derived SKU from selections (format: GLOBAL-CFPM-{SIZE}-{COLOR})
+  // Look up the selected product type config
+  const selectedProductType = useMemo(
+    () => PRODUCT_TYPES.find((t) => t.value === selectedType),
+    [selectedType],
+  );
+
+  // Derived SKU from selections
+  // FAP: GLOBAL-FAP-{SIZE}  |  CFP/CFPM: GLOBAL-{TYPE}-{SIZE}-{COLOR}
   const selectedSku = useMemo(() => {
-    if (!selectedSize || !selectedStyle) return '';
-    return `GLOBAL-CFPM-${selectedSize}-${selectedStyle.toUpperCase()}`;
-  }, [selectedSize, selectedStyle]);
+    if (!selectedType || !selectedSize) return '';
+    if (selectedType === 'FAP') return `GLOBAL-FAP-${selectedSize}`;
+    if (!selectedStyle) return '';
+    return `GLOBAL-${selectedType}-${selectedSize}-${selectedStyle.toUpperCase()}`;
+  }, [selectedType, selectedSize, selectedStyle]);
 
   // -------------------------------------------------------------------------
   // Data fetching
@@ -229,6 +246,9 @@ export default function PrintShopOrderPage() {
 
   /** CSS class for the frame preview border based on style selection. */
   function framePreviewClass(): string {
+    if (selectedProductType && !selectedProductType.hasFrame) {
+      return 'ps-order-frame-preview ps-order-frame-preview--noframe';
+    }
     const base = 'ps-order-frame-preview';
     if (selectedStyle === 'black') return `${base} ${base}--black`;
     if (selectedStyle === 'white') return `${base} ${base}--white`;
@@ -328,7 +348,7 @@ export default function PrintShopOrderPage() {
 
   return (
     <div className="ps-order-page">
-      <h1 className="ps-order-title">Order a Framed Print</h1>
+      <h1 className="ps-order-title">Order a Print</h1>
 
       {/* Step progress bar */}
       <div className="ps-order-steps">
@@ -375,13 +395,13 @@ export default function PrintShopOrderPage() {
               />
             </div>
             <div className="ps-order-customize-options">
-              <h2 className="ps-order-preview-heading">Frame This Image</h2>
+              <h2 className="ps-order-preview-heading">Get a Print of This Image</h2>
               <p className="ps-order-preview-caption">
-                Printed on high-quality fine art paper and professionally mounted in a classic frame. Click the image to see it full size.
+                Get a high-quality print of this image. Choose from fine art prints or professionally framed options. Click the image to see it full size.
               </p>
               <div className="ps-order-actions">
                 <button className="btn btn-primary" onClick={() => setStep(2)}>
-                  Choose Frame Options
+                  Choose Print Options
                 </button>
                 <Link to={`/rounds/${round.id}`} className="btn btn-outline">
                   Back to Round
@@ -412,9 +432,30 @@ export default function PrintShopOrderPage() {
             </div>
 
             <div className="ps-order-customize-options">
-              {/* Frame size */}
+              {/* Product type */}
               <fieldset className="ps-order-fieldset">
-                <legend className="ps-order-legend">Frame Size</legend>
+                <legend className="ps-order-legend">Product Type</legend>
+                <div className="ps-order-option-grid">
+                  {PRODUCT_TYPES.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      className={`ps-order-option-btn ps-order-option-btn--type ${selectedType === type.value ? 'ps-order-option-btn--selected' : ''}`}
+                      onClick={() => {
+                        setSelectedType(type.value);
+                        if (!type.hasFrame) setSelectedStyle('');
+                      }}
+                    >
+                      <span className="ps-order-type-label">{type.label}</span>
+                      <span className="ps-order-type-desc">{type.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              {/* Size */}
+              <fieldset className="ps-order-fieldset">
+                <legend className="ps-order-legend">Size</legend>
                 <div className="ps-order-option-grid">
                   {FRAME_SIZES.map((size) => (
                     <button
@@ -429,23 +470,25 @@ export default function PrintShopOrderPage() {
                 </div>
               </fieldset>
 
-              {/* Frame style */}
-              <fieldset className="ps-order-fieldset">
-                <legend className="ps-order-legend">Frame Style</legend>
-                <div className="ps-order-option-grid">
-                  {FRAME_STYLES.map((style) => (
-                    <button
-                      key={style.value}
-                      type="button"
-                      className={`ps-order-option-btn ps-order-option-btn--style-${style.value} ${selectedStyle === style.value ? 'ps-order-option-btn--selected' : ''}`}
-                      onClick={() => setSelectedStyle(style.value)}
-                    >
-                      <span className={`ps-order-style-swatch ps-order-style-swatch--${style.value}`} />
-                      {style.label}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
+              {/* Frame color — only for framed products */}
+              {selectedProductType?.hasFrame && (
+                <fieldset className="ps-order-fieldset">
+                  <legend className="ps-order-legend">Frame Color</legend>
+                  <div className="ps-order-option-grid">
+                    {FRAME_STYLES.map((style) => (
+                      <button
+                        key={style.value}
+                        type="button"
+                        className={`ps-order-option-btn ps-order-option-btn--style-${style.value} ${selectedStyle === style.value ? 'ps-order-option-btn--selected' : ''}`}
+                        onClick={() => setSelectedStyle(style.value)}
+                      >
+                        <span className={`ps-order-style-swatch ps-order-style-swatch--${style.value}`} />
+                        {style.label}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
 
               {/* Price quote */}
               {selectedSku && (
@@ -467,7 +510,7 @@ export default function PrintShopOrderPage() {
               <div className="ps-order-actions">
                 <button
                   className="btn btn-primary"
-                  disabled={!selectedSize || !selectedStyle || !quote}
+                  disabled={!selectedSku || !quote}
                   onClick={() => setStep(3)}
                 >
                   Continue to Shipping
@@ -611,13 +654,15 @@ export default function PrintShopOrderPage() {
                 />
               </div>
               <div className="ps-order-review-details">
-                <h3 className="ps-order-review-heading">Framed Print</h3>
+                <h3 className="ps-order-review-heading">{selectedProductType?.label || 'Print'}</h3>
                 <p className="ps-order-review-detail">
                   Size: {FRAME_SIZES.find((s) => s.value === selectedSize)?.label}
                 </p>
-                <p className="ps-order-review-detail">
-                  Style: {FRAME_STYLES.find((s) => s.value === selectedStyle)?.label}
-                </p>
+                {selectedProductType?.hasFrame && (
+                  <p className="ps-order-review-detail">
+                    Frame: {FRAME_STYLES.find((s) => s.value === selectedStyle)?.label}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -625,7 +670,7 @@ export default function PrintShopOrderPage() {
             <div className="ps-order-review-pricing">
               <h3 className="ps-order-review-heading">Price Breakdown</h3>
               <div className="ps-order-review-line">
-                <span>Print + Frame</span>
+                <span>{selectedProductType?.hasFrame ? 'Print + Frame' : 'Print'}</span>
                 <span>{formatPrice(quote.baseCostCents, quote.currency)}</span>
               </div>
               <div className="ps-order-review-line">

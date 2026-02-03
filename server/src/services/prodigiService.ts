@@ -75,20 +75,29 @@ export interface CreateOrderParams {
 // ---------------------------------------------------------------------------
 
 /**
- * Our internal SKU format: `GLOBAL-CFPM-{SIZE}-{COLOR}`
- * Prodigi SKU format:      `GLOBAL-CFPM-{SIZE}` + attributes: { color }
+ * Our internal SKU formats:
+ *   Fine Art Print:  `GLOBAL-FAP-{SIZE}`           -> prodigiSku = same, no color
+ *   Classic Frame:   `GLOBAL-CFP-{SIZE}-{COLOR}`   -> prodigiSku without color, color attribute
+ *   Premium Frame:   `GLOBAL-CFPM-{SIZE}-{COLOR}`  -> prodigiSku without color, color attribute
  *
- * Parses the internal SKU and returns the Prodigi SKU and color attribute.
+ * Parses the internal SKU and returns the Prodigi SKU and optional color attribute.
  */
-function parseInternalSku(internalSku: string): { prodigiSku: string; color: string } {
-  // Expected format: GLOBAL-CFPM-16X20-BLACK
+function parseInternalSku(internalSku: string): { prodigiSku: string; color?: string } {
   const parts = internalSku.split("-");
-  if (parts.length < 4) {
-    throw new Error(`Invalid internal SKU format: ${internalSku}`);
+
+  // FAP: GLOBAL-FAP-16X20 (3 parts, no color)
+  if (parts.length === 3 && parts[1] === "FAP") {
+    return { prodigiSku: internalSku };
   }
-  const color = parts[parts.length - 1].toLowerCase();
-  const prodigiSku = parts.slice(0, -1).join("-");
-  return { prodigiSku, color };
+
+  // CFP/CFPM: GLOBAL-CFP-16X20-BLACK or GLOBAL-CFPM-16X20-BLACK (4+ parts)
+  if (parts.length >= 4 && (parts[1] === "CFP" || parts[1] === "CFPM")) {
+    const color = parts[parts.length - 1].toLowerCase();
+    const prodigiSku = parts.slice(0, -1).join("-");
+    return { prodigiSku, color };
+  }
+
+  throw new Error(`Invalid internal SKU format: ${internalSku}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -242,17 +251,19 @@ async function getQuote(sku: string, quantity: number): Promise<ProdigiQuote> {
 
   const { prodigiSku, color } = parseInternalSku(sku);
 
+  const item: Record<string, unknown> = {
+    sku: prodigiSku,
+    copies: quantity,
+    assets: [{ printArea: "default" }],
+  };
+  if (color) {
+    item.attributes = { color };
+  }
+
   const data = await prodigiFetch<ProdigiQuoteResponse>("POST", "/quotes", {
     shippingMethod: "standard",
     destinationCountryCode: "US",
-    items: [
-      {
-        sku: prodigiSku,
-        copies: quantity,
-        attributes: { color },
-        assets: [{ printArea: "default" }],
-      },
-    ],
+    items: [item],
   });
 
   const quote = data.quotes?.[0];
@@ -317,7 +328,7 @@ async function createOrder(params: CreateOrderParams): Promise<{ orderId: string
       {
         sku: prodigiSku,
         copies: params.quantity,
-        attributes: { color },
+        ...(color ? { attributes: { color } } : {}),
         sizing: "fillPrintArea",
         assets: [{ printArea: "default", url: params.imageUrl }],
       },
