@@ -1140,6 +1140,64 @@ form .btn {
   margin: 0;
 }
 
+/* --- Personal best badge (post-submission) ------------------------- */
+
+@keyframes personal-best-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes personal-best-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.game-personal-best {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255, 200, 50, 0.15), rgba(255, 160, 20, 0.1));
+  border: 1px solid rgba(255, 200, 50, 0.35);
+  animation: personal-best-pop 0.5s ease-out both;
+  animation-delay: 0.15s;
+}
+
+.game-personal-best-icon {
+  font-size: 1.25rem;
+  color: #ffd700;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+}
+
+.game-personal-best-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, #ffd700, #ffb347, #ffd700);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: personal-best-shimmer 3s linear infinite;
+}
+
 /* --- Compact streak indicator (post-submission) -------------------- */
 
 .game-streak-inline {
@@ -3688,12 +3746,24 @@ body {
 /* --- Search input -------------------------------------------------- */
 
 .friends-search-input-wrapper {
+  position: relative;
   margin-bottom: 1.25rem;
+}
+
+.friends-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .friends-search-input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 2.5rem 0.75rem 2.5rem;
   min-height: var(--touch-target-min);
   background: var(--input-bg);
   border: 1px solid var(--border);
@@ -3711,6 +3781,36 @@ body {
 
 .friends-search-input:focus {
   border-color: var(--accent);
+}
+
+.friends-search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.friends-search-clear:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.friends-search-result-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
 }
 
 /* --- Friends page responsive --------------------------------------- */

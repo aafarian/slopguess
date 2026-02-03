@@ -522,6 +522,7 @@ export default function FriendsPage() {
       {activeTab === 'search' && (
         <section className="friends-section">
           <div className="friends-search-input-wrapper">
+            <span className="friends-search-icon" aria-hidden="true">{'\u{1F50D}'}</span>
             <input
               type="text"
               className="friends-search-input"
@@ -530,7 +531,29 @@ export default function FriendsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
             />
+            {searchQuery && (
+              <button
+                type="button"
+                className="friends-search-clear"
+                aria-label="Clear search"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                  setHasSearched(false);
+                }}
+              >
+                {'\u2715'}
+              </button>
+            )}
           </div>
+
+          {!searchLoading && !searchError && hasSearched && (
+            <div className="friends-search-result-count">
+              {searchResults.length === 0
+                ? `No users found for "${searchQuery}"`
+                : `${searchResults.length} user${searchResults.length !== 1 ? 's' : ''} found`}
+            </div>
+          )}
 
           {searchLoading && <LoadingSpinner message="Searching..." />}
 
