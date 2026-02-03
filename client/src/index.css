@@ -6066,3 +6066,234 @@ body {
     padding: 0.6rem 0.75rem;
   }
 }
+
+/* ====================================================================== */
+/*  Public Profile Page  (.public-profile-page prefix)                     */
+/* ====================================================================== */
+
+.public-profile-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+/* --- Header ---------------------------------------------------------- */
+
+.public-profile-page__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.public-profile-page__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.public-profile-page__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 0.35rem;
+}
+
+.public-profile-page__username {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.public-profile-page__level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.public-profile-page__member-since {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* --- Section headings ------------------------------------------------ */
+
+.public-profile-page__section-heading {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+/* --- Stats grid ------------------------------------------------------ */
+
+.public-profile-page__stats {
+  margin-bottom: 1.5rem;
+}
+
+.public-profile-page__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 480px) {
+  .public-profile-page__stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.public-profile-page__stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.85rem 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.public-profile-page__stat-card:hover {
+  border-color: var(--accent);
+}
+
+.public-profile-page__stat-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  margin-bottom: 0.15rem;
+}
+
+.public-profile-page__stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.public-profile-page__stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* --- Achievements ---------------------------------------------------- */
+
+.public-profile-page__achievements {
+  margin-bottom: 1.5rem;
+}
+
+.public-profile-page__achievement-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.public-profile-page__achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.public-profile-page__achievement-item:hover {
+  border-color: var(--accent);
+}
+
+.public-profile-page__achievement-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.public-profile-page__achievement-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.public-profile-page__achievement-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.public-profile-page__achievement-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* --- Action section -------------------------------------------------- */
+
+.public-profile-page__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.public-profile-page__action-error {
+  font-size: 0.82rem;
+  color: var(--error, #ef4444);
+  margin: 0;
+}
+
+.public-profile-page__action-success {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0;
+}
+
+.public-profile-page__back {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+/* --- Responsive tweaks ----------------------------------------------- */
+
+@media (max-width: 480px) {
+  .public-profile-page__username {
+    font-size: 1.3rem;
+  }
+
+  .public-profile-page__stat-value {
+    font-size: 1.25rem;
+  }
+
+  .public-profile-page__stat-label {
+    font-size: 0.65rem;
+  }
+}

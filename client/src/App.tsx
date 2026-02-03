@@ -18,6 +18,7 @@ import SeasonalLeaderboardPage from './pages/SeasonalLeaderboardPage'
 import PricingPage from './pages/PricingPage'
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage'
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage'
+import PublicProfilePage from './pages/PublicProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
@@ -52,6 +53,9 @@ function App() {
             <Route path="/challenges/:challengeId" element={<ChallengeDetailPage />} />
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/achievements" element={<AchievementsPage />} />
+
+            {/* Public user profiles (short shareable URL) */}
+            <Route path="/u/:username" element={<PublicProfilePage />} />
 
             {/* Subscription / monetization */}
             <Route path="/pricing" element={<PricingPage />} />

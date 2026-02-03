@@ -114,6 +114,43 @@ export interface UserSearchResult {
 }
 
 // ---------------------------------------------------------------------------
+// Public Profile
+// ---------------------------------------------------------------------------
+
+/** A recent achievement entry returned in the public profile. */
+export interface PublicProfileAchievement {
+  id: string;
+  key: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  unlockedAt: string;
+}
+
+/** Public profile data as returned by GET /api/users/:username/profile. */
+export interface PublicProfile {
+  username: string;
+  createdAt: string;
+  level: number;
+  xp: number;
+  stats: {
+    totalGamesPlayed: number;
+    averageScore: number;
+    bestScore: number;
+  };
+  recentAchievements: PublicProfileAchievement[];
+  currentStreak: number;
+  isFriend?: boolean;
+  friendshipId?: string;
+}
+
+/** Response from GET /api/users/:username/profile. */
+export interface PublicProfileResponse {
+  profile: PublicProfile;
+}
+
+// ---------------------------------------------------------------------------
 // API response wrappers — Friends
 // ---------------------------------------------------------------------------
 

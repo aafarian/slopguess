@@ -19,7 +19,25 @@ import type {
   ConversationResponse,
   NotificationsResponse,
   UnreadCountResponse,
+  PublicProfileResponse,
 } from '../types/social';
+
+// ---------------------------------------------------------------------------
+// Public Profile
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch a user's public profile by username.
+ * Does not require authentication, but sends the token if available
+ * (the backend uses optionalAuth to include friendship status).
+ *
+ * GET /api/users/:username/profile
+ */
+export async function getPublicProfile(
+  username: string,
+): Promise<PublicProfileResponse> {
+  return request<PublicProfileResponse>(`/api/users/${encodeURIComponent(username)}/profile`);
+}
 
 // ---------------------------------------------------------------------------
 // Friends
