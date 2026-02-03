@@ -21,6 +21,7 @@ import { streakService } from "../services/streakService";
 import { achievementService } from "../services/achievements";
 import { xpService } from "../services/xp";
 import { seasonalLeaderboardService } from "../services/seasonalLeaderboard";
+import { activityFeedService } from "../services/activityFeedService";
 import { logger } from "../config/logger";
 import { containsBlockedContent } from "../services/contentFilter";
 import { scheduler } from "../services/scheduler";
@@ -257,6 +258,14 @@ roundsRouter.post(
                 error: msg,
               });
             });
+        }
+
+        // Activity feed: record game_played event
+        if (savedGuess.score !== null) {
+          activityFeedService.recordEvent(userId, "game_played", {
+            roundId,
+            score: savedGuess.score,
+          }).catch(() => {});
         }
       }
 

@@ -17,6 +17,7 @@ import { containsBlockedContent } from "../services/contentFilter";
 import * as friendshipService from "../services/friendshipService";
 import { achievementService } from "../services/achievements";
 import { xpService } from "../services/xp";
+import { activityFeedService } from "../services/activityFeedService";
 
 const challengesRouter = Router();
 
@@ -344,14 +345,22 @@ challengesRouter.post(
       );
 
       // Fire-and-forget: check if the challenged user won (their score > challenger score)
-      if (
+      const won =
         challenge.challengedScore !== null &&
         challenge.challengerScore !== null &&
-        challenge.challengedScore > challenge.challengerScore
-      ) {
+        challenge.challengedScore > challenge.challengerScore;
+
+      if (won) {
         achievementService.checkAndUnlock(userId, { type: 'challenge_won' }).catch(() => {});
         xpService.awardChallengeWinXP(userId).catch(() => {});
       }
+
+      // Fire-and-forget: record challenge_completed activity event
+      activityFeedService.recordEvent(userId, "challenge_completed", {
+        challengeId,
+        won,
+        score: challenge.challengedScore,
+      }).catch(() => {});
 
       res.status(200).json({ challenge });
     } catch (err: unknown) {

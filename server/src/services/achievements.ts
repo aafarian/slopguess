@@ -16,6 +16,7 @@ import { pool } from "../config/database";
 import { logger } from "../config/logger";
 import { notificationService } from "./notificationService";
 import { xpService } from "./xp";
+import { activityFeedService } from "./activityFeedService";
 import type { AchievementContext, AchievementDefinition, AchievementKey } from "../types/achievement";
 
 // ---------------------------------------------------------------------------
@@ -348,6 +349,12 @@ async function checkAndUnlock(
 
       // Fire-and-forget: award XP for achievement unlock
       xpService.awardAchievementXP(userId, achievement.key).catch(() => {});
+
+      // Fire-and-forget: record activity event for achievement unlock
+      activityFeedService.recordEvent(userId, "achievement_unlocked", {
+        key: achievement.key,
+        title: achievement.title,
+      }).catch(() => {});
     }
 
     if (unlocked.length > 0) {

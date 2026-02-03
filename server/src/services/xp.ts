@@ -16,6 +16,7 @@
 
 import { pool } from "../config/database";
 import { logger } from "../config/logger";
+import { activityFeedService } from "./activityFeedService";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -119,6 +120,11 @@ async function awardXP(
       newLevel,
       source,
     });
+
+    // Fire-and-forget: record level_up activity event
+    activityFeedService.recordEvent(userId, "level_up", {
+      newLevel,
+    }).catch(() => {});
   }
 
   logger.debug("xp", `Awarded ${amount} XP to user ${userId} (${source})`, {
