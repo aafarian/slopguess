@@ -47,7 +47,7 @@ app.use(sanitizeBody);
 // Request logging
 app.use(requestLogger);
 
-// General rate limiting (100 req / 15 min per IP)
+// General rate limiting (300 req / 15 min per IP)
 app.use(generalLimiter);
 
 // API routes

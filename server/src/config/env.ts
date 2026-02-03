@@ -37,7 +37,7 @@ interface EnvConfig {
   TRUST_PROXY: boolean;
   /** Rate limit window duration in milliseconds (default: 900000 = 15 minutes) */
   RATE_LIMIT_WINDOW_MS: number;
-  /** Maximum number of requests per window per IP (default: 100) */
+  /** Maximum number of requests per window per IP (default: 300) */
   RATE_LIMIT_MAX: number;
   /** Default difficulty for new rounds (default: normal) */
   DEFAULT_DIFFICULTY: string;
@@ -121,7 +121,7 @@ function loadEnvConfig(): EnvConfig {
       process.env.RATE_LIMIT_WINDOW_MS || "900000",
       10
     ),
-    RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "100", 10),
+    RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "300", 10),
     DEFAULT_DIFFICULTY: process.env.DEFAULT_DIFFICULTY || "normal",
     DIFFICULTY_WORD_COUNTS: JSON.parse(
       process.env.DIFFICULTY_WORD_COUNTS ||
