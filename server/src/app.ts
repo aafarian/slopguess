@@ -48,7 +48,7 @@ app.use(sanitizeBody);
 // Request logging
 app.use(requestLogger);
 
-// General rate limiting (300 req / 15 min per IP)
+// General rate limiting (1000 req / 15 min per IP)
 app.use(generalLimiter);
 
 // Public share pages (serves HTML with OG tags for social media link previews)

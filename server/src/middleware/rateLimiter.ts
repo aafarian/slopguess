@@ -27,7 +27,7 @@ const testMax = 10000;
 /**
  * General API rate limiter.
  * Applied globally to all /api routes.
- * Defaults: 300 requests per 15 minutes (900000ms) per IP.
+ * Defaults: 1000 requests per 15 minutes (900000ms) per IP.
  * Configurable via RATE_LIMIT_MAX and RATE_LIMIT_WINDOW_MS env vars.
  *
  * Per-IP isolation model:

@@ -123,7 +123,7 @@ function loadEnvConfig(): EnvConfig {
       process.env.RATE_LIMIT_WINDOW_MS || "900000",
       10
     ),
-    RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "300", 10),
+    RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "1000", 10),
     DEFAULT_DIFFICULTY: process.env.DEFAULT_DIFFICULTY || "normal",
     DIFFICULTY_WORD_COUNTS: JSON.parse(
       process.env.DIFFICULTY_WORD_COUNTS ||
