@@ -4604,3 +4604,198 @@ body {
 .profile-upgrade-link {
   margin-top: 0.75rem;
 }
+
+/* ===================================================================
+   Pricing / Upgrade Page
+   =================================================================== */
+
+.pricing-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.pricing-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.pricing-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+}
+
+.pricing-error {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* --- Card grid --- */
+
+.pricing-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* --- Individual card --- */
+
+.pricing-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.pricing-card--pro {
+  border-color: var(--accent);
+}
+
+.pricing-card--current {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(124, 131, 255, 0.18);
+}
+
+/* --- Badge (current plan indicator) --- */
+
+.pricing-card-badge {
+  position: absolute;
+  top: -0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.85rem;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+/* --- Card header (name + price) --- */
+
+.pricing-card-header {
+  text-align: center;
+}
+
+.pricing-card-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.pricing-card-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.pricing-card-amount {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.pricing-card-period {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+/* --- Feature list --- */
+
+.pricing-card-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+}
+
+.pricing-card-feature {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.pricing-card-feature-icon {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: var(--success);
+}
+
+.pricing-card-feature--pro {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.pricing-card-feature-icon--pro {
+  color: var(--accent);
+}
+
+/* --- Actions (CTA area) --- */
+
+.pricing-card-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 44px;
+  align-items: center;
+}
+
+.pricing-card-current-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* --- Pricing responsive --- */
+
+@media (max-width: 640px) {
+  .pricing-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .pricing-title {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .pricing-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .pricing-card-amount {
+    font-size: 1.8rem;
+  }
+}
