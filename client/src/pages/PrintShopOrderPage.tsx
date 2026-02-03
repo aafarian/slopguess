@@ -356,23 +356,27 @@ export default function PrintShopOrderPage() {
       {/* ---- Step 1: Preview ---- */}
       {step === 1 && (
         <div className="ps-order-step-content">
-          <div className="ps-order-preview">
-            <img
-              src={round.imageUrl}
-              alt="AI-generated image to be framed"
-              className="ps-order-preview-img"
-            />
-          </div>
-          <p className="ps-order-preview-caption">
-            This AI-generated image will be printed on high-quality paper and professionally framed.
-          </p>
-          <div className="ps-order-actions">
-            <button className="btn btn-primary" onClick={() => setStep(2)}>
-              Select Frame Options
-            </button>
-            <Link to={`/rounds/${round.id}`} className="btn btn-outline">
-              Back to Round
-            </Link>
+          <div className="ps-order-preview-layout">
+            <div className="ps-order-preview">
+              <img
+                src={round.imageUrl}
+                alt="AI-generated image to be framed"
+                className="ps-order-preview-img"
+              />
+            </div>
+            <div className="ps-order-preview-info">
+              <p className="ps-order-preview-caption">
+                This AI-generated image will be printed on high-quality paper and professionally framed.
+              </p>
+              <div className="ps-order-actions">
+                <button className="btn btn-primary" onClick={() => setStep(2)}>
+                  Select Frame Options
+                </button>
+                <Link to={`/rounds/${round.id}`} className="btn btn-outline">
+                  Back to Round
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       )}

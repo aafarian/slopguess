@@ -7252,16 +7252,16 @@ body {
    =================================================================== */
 
 .ps-order-page {
-  max-width: 720px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
+  padding: 1.5rem 1.5rem 2rem;
 }
 
 .ps-order-title {
   font-size: 1.6rem;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 /* ---- Step progress bar ---- */
@@ -7270,7 +7270,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 0.25rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .ps-order-step {
@@ -7376,24 +7376,38 @@ body {
 
 /* ---- Step 1: Preview ---- */
 
+.ps-order-preview-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
 .ps-order-preview {
+  flex: 1 1 55%;
   display: flex;
   justify-content: center;
-  margin-bottom: 1rem;
 }
 
 .ps-order-preview-img {
   max-width: 100%;
-  max-height: 420px;
+  max-height: 340px;
   border-radius: 8px;
   object-fit: contain;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
+.ps-order-preview-info {
+  flex: 1 1 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 200px;
+}
+
 .ps-order-preview-caption {
-  text-align: center;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
   margin-bottom: 1.5rem;
 }
 
@@ -7758,8 +7772,7 @@ body {
 .ps-order-actions {
   display: flex;
   gap: 0.75rem;
-  justify-content: center;
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
   flex-wrap: wrap;
 }
 
@@ -7783,6 +7796,19 @@ body {
   .ps-order-step {
     padding: 0.3rem 0.5rem;
     font-size: 0.7rem;
+  }
+
+  .ps-order-preview-layout {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .ps-order-preview-info {
+    min-height: 0;
+  }
+
+  .ps-order-preview-caption {
+    text-align: center;
   }
 
   .ps-order-customize {
