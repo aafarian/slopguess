@@ -27,6 +27,7 @@ import EmptyState from '../components/EmptyState';
 import ScoreDisplay from '../components/ScoreDisplay';
 import GuessForm from '../components/GuessForm';
 import ElementBreakdown from '../components/ElementBreakdown';
+import PlayerBreakdown from '../components/PlayerBreakdown';
 import ShareButton from '../components/ShareButton';
 import CountdownTimer from '../components/CountdownTimer';
 import AdBanner from '../components/AdBanner';
@@ -346,8 +347,11 @@ export default function GamePage() {
                   </>
                 ) : (
                   <div className="game-prompt-teaser">
+                    {activeElementScores && (
+                      <PlayerBreakdown elementScores={activeElementScores} />
+                    )}
                     <p className="game-prompt-teaser-text">
-                      The prompt and word breakdown will be revealed when this round ends.
+                      The full prompt will be revealed when this round ends.
                     </p>
                     {nextRotationAt && (
                       <p className="game-prompt-teaser-countdown">
