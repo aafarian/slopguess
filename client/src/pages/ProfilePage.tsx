@@ -15,7 +15,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
 import { getUserStats, getUserHistory, getStreaks, getWeeklyStats } from '../services/game';
+import { fetchXPStatus } from '../services/achievements';
 import type { UserStats, UserHistoryEntry, Pagination, StreakData, WeeklyStats } from '../types/game';
+import type { XPStatus } from '../types/achievement';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
@@ -79,6 +81,11 @@ export default function ProfilePage() {
   const [weeklyLoading, setWeeklyLoading] = useState(true);
   const [weeklyError, setWeeklyError] = useState('');
 
+  // XP state
+  const [xpStatus, setXpStatus] = useState<XPStatus | null>(null);
+  const [xpLoading, setXpLoading] = useState(true);
+  const [xpError, setXpError] = useState('');
+
   // Fetch stats on mount
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
@@ -136,6 +143,20 @@ export default function ProfilePage() {
     }
   }, []);
 
+  // Fetch XP status
+  const fetchXP = useCallback(async () => {
+    setXpLoading(true);
+    setXpError('');
+    try {
+      const res = await fetchXPStatus();
+      setXpStatus(res);
+    } catch {
+      setXpError('Failed to load XP data.');
+    } finally {
+      setXpLoading(false);
+    }
+  }, []);
+
   // Kick off fetches once authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -143,12 +164,13 @@ export default function ProfilePage() {
       fetchHistory(historyPage);
       fetchStreaks();
       fetchWeeklyStats();
+      fetchXP();
     }
-  }, [isAuthenticated, fetchStats, fetchHistory, historyPage, fetchStreaks, fetchWeeklyStats]);
+  }, [isAuthenticated, fetchStats, fetchHistory, historyPage, fetchStreaks, fetchWeeklyStats, fetchXP]);
 
   // Derive whether ALL data fetches have finished AND all failed
-  const allDataLoaded = !statsLoading && !historyLoading && !streakLoading && !weeklyLoading;
-  const allDataFailed = allDataLoaded && !!statsError && !!historyError && !!streakError && !!weeklyError;
+  const allDataLoaded = !statsLoading && !historyLoading && !streakLoading && !weeklyLoading && !xpLoading;
+  const allDataFailed = allDataLoaded && !!statsError && !!historyError && !!streakError && !!weeklyError && !!xpError;
 
   // Show a loading spinner while auth state is resolving.
   if (authLoading) {
@@ -221,6 +243,7 @@ export default function ProfilePage() {
             fetchHistory(historyPage);
             fetchStreaks();
             fetchWeeklyStats();
+            fetchXP();
           }}
         />
       )}
@@ -291,6 +314,41 @@ export default function ProfilePage() {
                 />
               </div>
             )}
+          </div>
+        )}
+      </section>
+
+      {/* ============================================================= */}
+      {/* XP Progress                                                    */}
+      {/* ============================================================= */}
+      <section className="profile-xp-section">
+        {xpLoading && <LoadingSpinner message="Loading XP..." />}
+
+        {xpError && (
+          <ErrorMessage message={xpError} onRetry={fetchXP} />
+        )}
+
+        {!xpLoading && !xpError && xpStatus && (
+          <div className="profile-xp-card">
+            <div className="profile-xp-header">
+              <span className="profile-xp-level">Level {xpStatus.level}</span>
+              <span className="profile-xp-values">
+                {xpStatus.xpProgress} / {xpStatus.xpForNextLevel} XP
+              </span>
+            </div>
+            <div className="profile-xp-bar">
+              <div
+                className="profile-xp-bar-fill"
+                style={{
+                  width: `${xpStatus.xpForNextLevel > 0
+                    ? Math.min(100, (xpStatus.xpProgress / xpStatus.xpForNextLevel) * 100)
+                    : 0}%`,
+                }}
+              />
+            </div>
+            <div className="profile-xp-total">
+              {xpStatus.xp} total XP
+            </div>
           </div>
         )}
       </section>

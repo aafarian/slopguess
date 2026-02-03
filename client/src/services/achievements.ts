@@ -3,7 +3,7 @@
  */
 
 import { request } from './api';
-import type { AchievementsResponse, RecentAchievementsResponse } from '../types/achievement';
+import type { AchievementsResponse, RecentAchievementsResponse, XPStatusResponse } from '../types/achievement';
 
 /**
  * Fetch all achievements with the current user's unlock status.
@@ -23,4 +23,14 @@ export async function fetchAchievements(): Promise<AchievementsResponse> {
  */
 export async function fetchRecentAchievements(): Promise<RecentAchievementsResponse> {
   return request<RecentAchievementsResponse>('/api/achievements/recent');
+}
+
+/**
+ * Fetch the current user's XP status (level, progress toward next level).
+ * Requires authentication.
+ *
+ * GET /api/achievements/xp
+ */
+export async function fetchXPStatus(): Promise<XPStatusResponse> {
+  return request<XPStatusResponse>('/api/achievements/xp');
 }

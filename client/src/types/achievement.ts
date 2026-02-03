@@ -49,3 +49,18 @@ export interface AchievementsResponse {
 export interface RecentAchievementsResponse {
   achievements: Achievement[];
 }
+
+// ---------------------------------------------------------------------------
+// XP / Level
+// ---------------------------------------------------------------------------
+
+/** XP status as returned by GET /api/achievements/xp. */
+export interface XPStatus {
+  xp: number;
+  level: number;
+  xpForNextLevel: number;
+  xpProgress: number;
+}
+
+/** Response from GET /api/achievements/xp */
+export type XPStatusResponse = XPStatus;

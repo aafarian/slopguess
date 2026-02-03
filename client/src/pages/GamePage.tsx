@@ -19,7 +19,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getActiveRound, rotateRound, getStreaks, getUserStats } from '../services/game';
-import { fetchRecentAchievements } from '../services/achievements';
+import { fetchRecentAchievements, fetchXPStatus } from '../services/achievements';
+import type { XPStatus } from '../types/achievement';
 import type { Round, GuessResult, ElementScoreBreakdown, StreakData } from '../types/game';
 import type { Achievement } from '../types/achievement';
 import { ApiRequestError } from '../services/api';
@@ -67,6 +68,12 @@ export default function GamePage() {
   // Achievement unlock toast state
   const [achievementToasts, setAchievementToasts] = useState<Achievement[]>([]);
 
+  // XP state (loaded asynchronously after guess)
+  const [xpGained, setXpGained] = useState<number | null>(null);
+  const [leveledUp, setLeveledUp] = useState(false);
+  const [newLevel, setNewLevel] = useState<number | null>(null);
+  const [preGuessXP, setPreGuessXP] = useState<XPStatus | null>(null);
+
   // Dev toolbar state
   const [rotating, setRotating] = useState(false);
   const [devViewMode, setDevViewMode] = useState<'dev' | 'prod'>('dev');
@@ -109,6 +116,13 @@ export default function GamePage() {
     fetchRound();
   }, [fetchRound]);
 
+  // Capture XP snapshot before the user guesses (so we can show gain later)
+  useEffect(() => {
+    if (isAuthenticated && !hasGuessed && submissionPhase === 'idle') {
+      capturePreGuessXP();
+    }
+  }, [isAuthenticated, hasGuessed, submissionPhase, capturePreGuessXP]);
+
   // Fetch streak data for returning users who already guessed
   useEffect(() => {
     if (!loading && hasGuessed && isAuthenticated && !streakData && submissionPhase !== 'analyzing') {
@@ -129,6 +143,35 @@ export default function GamePage() {
       // Non-critical -- silently ignore stats fetch failures
     }
   }, []);
+
+  // Capture XP snapshot before guess so we can compute gain later
+  const capturePreGuessXP = useCallback(async () => {
+    try {
+      const status = await fetchXPStatus();
+      setPreGuessXP(status);
+    } catch {
+      // Non-critical — silently ignore
+    }
+  }, []);
+
+  // Check XP gain after guess submission (compare with pre-guess snapshot)
+  const checkXPGain = useCallback(async () => {
+    try {
+      const status = await fetchXPStatus();
+      if (preGuessXP) {
+        const gained = status.xp - preGuessXP.xp;
+        if (gained > 0) {
+          setXpGained(gained);
+        }
+        if (status.level > preGuessXP.level) {
+          setLeveledUp(true);
+          setNewLevel(status.level);
+        }
+      }
+    } catch {
+      // Non-critical — silently ignore
+    }
+  }, [preGuessXP]);
 
   // Check for newly unlocked achievements after guess (fire-and-forget)
   const checkNewAchievements = useCallback(async () => {
@@ -162,12 +205,13 @@ export default function GamePage() {
       setHasGuessed(true);
       setUserScore(result.score);
 
-      // Check for new achievements after reveal (slight delay for server processing)
+      // Check for new achievements and XP gain after reveal (slight delay for server processing)
       setTimeout(() => {
         checkNewAchievements();
+        checkXPGain();
       }, 500);
     }, ANALYZING_DELAY_MS);
-  }, [fetchStreakData, checkPersonalBest, checkNewAchievements]);
+  }, [fetchStreakData, checkPersonalBest, checkNewAchievements, checkXPGain]);
 
   const handleAlreadyGuessed = useCallback(() => {
     setHasGuessed(true);
@@ -198,6 +242,10 @@ export default function GamePage() {
       setStreakData(null);
       setIsPersonalBest(false);
       setAchievementToasts([]);
+      setXpGained(null);
+      setLeveledUp(false);
+      setNewLevel(null);
+      setPreGuessXP(null);
       await fetchRound();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to rotate round.');
@@ -214,6 +262,15 @@ export default function GamePage() {
     }, 5000);
     return () => clearTimeout(timer);
   }, [achievementToasts]);
+
+  // Auto-dismiss level-up toast after 5 seconds
+  useEffect(() => {
+    if (!leveledUp) return;
+    const timer = setTimeout(() => {
+      setLeveledUp(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [leveledUp]);
 
   function dismissAchievementToast(id: string) {
     setAchievementToasts((prev) => prev.filter((a) => a.id !== id));
@@ -329,6 +386,27 @@ export default function GamePage() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Level-up toast */}
+      {leveledUp && newLevel !== null && (
+        <div className="achievement-toast-container">
+          <div className="levelup-toast">
+            <span className="levelup-toast-icon" aria-hidden="true">&#11088;</span>
+            <div className="levelup-toast-info">
+              <span className="levelup-toast-label">Level Up!</span>
+              <span className="levelup-toast-title">You reached Level {newLevel}</span>
+            </div>
+            <button
+              type="button"
+              className="achievement-toast-close"
+              onClick={() => setLeveledUp(false)}
+              aria-label="Dismiss"
+            >
+              &times;
+            </button>
+          </div>
         </div>
       )}
 
@@ -492,6 +570,13 @@ export default function GamePage() {
                         Start a streak! Play again tomorrow.
                       </span>
                     )}
+                  </div>
+                )}
+
+                {/* XP gained indicator */}
+                {guessResult && xpGained !== null && xpGained > 0 && (
+                  <div className="game-xp-gained">
+                    <span className="game-xp-gained-text">+{xpGained} XP</span>
                   </div>
                 )}
 
