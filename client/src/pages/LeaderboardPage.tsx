@@ -95,7 +95,7 @@ export default function LeaderboardPage() {
       <div className="leaderboard-page">
         <LeaderboardHeader roundId={data.roundId} isCompleted={isCompleted} />
         <EmptyState title="No guesses yet" message="Be the first to play this round!" />
-        <BackLink />
+        <BackLink roundId={data.roundId} />
       </div>
     );
   }
@@ -180,7 +180,7 @@ export default function LeaderboardPage() {
         </div>
       )}
 
-      <BackLink />
+      <BackLink roundId={data.roundId} />
     </div>
   );
 }
@@ -215,10 +215,13 @@ function LeaderboardHeader({
   );
 }
 
-function BackLink() {
+function BackLink({ roundId }: { roundId: string }) {
   return (
     <div className="leaderboard-back">
-      <Link to="/play" className="btn btn-outline btn-sm">
+      <Link to={`/rounds/${roundId}`} className="btn btn-outline btn-sm">
+        Back to Round Details
+      </Link>
+      <Link to="/" className="btn btn-outline btn-sm">
         Back to Game
       </Link>
     </div>
