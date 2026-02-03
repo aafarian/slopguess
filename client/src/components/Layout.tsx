@@ -15,6 +15,7 @@ import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-do
 import { useAuth } from '../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
 import { fetchXPStatus } from '../services/achievements';
+import { getConfig as getPrintShopConfig } from '../services/printShop';
 import NotificationBell from './NotificationBell';
 import ProBadge from './ProBadge';
 
@@ -22,7 +23,7 @@ import ProBadge from './ProBadge';
 const SOCIAL_PATHS = ['/friends', '/challenges', '/group-challenges', '/messages', '/activity'];
 
 /** Paths that should mark the Account dropdown as active. */
-const ACCOUNT_PATHS = ['/profile', '/achievements', '/pricing'];
+const ACCOUNT_PATHS = ['/profile', '/achievements', '/pricing', '/print-shop'];
 
 export default function Layout() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -31,11 +32,21 @@ export default function Layout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userLevel, setUserLevel] = useState<number | null>(null);
+  const [printShopEnabled, setPrintShopEnabled] = useState(false);
 
   // Dropdown open state
   const [openDropdown, setOpenDropdown] = useState<'social' | 'account' | null>(null);
   const socialRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+
+  // Fetch print shop feature flag once on mount (cached at module level)
+  useEffect(() => {
+    let cancelled = false;
+    getPrintShopConfig()
+      .then((config) => { if (!cancelled) setPrintShopEnabled(config.enabled); })
+      .catch(() => {/* Non-critical -- default to hidden */});
+    return () => { cancelled = true; };
+  }, []);
 
   // Fetch the user's level for the header badge
   useEffect(() => {
@@ -248,6 +259,16 @@ export default function Layout() {
                       >
                         Achievements
                       </NavLink>
+                      {printShopEnabled && (
+                        <NavLink
+                          to="/print-shop/orders"
+                          className={({ isActive }) =>
+                            `navbar-dropdown-item${isActive ? ' navbar-dropdown-item--active' : ''}`
+                          }
+                        >
+                          Print Shop
+                        </NavLink>
+                      )}
                       {monetizationEnabled && (
                         <NavLink
                           to="/pricing"
