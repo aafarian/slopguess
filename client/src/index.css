@@ -7203,3 +7203,579 @@ body {
     padding: 0.35rem 0.7rem;
   }
 }
+
+/* ===================================================================
+   Print Shop Order Page — 4-step checkout flow
+   =================================================================== */
+
+.ps-order-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.ps-order-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* ---- Step progress bar ---- */
+
+.ps-order-steps {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 2rem;
+}
+
+.ps-order-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.ps-order-step--active {
+  color: var(--text-primary);
+  border-color: var(--accent);
+  background: rgba(124, 131, 255, 0.1);
+}
+
+.ps-order-step--done {
+  color: var(--score-excellent);
+  border-color: var(--score-excellent);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.ps-order-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.ps-order-step--active .ps-order-step-num {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.ps-order-step--done .ps-order-step-num {
+  background: var(--score-excellent);
+  color: #fff;
+  border-color: var(--score-excellent);
+}
+
+.ps-order-step-label {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .ps-order-step-label {
+    display: inline;
+  }
+}
+
+/* ---- Error banner ---- */
+
+.ps-order-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  color: var(--error);
+  font-size: 0.85rem;
+}
+
+.ps-order-error-banner p {
+  flex: 1;
+}
+
+.ps-order-error-dismiss {
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* ---- Step content ---- */
+
+.ps-order-step-content {
+  animation: psOrderFadeIn 0.3s ease;
+}
+
+@keyframes psOrderFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Step 1: Preview ---- */
+
+.ps-order-preview {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.ps-order-preview-img {
+  max-width: 100%;
+  max-height: 420px;
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.ps-order-preview-caption {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ---- Step 2: Customize ---- */
+
+.ps-order-customize {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.ps-order-customize-preview {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.ps-order-customize-options {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Frame preview container */
+.ps-order-frame-preview {
+  padding: 12px;
+  border-radius: 2px;
+  background: #333;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.ps-order-frame-preview--black {
+  background: #1a1a1a;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #2a2a2a;
+}
+
+.ps-order-frame-preview--white {
+  background: #f0f0f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 0 0 2px #e0e0e0;
+}
+
+.ps-order-frame-preview--natural {
+  background: #8b6914;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 0 0 2px #a07d1f;
+}
+
+.ps-order-frame-img {
+  display: block;
+  width: 180px;
+  height: auto;
+  border-radius: 1px;
+}
+
+/* Options fieldsets */
+.ps-order-fieldset {
+  border: none;
+  margin-bottom: 1.25rem;
+}
+
+.ps-order-legend {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.ps-order-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+}
+
+.ps-order-option-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.6rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.ps-order-option-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.ps-order-option-btn--selected {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  background: rgba(124, 131, 255, 0.12);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Style swatches */
+.ps-order-style-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.ps-order-style-swatch--black {
+  background: #1a1a1a;
+}
+
+.ps-order-style-swatch--white {
+  background: #f0f0f0;
+}
+
+.ps-order-style-swatch--natural {
+  background: #8b6914;
+}
+
+/* Quote display */
+.ps-order-quote {
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+
+.ps-order-quote-price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ps-order-quote-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.ps-order-quote-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ps-order-quote-loading {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.ps-order-quote-error {
+  font-size: 0.8rem;
+  color: var(--error);
+}
+
+/* ---- Step 3: Shipping form ---- */
+
+.ps-order-shipping-form {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.ps-order-form-group {
+  margin-bottom: 1rem;
+}
+
+.ps-order-form-group--flex {
+  flex: 1;
+  min-width: 0;
+}
+
+.ps-order-form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.ps-order-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+}
+
+.ps-order-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ps-order-input:focus {
+  border-color: var(--accent);
+}
+
+.ps-order-input--error {
+  border-color: var(--error);
+}
+
+.ps-order-select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23b0b0c8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.ps-order-field-error {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--error);
+  margin-top: 0.25rem;
+}
+
+/* ---- Step 4: Review ---- */
+
+.ps-order-review {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ps-order-review-product {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  padding: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.ps-order-review-thumb-frame {
+  flex: 0 0 auto;
+}
+
+.ps-order-review-thumb-frame .ps-order-frame-img {
+  width: 100px;
+}
+
+.ps-order-review-thumb {
+  display: block;
+  width: 100px;
+  height: auto;
+  border-radius: 2px;
+}
+
+.ps-order-review-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.ps-order-review-heading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.ps-order-review-detail {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.15rem;
+}
+
+/* Price breakdown */
+.ps-order-review-pricing {
+  padding: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.ps-order-review-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 0.35rem 0;
+}
+
+.ps-order-review-line--total {
+  border-top: 1px solid var(--border);
+  margin-top: 0.35rem;
+  padding-top: 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Shipping summary */
+.ps-order-review-shipping {
+  padding: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.ps-order-review-address {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.1rem;
+}
+
+/* Place Order button */
+.ps-order-place-btn {
+  font-size: 1rem;
+  padding: 0.75rem 2rem;
+}
+
+.ps-order-stripe-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.75rem;
+}
+
+/* ---- Auth CTA ---- */
+
+.ps-order-auth-cta {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.ps-order-auth-cta h2 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.ps-order-auth-cta p {
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+}
+
+.ps-order-auth-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+/* ---- Back link ---- */
+
+.ps-order-back {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+/* ---- Shared action bar ---- */
+
+.ps-order-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+/* ===================================================================
+   Print Shop Order Page — Responsive
+   =================================================================== */
+
+@media (max-width: 600px) {
+  .ps-order-page {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .ps-order-title {
+    font-size: 1.3rem;
+  }
+
+  .ps-order-steps {
+    gap: 0.15rem;
+  }
+
+  .ps-order-step {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .ps-order-customize {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .ps-order-frame-img {
+    width: 140px;
+  }
+
+  .ps-order-option-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ps-order-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .ps-order-review-product {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .ps-order-review-thumb-frame .ps-order-frame-img {
+    width: 120px;
+  }
+
+  .ps-order-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ps-order-actions .btn {
+    text-align: center;
+  }
+}

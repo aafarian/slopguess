@@ -21,6 +21,9 @@ import SubscriptionCancelPage from './pages/SubscriptionCancelPage'
 import ActivityFeedPage from './pages/ActivityFeedPage'
 import GroupChallengePage from './pages/GroupChallengePage'
 import GroupChallengeDetailPage from './pages/GroupChallengeDetailPage'
+import PrintShopOrderPage from './pages/PrintShopOrderPage'
+import PrintShopOrdersPage from './pages/PrintShopOrdersPage'
+import PrintShopOrderDetailPage from './pages/PrintShopOrderDetailPage'
 import PublicProfilePage from './pages/PublicProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -62,6 +65,11 @@ function App() {
 
             {/* Public user profiles (short shareable URL) */}
             <Route path="/u/:username" element={<PublicProfilePage />} />
+
+            {/* Print shop */}
+            <Route path="/print-shop/order" element={<PrintShopOrderPage />} />
+            <Route path="/print-shop/orders" element={<PrintShopOrdersPage />} />
+            <Route path="/print-shop/orders/:orderId" element={<PrintShopOrderDetailPage />} />
 
             {/* Subscription / monetization */}
             <Route path="/pricing" element={<PricingPage />} />
