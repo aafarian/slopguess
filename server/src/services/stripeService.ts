@@ -3,6 +3,7 @@
  *
  * Wraps the Stripe SDK for one-time payment management:
  * - Checkout session creation for one-time Pro purchase
+ * - Checkout session creation for print shop orders (dynamic pricing)
  * - Webhook event processing for checkout completion
  *
  * All methods are guarded by isStripeConfigured(). If Stripe keys are
@@ -14,6 +15,7 @@ import { env, isStripeConfigured } from "../config/env";
 import { pool } from "../config/database";
 import { logger } from "../config/logger";
 import { notificationService } from "./notificationService";
+import { printOrderService } from "./printOrderService";
 import type { SubscriptionTier } from "../models/subscription";
 
 // ---------------------------------------------------------------------------
@@ -146,6 +148,75 @@ async function createCheckoutSession(
 }
 
 // ---------------------------------------------------------------------------
+// Print order checkout
+// ---------------------------------------------------------------------------
+
+/** Parameters for creating a print-order Stripe Checkout session. */
+interface PrintOrderCheckoutParams {
+  userId: string;
+  orderId: string;
+  totalCostCents: number;
+  currency: string;
+  productDescription: string;
+}
+
+/**
+ * Create a Stripe Checkout session for a print shop order.
+ *
+ * Uses `price_data` for dynamic pricing (each order can have a different
+ * total depending on frame size, style, and margin). The session metadata
+ * includes `type: 'print_order'` so the webhook handler can route the
+ * completed checkout to printOrderService.confirmPayment().
+ *
+ * Returns the checkout session URL that the client should redirect to.
+ */
+async function createPrintOrderCheckoutSession(
+  params: PrintOrderCheckoutParams,
+): Promise<string> {
+  requireStripe();
+  const stripe = getStripe();
+
+  const { userId, orderId, totalCostCents, currency, productDescription } = params;
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    line_items: [
+      {
+        price_data: {
+          currency: currency.toLowerCase(),
+          product_data: {
+            name: productDescription,
+          },
+          unit_amount: totalCostCents,
+        },
+        quantity: 1,
+      },
+    ],
+    metadata: {
+      userId,
+      orderId,
+      type: "print_order",
+    },
+    success_url: `${env.CORS_ORIGIN}/print-shop/orders/${orderId}?status=success`,
+    cancel_url: `${env.CORS_ORIGIN}/print-shop/orders/${orderId}?status=cancelled`,
+  });
+
+  logger.info("stripeService", "Created print order checkout session", {
+    userId,
+    orderId,
+    sessionId: session.id,
+    totalCostCents,
+    currency,
+  });
+
+  if (!session.url) {
+    throw new Error("Stripe checkout session did not return a URL");
+  }
+
+  return session.url;
+}
+
+// ---------------------------------------------------------------------------
 // Webhook handling
 // ---------------------------------------------------------------------------
 
@@ -195,10 +266,14 @@ async function handleWebhookEvent(
 // ---------------------------------------------------------------------------
 
 /**
- * Handle checkout.session.completed: activate the one-time Pro purchase.
+ * Handle checkout.session.completed.
  *
- * Sets tier=pro, status=purchased, records the payment intent ID and
- * purchased_at timestamp. Updates users.subscription_tier = 'pro'.
+ * Routes to the correct handler based on session.metadata.type:
+ * - 'print_order': confirms payment for a print shop order via printOrderService
+ * - default (no type or any other value): existing Pro purchase flow
+ *
+ * This ensures backwards compatibility -- existing Pro purchase checkouts
+ * that have no `type` metadata continue to work as before.
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
   const userId = session.metadata?.userId;
@@ -209,6 +284,75 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     return;
   }
 
+  const metadataType = session.metadata?.type;
+
+  if (metadataType === "print_order") {
+    await handlePrintOrderCheckoutCompleted(session);
+  } else {
+    await handleProPurchaseCheckoutCompleted(session);
+  }
+}
+
+/**
+ * Handle checkout.session.completed for print shop orders.
+ *
+ * Calls printOrderService.confirmPayment() with the orderId from metadata
+ * and the Stripe payment intent ID. This marks the order as paid and
+ * submits it to Prodigi for fulfillment.
+ */
+async function handlePrintOrderCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+): Promise<void> {
+  const userId = session.metadata?.userId;
+  const orderId = session.metadata?.orderId;
+  const paymentIntentId = session.payment_intent as string | null;
+
+  if (!orderId) {
+    logger.warn("stripeService", "Print order checkout missing orderId metadata", {
+      sessionId: session.id,
+      userId,
+    });
+    return;
+  }
+
+  if (!paymentIntentId) {
+    logger.warn("stripeService", "Print order checkout missing payment_intent", {
+      sessionId: session.id,
+      userId,
+      orderId,
+    });
+    return;
+  }
+
+  try {
+    await printOrderService.confirmPayment(orderId, paymentIntentId);
+
+    logger.info("stripeService", "Print order payment confirmed via checkout", {
+      userId,
+      orderId,
+      paymentIntentId,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("stripeService", "Failed to confirm print order payment", {
+      userId,
+      orderId,
+      paymentIntentId,
+      error: message,
+    });
+  }
+}
+
+/**
+ * Handle checkout.session.completed for Pro purchases (original flow).
+ *
+ * Sets tier=pro, status=purchased, records the payment intent ID and
+ * purchased_at timestamp. Updates users.subscription_tier = 'pro'.
+ */
+async function handleProPurchaseCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+): Promise<void> {
+  const userId = session.metadata?.userId as string;
   const customerId = session.customer as string | null;
   const paymentIntentId = session.payment_intent as string | null;
 
@@ -332,5 +476,6 @@ async function notifyPurchase(userId: string): Promise<void> {
 export const stripeService = {
   getOrCreateCustomer,
   createCheckoutSession,
+  createPrintOrderCheckoutSession,
   handleWebhookEvent,
 };
