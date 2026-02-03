@@ -34,6 +34,20 @@ import PlayerBreakdown from '../components/PlayerBreakdown';
 import ShareButton from '../components/ShareButton';
 import CountdownTimer from '../components/CountdownTimer';
 import AdBanner from '../components/AdBanner';
+import { getConfig as getPrintShopConfig } from '../services/printShop';
+
+/** Module-level cache for the print shop enabled flag. */
+let _printShopEnabled: boolean | null = null;
+async function isPrintShopEnabled(): Promise<boolean> {
+  if (_printShopEnabled !== null) return _printShopEnabled;
+  try {
+    const cfg = await getPrintShopConfig();
+    _printShopEnabled = cfg.enabled;
+  } catch {
+    _printShopEnabled = false;
+  }
+  return _printShopEnabled;
+}
 
 /** Interval between polls when waiting for a new round after expiry. */
 const ROTATION_POLL_MS = 5_000;
@@ -76,6 +90,9 @@ export default function GamePage() {
   const [leveledUp, setLeveledUp] = useState(false);
   const [newLevel, setNewLevel] = useState<number | null>(null);
   const [preGuessXP, setPreGuessXP] = useState<XPStatus | null>(null);
+
+  // Print shop feature flag
+  const [printShopEnabled, setPrintShopEnabled] = useState(false);
 
   // Rotation polling state
   const [awaitingNewRound, setAwaitingNewRound] = useState(false);
@@ -147,6 +164,11 @@ export default function GamePage() {
   useEffect(() => {
     fetchRound();
   }, [fetchRound]);
+
+  // Fetch print shop feature flag once on mount
+  useEffect(() => {
+    isPrintShopEnabled().then(setPrintShopEnabled);
+  }, []);
 
   // Keep the current round ID ref in sync so the poller can detect a change
   useEffect(() => {
@@ -700,6 +722,15 @@ export default function GamePage() {
                   >
                     Round Details
                   </Link>
+                  {printShopEnabled && round.imageUrl && (
+                    <Link
+                      to={`/print-shop/order?roundId=${round.id}`}
+                      className="frame-this-btn"
+                    >
+                      <span className="frame-this-btn-icon" aria-hidden="true">&#128444;&#65039;</span>
+                      Frame This
+                    </Link>
+                  )}
                 </div>
               </div>
             );

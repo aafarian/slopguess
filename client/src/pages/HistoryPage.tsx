@@ -18,6 +18,20 @@ import { HistoryPageSkeleton } from '../components/SkeletonLoader';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import AdBanner from '../components/AdBanner';
+import { getConfig as getPrintShopConfig } from '../services/printShop';
+
+/** Module-level cache for the print shop enabled flag. */
+let _printShopEnabled: boolean | null = null;
+async function isPrintShopEnabled(): Promise<boolean> {
+  if (_printShopEnabled !== null) return _printShopEnabled;
+  try {
+    const cfg = await getPrintShopConfig();
+    _printShopEnabled = cfg.enabled;
+  } catch {
+    _printShopEnabled = false;
+  }
+  return _printShopEnabled;
+}
 
 const PAGE_LIMIT = 9;
 
@@ -27,6 +41,7 @@ export default function HistoryPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [printShopEnabled, setPrintShopEnabled] = useState(false);
 
   const fetchRounds = useCallback(async (targetPage: number) => {
     setLoading(true);
@@ -47,6 +62,11 @@ export default function HistoryPage() {
   useEffect(() => {
     fetchRounds(page);
   }, [page, fetchRounds]);
+
+  // Fetch print shop feature flag once on mount
+  useEffect(() => {
+    isPrintShopEnabled().then(setPrintShopEnabled);
+  }, []);
 
   /** Format an ISO date string to a short readable date. */
   function formatDate(dateStr: string | null): string {
@@ -147,6 +167,16 @@ export default function HistoryPage() {
                   </span>
                 </span>
               </div>
+              {printShopEnabled && round.imageUrl && (
+                <Link
+                  to={`/print-shop/order?roundId=${round.id}`}
+                  className="frame-this-btn frame-this-btn--card"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span className="frame-this-btn-icon" aria-hidden="true">&#128444;&#65039;</span>
+                  Frame This
+                </Link>
+              )}
             </div>
           </Link>
         ))}

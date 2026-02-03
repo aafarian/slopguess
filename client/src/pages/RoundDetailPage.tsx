@@ -32,6 +32,20 @@ import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ScoreDisplay from '../components/ScoreDisplay';
 import ElementBreakdown from '../components/ElementBreakdown';
+import { getConfig as getPrintShopConfig } from '../services/printShop';
+
+/** Module-level cache for the print shop enabled flag. */
+let _printShopEnabled: boolean | null = null;
+async function isPrintShopEnabled(): Promise<boolean> {
+  if (_printShopEnabled !== null) return _printShopEnabled;
+  try {
+    const cfg = await getPrintShopConfig();
+    _printShopEnabled = cfg.enabled;
+  } catch {
+    _printShopEnabled = false;
+  }
+  return _printShopEnabled;
+}
 
 /** Unicode medal characters for the top 3. */
 const MEDALS: Record<number, string> = {
@@ -51,6 +65,7 @@ export default function RoundDetailPage() {
   const [results, setResults] = useState<RoundResultsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [printShopEnabled, setPrintShopEnabled] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!roundId) return;
@@ -84,6 +99,11 @@ export default function RoundDetailPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Fetch print shop feature flag once on mount
+  useEffect(() => {
+    isPrintShopEnabled().then(setPrintShopEnabled);
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Render: Loading
@@ -131,6 +151,17 @@ export default function RoundDetailPage() {
       <div className="round-detail">
         {/* Hero image */}
         <RoundImage imageUrl={round.imageUrl} />
+        {printShopEnabled && round.imageUrl && (
+          <div className="round-detail-frame-cta">
+            <Link
+              to={`/print-shop/order?roundId=${round.id}`}
+              className="frame-this-btn"
+            >
+              <span className="frame-this-btn-icon" aria-hidden="true">&#128444;&#65039;</span>
+              Frame This
+            </Link>
+          </div>
+        )}
 
         <div className="round-detail-body">
           <StatusBadge status="active" />
@@ -189,6 +220,17 @@ export default function RoundDetailPage() {
     <div className="round-detail">
       {/* Hero image */}
       <RoundImage imageUrl={completedRound.imageUrl} />
+      {printShopEnabled && completedRound.imageUrl && (
+        <div className="round-detail-frame-cta">
+          <Link
+            to={`/print-shop/order?roundId=${round.id}`}
+            className="frame-this-btn"
+          >
+            <span className="frame-this-btn-icon" aria-hidden="true">&#128444;&#65039;</span>
+            Frame This
+          </Link>
+        </div>
+      )}
 
       <div className="round-detail-body">
         <StatusBadge status="completed" />

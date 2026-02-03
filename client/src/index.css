@@ -7150,3 +7150,56 @@ body {
     max-height: 160px;
   }
 }
+
+/* ===================================================================
+   "Frame This" button — subtle CTA linking to the print shop
+   =================================================================== */
+
+.frame-this-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+  white-space: nowrap;
+}
+
+.frame-this-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(124, 131, 255, 0.06);
+}
+
+.frame-this-btn-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* Variant inside history cards — align to the right */
+.frame-this-btn--card {
+  margin-top: 0.5rem;
+  align-self: flex-end;
+}
+
+/* Container for the button on the round detail page */
+.round-detail-frame-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+@media (max-width: 600px) {
+  .frame-this-btn {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+  }
+}
