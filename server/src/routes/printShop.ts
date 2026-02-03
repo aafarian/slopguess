@@ -13,6 +13,8 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { requireAuth, optionalAuth } from "../middleware/auth";
 import { printOrderService } from "../services/printOrderService";
+import { stripeService } from "../services/stripeService";
+import { isStripeConfigured } from "../config/env";
 import { toPublicPrintOrder } from "../models/printOrder";
 import { env } from "../config/env";
 import { logger } from "../config/logger";
@@ -219,13 +221,23 @@ printShopRouter.post(
         },
       });
 
-      // NOTE: Stripe checkout URL will be wired in Task 6.6.
-      // For now, return the order without a checkout URL.
       const publicOrder = toPublicPrintOrder(order);
+
+      // Create Stripe checkout session if Stripe is configured
+      let checkoutUrl: string | null = null;
+      if (isStripeConfigured()) {
+        checkoutUrl = await stripeService.createPrintOrderCheckoutSession({
+          userId,
+          orderId: order.id,
+          totalCostCents: order.totalCostCents,
+          currency: order.currency,
+          productDescription: `Framed Print - ${order.sku}`,
+        });
+      }
 
       res.status(201).json({
         order: publicOrder,
-        checkoutUrl: null,
+        checkoutUrl,
       });
     } catch (err: unknown) {
       if (err instanceof Error) {
