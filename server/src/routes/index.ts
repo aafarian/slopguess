@@ -61,6 +61,13 @@
  * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
  * │ /api/activity/feed                  │ GET    │ Friend activity feed (auth)               │
  * │ /api/activity/user/:username        │ GET    │ Public activity for a user (optionalAuth)  │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/group-challenges              │ POST   │ Create a group challenge (auth)            │
+ * │ /api/group-challenges              │ GET    │ List user's group challenges (auth)        │
+ * │ /api/group-challenges/:id          │ GET    │ Get group challenge detail (auth)          │
+ * │ /api/group-challenges/:id/join     │ POST   │ Join a group challenge (auth)              │
+ * │ /api/group-challenges/:id/guess    │ POST   │ Submit a guess for group challenge (auth)  │
+ * │ /api/group-challenges/:id/decline  │ POST   │ Decline a group challenge (auth)           │
  * └─────────────────────────────────────┴────────┴──────────────────────────────────────────┘
  *
  * Auth: Routes marked "requires auth" expect an Authorization: Bearer <JWT> header.
@@ -82,6 +89,7 @@ import { achievementsRouter } from "./achievements";
 import { leaderboardsRouter } from "./leaderboards";
 import { subscriptionsRouter } from "./subscriptions";
 import { activityRouter } from "./activity";
+import { groupChallengesRouter } from "./groupChallenges";
 const router = Router();
 
 // Health check
@@ -122,6 +130,9 @@ router.use("/subscriptions", subscriptionsRouter);
 
 // Activity feed (friend feed, per-user activity)
 router.use("/activity", activityRouter);
+
+// Group challenges (multi-player image challenges)
+router.use("/group-challenges", groupChallengesRouter);
 
 // Admin (round management, dev tools)
 router.use("/admin", adminRouter);
