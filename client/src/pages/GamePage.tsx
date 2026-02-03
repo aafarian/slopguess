@@ -18,8 +18,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getActiveRound, rotateRound } from '../services/game';
-import type { Round, GuessResult, ElementScoreBreakdown } from '../types/game';
+import { getActiveRound, rotateRound, getStreaks } from '../services/game';
+import type { Round, GuessResult, ElementScoreBreakdown, StreakData } from '../types/game';
 import { ApiRequestError } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -56,6 +56,9 @@ export default function GamePage() {
   const [savedElementScores, setSavedElementScores] = useState<ElementScoreBreakdown | null>(null);
   const [nextRotationAt, setNextRotationAt] = useState<string | null>(null);
 
+  // Streak data (loaded asynchronously after guess)
+  const [streakData, setStreakData] = useState<StreakData | null>(null);
+
   // Dev toolbar state
   const [rotating, setRotating] = useState(false);
   const [devViewMode, setDevViewMode] = useState<'dev' | 'prod'>('dev');
@@ -84,20 +87,40 @@ export default function GamePage() {
     }
   }, []);
 
+  // Fetch streak data asynchronously (fire-and-forget, never blocks UI)
+  const fetchStreakData = useCallback(async () => {
+    try {
+      const res = await getStreaks();
+      setStreakData(res.streak);
+    } catch {
+      // Non-critical -- silently ignore streak fetch failures
+    }
+  }, []);
+
   useEffect(() => {
     fetchRound();
   }, [fetchRound]);
 
+  // Fetch streak data for returning users who already guessed
+  useEffect(() => {
+    if (!loading && hasGuessed && isAuthenticated && !streakData && submissionPhase !== 'analyzing') {
+      fetchStreakData();
+    }
+  }, [loading, hasGuessed, isAuthenticated, streakData, submissionPhase, fetchStreakData]);
+
   const handleGuessSuccess = useCallback((result: GuessResult) => {
     setGuessResult(result);
     setSubmissionPhase('analyzing');
+
+    // Kick off async streak fetch when guess is submitted
+    fetchStreakData();
 
     setTimeout(() => {
       setSubmissionPhase('revealed');
       setHasGuessed(true);
       setUserScore(result.score);
     }, ANALYZING_DELAY_MS);
-  }, []);
+  }, [fetchStreakData]);
 
   const handleAlreadyGuessed = useCallback(() => {
     setHasGuessed(true);
@@ -125,6 +148,7 @@ export default function GamePage() {
       setSavedElementScores(null);
       setNextRotationAt(null);
       setRoundEnded(false);
+      setStreakData(null);
       await fetchRound();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to rotate round.');
@@ -357,6 +381,21 @@ export default function GamePage() {
                       <p className="game-prompt-teaser-countdown">
                         <CountdownTimer targetDate={nextRotationAt} />
                       </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Compact streak indicator */}
+                {streakData && (
+                  <div className="game-streak-inline">
+                    {streakData.currentStreak > 0 ? (
+                      <span className="game-streak-inline-active">
+                        🔥 {streakData.currentStreak} day streak!
+                      </span>
+                    ) : (
+                      <span className="game-streak-inline-prompt">
+                        Start a streak! Play again tomorrow.
+                      </span>
                     )}
                   </div>
                 )}
