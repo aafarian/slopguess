@@ -32,7 +32,7 @@ services:
       - "3001:3001"
     environment:
       # Database
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/slopguess
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/slopguess}
       # Auth
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       # Server
@@ -50,8 +50,10 @@ services:
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
       # Game configuration
-      ROUND_DURATION_HOURS: ${ROUND_DURATION_HOURS:-24}
+      ROUND_DURATION_HOURS: ${ROUND_DURATION_HOURS:-1}
       ROUND_CHECK_INTERVAL_MINUTES: ${ROUND_CHECK_INTERVAL_MINUTES:-5}
+      # Admin
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy
