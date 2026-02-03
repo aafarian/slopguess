@@ -115,6 +115,15 @@ export default function Layout() {
                 >
                   Messages
                 </NavLink>
+                <NavLink
+                  to="/pricing"
+                  className={({ isActive }) =>
+                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
+                  }
+                  onClick={closeMobileMenu}
+                >
+                  {isPro ? <ProBadge isPro /> : 'Upgrade'}
+                </NavLink>
               </>
             )}
           </nav>
