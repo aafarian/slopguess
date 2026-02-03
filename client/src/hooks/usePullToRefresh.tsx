@@ -49,7 +49,7 @@ export function usePullToRefresh(onRefresh: RefreshFn) {
   const { setRefreshHandler } = useContext(PullToRefreshContext);
 
   useEffect(() => {
-    setRefreshHandler(() => onRefresh);
+    setRefreshHandler(onRefresh);
     return () => setRefreshHandler(null);
   }, [onRefresh, setRefreshHandler]);
 }
