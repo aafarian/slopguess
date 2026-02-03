@@ -65,3 +65,14 @@ export interface AchievementSummary {
   unlocked: number;
   achievements: UserAchievementWithDefinition[];
 }
+
+/**
+ * Context hint passed to the achievement-checking engine so it knows
+ * which subset of achievements to evaluate after a game event.
+ */
+export type AchievementContext =
+  | { type: 'guess'; score: number }
+  | { type: 'streak'; count: number }
+  | { type: 'friend' }
+  | { type: 'challenge_sent' }
+  | { type: 'challenge_won' };
