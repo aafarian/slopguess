@@ -101,7 +101,7 @@ async function prodigiFetch<T>(
   const url = `${env.PRODIGI_API_URL}${path}`;
 
   const headers: Record<string, string> = {
-    "Authorization": `Bearer ${env.PRODIGI_API_KEY}`,
+    "X-API-Key": env.PRODIGI_API_KEY,
     "Content-Type": "application/json",
     "Accept": "application/json",
   };
