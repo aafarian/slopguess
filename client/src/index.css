@@ -4580,3 +4580,27 @@ body {
   font-size: 0.85rem;
   margin: 0;
 }
+
+/* ===================================================================
+   Pro Badge
+   =================================================================== */
+
+.pro-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1a1a2e;
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+/* Profile page upgrade link */
+.profile-upgrade-link {
+  margin-top: 0.75rem;
+}

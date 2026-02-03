@@ -13,12 +13,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useSubscription } from '../hooks/useSubscription';
 import { getUserStats, getUserHistory, getStreaks, getWeeklyStats } from '../services/game';
 import type { UserStats, UserHistoryEntry, Pagination, StreakData, WeeklyStats } from '../types/game';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import StreakDisplay from '../components/StreakDisplay';
+import ProBadge from '../components/ProBadge';
 
 const HISTORY_PAGE_LIMIT = 10;
 
@@ -53,6 +55,7 @@ function formatDate(dateStr: string): string {
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
+  const { isPro } = useSubscription();
 
   // Stats state
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -184,7 +187,15 @@ export default function ProfilePage() {
       <div className="profile-header">
         <h1 className="profile-title">Your Profile</h1>
         {user && (
-          <p className="profile-username">{user.username}</p>
+          <p className="profile-username">
+            {user.username}
+            <ProBadge isPro={isPro} />
+          </p>
+        )}
+        {!isPro && (
+          <Link to="/pricing" className="btn btn-sm btn-primary profile-upgrade-link">
+            Upgrade to Pro
+          </Link>
         )}
       </div>
 

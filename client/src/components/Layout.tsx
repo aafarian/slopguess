@@ -15,10 +15,13 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useSubscription } from '../hooks/useSubscription';
 import NotificationBell from './NotificationBell';
+import ProBadge from './ProBadge';
 
 export default function Layout() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { isPro } = useSubscription();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -123,6 +126,7 @@ export default function Layout() {
                 <NotificationBell />
                 <span className="navbar-user">
                   {user?.username}
+                  <ProBadge isPro={isPro} />
                 </span>
                 <button
                   type="button"
