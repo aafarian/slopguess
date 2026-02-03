@@ -168,9 +168,9 @@ jobs:
             RETRY_DELAY=10
             RETRY_COUNT=0
 
-            echo "==> Running health check..."
+            echo "==> Running health check (hitting server container directly)..."
             until [ $RETRY_COUNT -ge $MAX_RETRIES ]; do
-              BODY=$(curl -s http://localhost/api/health 2>/dev/null || true)
+              BODY=$(docker exec slopguess-server wget -q -O- http://localhost:3001/api/health 2>/dev/null || true)
 
               if echo "$BODY" | grep -q '"status":"ok"'; then
                 echo "Health check passed! API is responding with status: ok"
@@ -248,9 +248,9 @@ jobs:
             RETRY_DELAY=10
             RETRY_COUNT=0
 
-            echo "==> Running post-rollback health check..."
+            echo "==> Running post-rollback health check (hitting server container directly)..."
             until [ $RETRY_COUNT -ge $MAX_RETRIES ]; do
-              BODY=$(curl -s http://localhost/api/health 2>/dev/null || true)
+              BODY=$(docker exec slopguess-server wget -q -O- http://localhost:3001/api/health 2>/dev/null || true)
 
               if echo "$BODY" | grep -q '"status":"ok"'; then
                 echo "Health check passed after rollback! API is responding with status: ok"
