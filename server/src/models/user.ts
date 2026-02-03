@@ -9,6 +9,7 @@ export interface UserRow {
   username: string;
   email: string;
   password_hash: string;
+  subscription_tier: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -18,6 +19,7 @@ export interface PublicUser {
   id: string;
   username: string;
   email: string;
+  subscriptionTier: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -28,6 +30,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     id: row.id,
     username: row.username,
     email: row.email,
+    subscriptionTier: row.subscription_tier ?? "free",
     created_at: row.created_at,
     updated_at: row.updated_at,
   };

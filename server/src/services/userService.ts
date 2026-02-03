@@ -25,7 +25,7 @@ export async function createUser(
   const result = await pool.query<UserRow>(
     `INSERT INTO users (username, email, password_hash)
      VALUES ($1, $2, $3)
-     RETURNING id, username, email, password_hash, created_at, updated_at`,
+     RETURNING id, username, email, password_hash, subscription_tier, created_at, updated_at`,
     [username, email.toLowerCase(), passwordHash]
   );
 
@@ -38,7 +38,7 @@ export async function createUser(
  */
 export async function findByEmail(email: string): Promise<UserRow | null> {
   const result = await pool.query<UserRow>(
-    `SELECT id, username, email, password_hash, created_at, updated_at
+    `SELECT id, username, email, password_hash, subscription_tier, created_at, updated_at
      FROM users
      WHERE email = $1`,
     [email.toLowerCase()]
@@ -55,7 +55,7 @@ export async function findByUsername(
   username: string
 ): Promise<UserRow | null> {
   const result = await pool.query<UserRow>(
-    `SELECT id, username, email, password_hash, created_at, updated_at
+    `SELECT id, username, email, password_hash, subscription_tier, created_at, updated_at
      FROM users
      WHERE username = $1`,
     [username]
@@ -70,7 +70,7 @@ export async function findByUsername(
  */
 export async function findById(id: string): Promise<UserRow | null> {
   const result = await pool.query<UserRow>(
-    `SELECT id, username, email, password_hash, created_at, updated_at
+    `SELECT id, username, email, password_hash, subscription_tier, created_at, updated_at
      FROM users
      WHERE id = $1`,
     [id]

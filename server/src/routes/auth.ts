@@ -12,6 +12,7 @@ import * as userService from "../services/userService";
 import { toPublicUser } from "../models/user";
 import { requireAuth } from "../middleware/auth";
 import { loginLimiter, registerLimiter } from "../middleware/rateLimiter";
+import { subscriptionService } from "../services/subscriptionService";
 
 const authRouter = Router();
 
@@ -127,10 +128,17 @@ authRouter.post(
       // 4. Create user (password is hashed inside the service)
       const user = await userService.createUser(username, email, password);
 
-      // 5. Generate JWT
+      // 5. Create free subscription (best-effort — don't fail registration)
+      try {
+        await subscriptionService.createFreeSubscription(user.id);
+      } catch {
+        // Subscription creation is non-critical; user can still use the app
+      }
+
+      // 6. Generate JWT
       const token = signToken(user.id, user.username);
 
-      // 6. Return 201 with user + token
+      // 7. Return 201 with user + token
       res.status(201).json({ user, token });
     } catch (err: unknown) {
       // Handle unique-constraint violations that slip through the race window
