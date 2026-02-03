@@ -89,3 +89,51 @@ export async function verifyPassword(
 ): Promise<boolean> {
   return bcrypt.compare(plaintext, hash);
 }
+
+/**
+ * Public profile shape returned by `getPublicProfile`.
+ * Never includes email, password_hash, or subscription_tier.
+ */
+export interface PublicProfileUser {
+  id: string;
+  username: string;
+  createdAt: string;
+  level: number;
+  xp: number;
+}
+
+/**
+ * Retrieve the public profile data for a username.
+ * Returns null if the user does not exist.
+ * Never exposes email, password_hash, or subscription_tier.
+ */
+export async function getPublicProfile(
+  username: string,
+): Promise<PublicProfileUser | null> {
+  const result = await pool.query<{
+    id: string;
+    username: string;
+    created_at: Date;
+    level: number;
+    xp: number;
+  }>(
+    `SELECT id, username, created_at, level, xp
+     FROM users
+     WHERE username = $1`,
+    [username],
+  );
+
+  if (result.rows.length === 0) return null;
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    username: row.username,
+    createdAt:
+      row.created_at instanceof Date
+        ? row.created_at.toISOString()
+        : String(row.created_at),
+    level: row.level ?? 1,
+    xp: row.xp ?? 0,
+  };
+}

@@ -312,10 +312,54 @@ async function getUserStats(userId: string): Promise<{
   };
 }
 
+/**
+ * Get public-facing aggregate stats for a user (for public profile).
+ *
+ * Returns totalGamesPlayed, averageScore, and bestScore.
+ * Intentionally does NOT include worstScore or averageRank to keep
+ * the public view encouraging.
+ *
+ * @param userId - UUID of the user
+ * @returns Public stats object
+ */
+async function getPublicStats(userId: string): Promise<{
+  totalGamesPlayed: number;
+  averageScore: number;
+  bestScore: number;
+}> {
+  const result = await pool.query<{
+    total_rounds: string;
+    avg_score: string | null;
+    best_score: number | null;
+  }>(
+    `SELECT
+       COUNT(*) AS total_rounds,
+       AVG(score) AS avg_score,
+       MAX(score) AS best_score
+     FROM guesses
+     WHERE user_id = $1`,
+    [userId],
+  );
+
+  const row = result.rows[0];
+  const totalGamesPlayed = parseInt(row.total_rounds, 10);
+
+  if (totalGamesPlayed === 0) {
+    return { totalGamesPlayed: 0, averageScore: 0, bestScore: 0 };
+  }
+
+  return {
+    totalGamesPlayed,
+    averageScore: Math.round(parseFloat(row.avg_score ?? "0")),
+    bestScore: row.best_score ?? 0,
+  };
+}
+
 export const leaderboardService = {
   getLeaderboard,
   getUserRank,
   getRoundStats,
   getUserHistory,
   getUserStats,
+  getPublicStats,
 };
