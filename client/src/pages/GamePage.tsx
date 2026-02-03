@@ -15,7 +15,7 @@
  *  5. Not authenticated -- image displayed with login/register CTA
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getActiveRound, rotateRound, getStreaks, getUserStats } from '../services/game';
@@ -34,6 +34,9 @@ import PlayerBreakdown from '../components/PlayerBreakdown';
 import ShareButton from '../components/ShareButton';
 import CountdownTimer from '../components/CountdownTimer';
 import AdBanner from '../components/AdBanner';
+
+/** Interval between polls when waiting for a new round after expiry. */
+const ROTATION_POLL_MS = 5_000;
 
 /** Duration of the "Analyzing your guess..." transition in ms. */
 const ANALYZING_DELAY_MS = 1200;
@@ -73,6 +76,11 @@ export default function GamePage() {
   const [leveledUp, setLeveledUp] = useState(false);
   const [newLevel, setNewLevel] = useState<number | null>(null);
   const [preGuessXP, setPreGuessXP] = useState<XPStatus | null>(null);
+
+  // Rotation polling state
+  const [awaitingNewRound, setAwaitingNewRound] = useState(false);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentRoundIdRef = useRef<string | null>(null);
 
   // Dev toolbar state
   const [rotating, setRotating] = useState(false);
@@ -139,6 +147,85 @@ export default function GamePage() {
   useEffect(() => {
     fetchRound();
   }, [fetchRound]);
+
+  // Keep the current round ID ref in sync so the poller can detect a change
+  useEffect(() => {
+    if (round) {
+      currentRoundIdRef.current = round.id;
+    }
+  }, [round]);
+
+  // Clean up polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
+
+  // Called by CountdownTimer when the countdown reaches zero.
+  // Starts polling for the new round so the UI updates automatically.
+  const handleCountdownExpired = useCallback(() => {
+    // Don't start a second poller
+    if (pollIntervalRef.current) return;
+
+    const previousRoundId = currentRoundIdRef.current;
+    setAwaitingNewRound(true);
+
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const data = await getActiveRound();
+        const newRound = data.round ?? null;
+
+        // Only transition when we get a genuinely new round
+        if (newRound && newRound.id !== previousRoundId) {
+          // Stop polling
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+
+          // Reset all per-round state
+          setRound(newRound);
+          setHasGuessed(data.hasGuessed ?? false);
+          setUserScore(data.userScore ?? null);
+          setSavedGuessText(data.userGuessText ?? null);
+          setSavedElementScores(data.elementScores ?? null);
+          setNextRotationAt(data.nextRotationAt ?? null);
+          setGuessResult(null);
+          setSubmissionPhase('idle');
+          setRoundEnded(false);
+          setStreakData(null);
+          setIsPersonalBest(false);
+          setAchievementToasts([]);
+          setXpGained(null);
+          setLeveledUp(false);
+          setNewLevel(null);
+          setPreGuessXP(null);
+          setAwaitingNewRound(false);
+        }
+      } catch {
+        // 404 = server is generating the new round, keep polling
+      }
+    }, ROTATION_POLL_MS);
+  }, []);
+
+  // When nextRotationAt is known, schedule auto-polling for the new round
+  useEffect(() => {
+    if (!nextRotationAt) return;
+
+    const delay = new Date(nextRotationAt).getTime() - Date.now();
+    if (delay <= 0) {
+      // Already expired — start polling immediately
+      handleCountdownExpired();
+      return;
+    }
+
+    const timerId = setTimeout(() => {
+      handleCountdownExpired();
+    }, delay);
+
+    return () => clearTimeout(timerId);
+  }, [nextRotationAt, handleCountdownExpired]);
 
   // Capture XP snapshot before the user guesses (so we can show gain later)
   useEffect(() => {
@@ -219,7 +306,9 @@ export default function GamePage() {
 
   const handleRoundEnded = useCallback(() => {
     setRoundEnded(true);
-  }, []);
+    // Start polling for the next round automatically
+    handleCountdownExpired();
+  }, [handleCountdownExpired]);
 
   const handleLoginRedirect = useCallback(() => {
     const returnUrl = encodeURIComponent(window.location.pathname);
@@ -304,10 +393,14 @@ export default function GamePage() {
   if (!round) {
     return (
       <div className="game-page">
-        <EmptyState
-          title="No Active Round"
-          message="Check back soon for the next round!"
-        />
+        {awaitingNewRound ? (
+          <LoadingSpinner message="New round loading..." />
+        ) : (
+          <EmptyState
+            title="No Active Round"
+            message="Check back soon for the next round!"
+          />
+        )}
       </div>
     );
   }

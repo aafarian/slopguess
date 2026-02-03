@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface CountdownTimerProps {
   targetDate: string;
+  /** Called once when the countdown reaches zero. */
+  onExpired?: () => void;
 }
 
 function formatRemaining(ms: number): string {
@@ -21,18 +23,27 @@ function formatRemaining(ms: number): string {
   return `${seconds}s`;
 }
 
-export default function CountdownTimer({ targetDate }: CountdownTimerProps) {
+export default function CountdownTimer({ targetDate, onExpired }: CountdownTimerProps) {
   const [remaining, setRemaining] = useState(() => new Date(targetDate).getTime() - Date.now());
+  const firedRef = useRef(false);
 
   useEffect(() => {
+    // Reset fired flag when targetDate changes (new round)
+    firedRef.current = false;
     setRemaining(new Date(targetDate).getTime() - Date.now());
 
     const id = setInterval(() => {
-      setRemaining(new Date(targetDate).getTime() - Date.now());
+      const r = new Date(targetDate).getTime() - Date.now();
+      setRemaining(r);
+
+      if (r <= 0 && !firedRef.current) {
+        firedRef.current = true;
+        onExpired?.();
+      }
     }, 1000);
 
     return () => clearInterval(id);
-  }, [targetDate]);
+  }, [targetDate, onExpired]);
 
   if (remaining <= 0) {
     return <span className="countdown-timer countdown-timer--done">Rotating soon...</span>;
