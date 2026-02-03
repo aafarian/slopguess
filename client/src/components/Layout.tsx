@@ -1,31 +1,41 @@
 /**
  * Layout component with navigation bar.
  *
- * Shows:
- *  - App title (links to home / game)
- *  - Nav links: Play, History, Profile (auth only)
- *  - Social nav links: Friends, Challenges, Messages (auth only)
- *  - NotificationBell (auth only)
- *  - Login / Register links when logged out
- *  - Username + Logout button when logged in
+ * Nav structure:
+ *  - Play, History, Leaderboards (top-level)
+ *  - "Social" dropdown: Friends, Challenges, Messages (auth only)
+ *  - Username dropdown: Profile, Achievements, Upgrade, Logout (auth only)
+ *  - Login / Register when logged out
  *
  * Uses NavLink for active link highlighting.
  */
 
-import { useState, useEffect } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
 import { fetchXPStatus } from '../services/achievements';
 import NotificationBell from './NotificationBell';
 import ProBadge from './ProBadge';
 
+/** Paths that should mark the Social dropdown as active. */
+const SOCIAL_PATHS = ['/friends', '/challenges', '/messages'];
+
+/** Paths that should mark the Account dropdown as active. */
+const ACCOUNT_PATHS = ['/profile', '/achievements', '/pricing'];
+
 export default function Layout() {
   const { user, isAuthenticated, logout } = useAuth();
   const { isPro, monetizationEnabled } = useSubscription();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userLevel, setUserLevel] = useState<number | null>(null);
+
+  // Dropdown open state
+  const [openDropdown, setOpenDropdown] = useState<'social' | 'account' | null>(null);
+  const socialRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   // Fetch the user's level for the header badge
   useEffect(() => {
@@ -35,18 +45,52 @@ export default function Layout() {
     }
     fetchXPStatus()
       .then((status) => setUserLevel(status.level))
-      .catch(() => {/* Non-critical — silently ignore */});
+      .catch(() => {/* Non-critical */});
   }, [isAuthenticated]);
 
-  function handleLogout() {
-    logout();
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!openDropdown) return;
+
+    function handleClick(e: MouseEvent) {
+      const target = e.target as Node;
+      if (
+        socialRef.current?.contains(target) ||
+        accountRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setOpenDropdown(null);
+    }
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [openDropdown]);
+
+  // Close dropdown on route change
+  useEffect(() => {
+    setOpenDropdown(null);
     setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  function handleLogout() {
+    setOpenDropdown(null);
+    setMobileMenuOpen(false);
+    logout();
     navigate('/');
   }
 
   function closeMobileMenu() {
     setMobileMenuOpen(false);
+    setOpenDropdown(null);
   }
+
+  function toggleDropdown(name: 'social' | 'account') {
+    setOpenDropdown((prev) => (prev === name ? null : name));
+  }
+
+  const isSocialActive = SOCIAL_PATHS.some((p) => location.pathname.startsWith(p));
+  const isAccountActive = ACCOUNT_PATHS.some((p) => location.pathname.startsWith(p));
 
   return (
     <div className="layout">
@@ -67,7 +111,7 @@ export default function Layout() {
         </button>
 
         <div className={`navbar-menu ${mobileMenuOpen ? 'navbar-menu--open' : ''}`}>
-          {/* Game navigation */}
+          {/* Primary nav links */}
           <nav className="navbar-nav">
             <NavLink
               to="/"
@@ -97,67 +141,51 @@ export default function Layout() {
             >
               Leaderboards
             </NavLink>
-            <NavLink
-              to="/profile"
-              className={({ isActive }) =>
-                `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
-              }
-              onClick={closeMobileMenu}
-            >
-              Profile
-            </NavLink>
 
-            {/* Social feature links (auth only) */}
+            {/* Social dropdown (auth only) */}
             {isAuthenticated && (
-              <>
-                <NavLink
-                  to="/friends"
-                  className={({ isActive }) =>
-                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
-                  }
-                  onClick={closeMobileMenu}
+              <div
+                className="navbar-dropdown-wrapper"
+                ref={socialRef}
+              >
+                <button
+                  type="button"
+                  className={`navbar-nav-link navbar-dropdown-trigger${isSocialActive ? ' navbar-nav-link--active' : ''}`}
+                  onClick={() => toggleDropdown('social')}
+                  aria-expanded={openDropdown === 'social'}
                 >
-                  Friends
-                </NavLink>
-                <NavLink
-                  to="/challenges"
-                  className={({ isActive }) =>
-                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
-                  }
-                  onClick={closeMobileMenu}
-                >
-                  Challenges
-                </NavLink>
-                <NavLink
-                  to="/messages"
-                  className={({ isActive }) =>
-                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
-                  }
-                  onClick={closeMobileMenu}
-                >
-                  Messages
-                </NavLink>
-                <NavLink
-                  to="/achievements"
-                  className={({ isActive }) =>
-                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
-                  }
-                  onClick={closeMobileMenu}
-                >
-                  Achievements
-                </NavLink>
-                {monetizationEnabled && (
-                  <NavLink
-                    to="/pricing"
-                    className={({ isActive }) =>
-                      `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
-                    }
-                    onClick={closeMobileMenu}
-                  >
-                    {isPro ? <ProBadge isPro /> : 'Upgrade'}
-                  </NavLink>
+                  Social
+                  <span className="navbar-dropdown-arrow" aria-hidden="true" />
+                </button>
+                {openDropdown === 'social' && (
+                  <div className="navbar-dropdown-menu">
+                    <NavLink
+                      to="/friends"
+                      className={({ isActive }) =>
+                        `navbar-dropdown-item${isActive ? ' navbar-dropdown-item--active' : ''}`
+                      }
+                    >
+                      Friends
+                    </NavLink>
+                    <NavLink
+                      to="/challenges"
+                      className={({ isActive }) =>
+                        `navbar-dropdown-item${isActive ? ' navbar-dropdown-item--active' : ''}`
+                      }
+                    >
+                      Challenges
+                    </NavLink>
+                    <NavLink
+                      to="/messages"
+                      className={({ isActive }) =>
+                        `navbar-dropdown-item${isActive ? ' navbar-dropdown-item--active' : ''}`
+                      }
+                    >
+                      Messages
+                    </NavLink>
+                  </div>
                 )}
-              </>
+              </div>
             )}
           </nav>
 
@@ -166,20 +194,65 @@ export default function Layout() {
             {isAuthenticated ? (
               <>
                 <NotificationBell />
-                <span className="navbar-user">
-                  {user?.username}
-                  {userLevel !== null && (
-                    <span className="navbar-level-badge">Lv.&nbsp;{userLevel}</span>
-                  )}
-                  {monetizationEnabled && <ProBadge isPro={isPro} />}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline"
-                  onClick={handleLogout}
+
+                {/* Account dropdown */}
+                <div
+                  className="navbar-dropdown-wrapper"
+                  ref={accountRef}
                 >
-                  Logout
-                </button>
+                  <button
+                    type="button"
+                    className={`navbar-account-trigger${isAccountActive ? ' navbar-account-trigger--active' : ''}`}
+                    onClick={() => toggleDropdown('account')}
+                    aria-expanded={openDropdown === 'account'}
+                  >
+                    <span className="navbar-account-icon" aria-hidden="true">&#9679;</span>
+                    <span className="navbar-account-name">{user?.username}</span>
+                    {userLevel !== null && (
+                      <span className="navbar-level-badge">Lv.&nbsp;{userLevel}</span>
+                    )}
+                    {monetizationEnabled && <ProBadge isPro={isPro} />}
+                    <span className="navbar-dropdown-arrow" aria-hidden="true" />
+                  </button>
+                  {openDropdown === 'account' && (
+                    <div className="navbar-dropdown-menu navbar-dropdown-menu--right">
+                      <NavLink
+                        to="/profile"
+                        className={({ isActive }) =>
+                          `navbar-dropdown-item${isActive ? ' navbar-dropdown-item--active' : ''}`
+                        }
+                      >
+                        Profile
+                      </NavLink>
+                      <NavLink
+                        to="/achievements"
+                        className={({ isActive }) =>
+                          `navbar-dropdown-item${isActive ? ' navbar-dropdown-item--active' : ''}`
+                        }
+                      >
+                        Achievements
+                      </NavLink>
+                      {monetizationEnabled && (
+                        <NavLink
+                          to="/pricing"
+                          className={({ isActive }) =>
+                            `navbar-dropdown-item${isActive ? ' navbar-dropdown-item--active' : ''}`
+                          }
+                        >
+                          {isPro ? 'Pro Plan' : 'Upgrade'}
+                        </NavLink>
+                      )}
+                      <div className="navbar-dropdown-divider" />
+                      <button
+                        type="button"
+                        className="navbar-dropdown-item navbar-dropdown-item--danger"
+                        onClick={handleLogout}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>
