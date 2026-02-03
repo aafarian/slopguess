@@ -57,6 +57,14 @@ interface EnvConfig {
   PROMPT_MAX_LENGTH: number;
   /** Whether monetization features (Stripe, ads, Pro tier) are enabled (default: false). */
   MONETIZATION_ENABLED: boolean;
+  /** Whether the print shop feature is enabled (default: false). */
+  PRINT_SHOP_ENABLED: boolean;
+  /** Prodigi API key for print-on-demand fulfillment. Leave empty to disable. */
+  PRODIGI_API_KEY: string;
+  /** Prodigi API base URL. Sandbox by default for development; use https://api.prodigi.com/v4.0 in production. */
+  PRODIGI_API_URL: string;
+  /** Margin percentage added on top of Prodigi base cost for print shop items (default: 30). */
+  PRINT_SHOP_MARGIN_PERCENT: number;
 }
 
 /**
@@ -138,6 +146,17 @@ function loadEnvConfig(): EnvConfig {
     MONETIZATION_ENABLED:
       process.env.MONETIZATION_ENABLED === "true" ||
       process.env.MONETIZATION_ENABLED === "1",
+    PRINT_SHOP_ENABLED:
+      process.env.PRINT_SHOP_ENABLED === "true" ||
+      process.env.PRINT_SHOP_ENABLED === "1",
+    PRODIGI_API_KEY: process.env.PRODIGI_API_KEY || "",
+    PRODIGI_API_URL:
+      process.env.PRODIGI_API_URL ||
+      "https://api.sandbox.prodigi.com/v4.0",
+    PRINT_SHOP_MARGIN_PERCENT: parseInt(
+      process.env.PRINT_SHOP_MARGIN_PERCENT || "30",
+      10
+    ),
   };
 }
 
@@ -152,5 +171,13 @@ function isStripeConfigured(): boolean {
   return env.STRIPE_SECRET_KEY.trim().length > 0;
 }
 
-export { env, isStripeConfigured };
+/**
+ * Returns true when the Prodigi API key is configured,
+ * indicating that print-on-demand features are available.
+ */
+function isProdigiConfigured(): boolean {
+  return env.PRODIGI_API_KEY.trim().length > 0;
+}
+
+export { env, isStripeConfigured, isProdigiConfigured };
 export type { EnvConfig };
