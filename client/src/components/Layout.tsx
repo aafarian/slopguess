@@ -21,7 +21,7 @@ import ProBadge from './ProBadge';
 
 export default function Layout() {
   const { user, isAuthenticated, logout } = useAuth();
-  const { isPro } = useSubscription();
+  const { isPro, monetizationEnabled } = useSubscription();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -115,15 +115,17 @@ export default function Layout() {
                 >
                   Messages
                 </NavLink>
-                <NavLink
-                  to="/pricing"
-                  className={({ isActive }) =>
-                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
-                  }
-                  onClick={closeMobileMenu}
-                >
-                  {isPro ? <ProBadge isPro /> : 'Upgrade'}
-                </NavLink>
+                {monetizationEnabled && (
+                  <NavLink
+                    to="/pricing"
+                    className={({ isActive }) =>
+                      `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
+                    }
+                    onClick={closeMobileMenu}
+                  >
+                    {isPro ? <ProBadge isPro /> : 'Upgrade'}
+                  </NavLink>
+                )}
               </>
             )}
           </nav>
@@ -135,7 +137,7 @@ export default function Layout() {
                 <NotificationBell />
                 <span className="navbar-user">
                   {user?.username}
-                  <ProBadge isPro={isPro} />
+                  {monetizationEnabled && <ProBadge isPro={isPro} />}
                 </span>
                 <button
                   type="button"

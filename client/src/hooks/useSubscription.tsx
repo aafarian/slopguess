@@ -3,7 +3,7 @@
  *
  * Wrap the app in <SubscriptionProvider> (inside AuthProvider) and call
  * useSubscription() in any component to access the current subscription tier,
- * premium features, challenge limits, and checkout/portal actions.
+ * premium features, and checkout action.
  *
  * The provider fetches subscription status on mount when authenticated and
  * polls every 60 seconds to pick up server-side tier changes (e.g. from
@@ -22,7 +22,6 @@ import {
 import type {
   SubscriptionTier,
   PremiumFeatures,
-  ChallengeLimit,
 } from '../types/subscription';
 import * as subscriptionService from '../services/subscription';
 import { useAuth } from './useAuth';
@@ -32,19 +31,8 @@ const POLL_INTERVAL_MS = 60_000;
 
 /** Default premium features for unauthenticated / free-tier users. */
 const DEFAULT_FEATURES: PremiumFeatures = {
-  unlimitedChallenges: false,
-  proBadge: false,
-  detailedAnalytics: false,
   adFree: false,
-  priorityImageGen: false,
-};
-
-/** Default challenge limit for unauthenticated / free-tier users. */
-const DEFAULT_CHALLENGE_LIMIT: ChallengeLimit = {
-  allowed: 3,
-  used: 0,
-  remaining: 3,
-  isPro: false,
+  proBadge: false,
 };
 
 interface SubscriptionContextValue {
@@ -60,14 +48,10 @@ interface SubscriptionContextValue {
   error: string | null;
   /** Start a Stripe Checkout session and redirect. */
   startCheckout: () => Promise<void>;
-  /** Open the Stripe Customer Portal and redirect. */
-  openPortal: () => Promise<void>;
-  /** Current challenge usage / limit info. */
-  challengeLimit: ChallengeLimit;
-  /** Whether the user can still send challenges today. */
-  canSendChallenge: boolean;
   /** Manually re-fetch subscription status from the server. */
   refreshSubscription: () => Promise<void>;
+  /** Whether monetization features are enabled on the server. */
+  monetizationEnabled: boolean;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextValue | undefined>(
@@ -80,8 +64,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [tier, setTier] = useState<SubscriptionTier>('free');
   const [premiumFeatures, setPremiumFeatures] =
     useState<PremiumFeatures>(DEFAULT_FEATURES);
-  const [challengeLimit, setChallengeLimit] =
-    useState<ChallengeLimit>(DEFAULT_CHALLENGE_LIMIT);
+  const [monetizationEnabled, setMonetizationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,16 +83,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const [status, limit] = await Promise.all([
-        subscriptionService.getSubscriptionStatus(),
-        subscriptionService.getChallengeLimit(),
-      ]);
+      const status = await subscriptionService.getSubscriptionStatus();
 
       if (!mountedRef.current) return;
 
+      setMonetizationEnabled(status.monetizationEnabled);
       setTier(status.tier);
       setPremiumFeatures(status.features);
-      setChallengeLimit(limit);
       setError(null);
     } catch (err) {
       if (!mountedRef.current) return;
@@ -126,7 +106,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       // Reset to defaults when logged out
       setTier('free');
       setPremiumFeatures(DEFAULT_FEATURES);
-      setChallengeLimit(DEFAULT_CHALLENGE_LIMIT);
+      setMonetizationEnabled(false);
       setLoading(false);
       setError(null);
       return;
@@ -137,16 +117,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     async function initialFetch() {
       setLoading(true);
       try {
-        const [status, limit] = await Promise.all([
-          subscriptionService.getSubscriptionStatus(),
-          subscriptionService.getChallengeLimit(),
-        ]);
+        const status = await subscriptionService.getSubscriptionStatus();
 
         if (cancelled) return;
 
+        setMonetizationEnabled(status.monetizationEnabled);
         setTier(status.tier);
         setPremiumFeatures(status.features);
-        setChallengeLimit(limit);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -177,10 +154,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     await subscriptionService.startCheckout();
   }, []);
 
-  const openPortal = useCallback(async () => {
-    await subscriptionService.openCustomerPortal();
-  }, []);
-
   const refreshSubscription = useCallback(async () => {
     await fetchStatus();
   }, [fetchStatus]);
@@ -189,8 +162,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   // Derived state
   // ------------------------------------------------------------------
 
-  const isPro = tier === 'pro';
-  const canSendChallenge = challengeLimit.isPro || challengeLimit.remaining > 0;
+  const isPro = monetizationEnabled && tier === 'pro';
 
   // ------------------------------------------------------------------
   // Provider value
@@ -203,10 +175,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     loading,
     error,
     startCheckout,
-    openPortal,
-    challengeLimit,
-    canSendChallenge,
     refreshSubscription,
+    monetizationEnabled,
   };
 
   return (

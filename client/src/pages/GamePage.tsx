@@ -29,6 +29,7 @@ import GuessForm from '../components/GuessForm';
 import ElementBreakdown from '../components/ElementBreakdown';
 import ShareButton from '../components/ShareButton';
 import CountdownTimer from '../components/CountdownTimer';
+import AdBanner from '../components/AdBanner';
 
 /** Duration of the "Analyzing your guess..." transition in ms. */
 const ANALYZING_DELAY_MS = 1200;
@@ -253,6 +254,9 @@ export default function GamePage() {
           )}
         </div>
 
+        {/* Ad between image and controls */}
+        <AdBanner slot="6540643878" />
+
         {/* Right panel: Controls */}
         <div className="game-controls-panel">
           {/* Round info */}
@@ -363,6 +367,9 @@ export default function GamePage() {
                     userId={user.id}
                   />
                 )}
+
+                {/* Ad after guess submission */}
+                <AdBanner slot="5642203599" />
 
                 <div className="game-result-links">
                   <Link

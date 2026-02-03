@@ -42,18 +42,15 @@ export default function SubscriptionSuccessPage() {
           &#10003;
         </div>
 
-        <h1 className="subscription-result-title">Welcome to Slop Guess Pro!</h1>
+        <h1 className="subscription-result-title">Your purchase is complete!</h1>
 
         <p className="subscription-result-subtitle">
-          Your subscription is now active. Here&apos;s what you&apos;ve unlocked:
+          Welcome to Slop Guess Pro. Here&apos;s what you&apos;ve unlocked:
         </p>
 
         <ul className="subscription-features-list">
-          <li>Unlimited challenges</li>
-          <li>Pro badge on your profile</li>
-          <li>Detailed analytics</li>
           <li>Ad-free experience</li>
-          <li>Priority image generation</li>
+          <li>Pro badge on your profile</li>
         </ul>
 
         <div className="subscription-result-actions">

@@ -12,7 +12,6 @@
 
 import { Router, Request, Response, NextFunction } from "express";
 import { requireAuth } from "../middleware/auth";
-import { checkChallengeLimit } from "../middleware/premium";
 import { challengeService } from "../services/challengeService";
 import { containsBlockedContent } from "../services/contentFilter";
 import * as friendshipService from "../services/friendshipService";
@@ -34,7 +33,6 @@ const MAX_GUESS_LENGTH = 200;
 
 challengesRouter.post(
   "/",
-  checkChallengeLimit,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { friendId, prompt } = req.body as {

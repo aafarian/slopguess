@@ -1,13 +1,12 @@
 /**
  * Subscription service — pure database logic for subscription management.
  *
- * Handles tier lookups, premium feature resolution, daily challenge limits,
- * and free-tier subscription creation. All Stripe interactions are delegated
- * to stripeService; this module is intentionally Stripe-free.
+ * Handles tier lookups, premium feature resolution, and free-tier subscription
+ * creation. All Stripe interactions are delegated to stripeService; this module
+ * is intentionally Stripe-free.
  */
 
 import { pool } from "../config/database";
-import { env } from "../config/env";
 import { logger } from "../config/logger";
 import type {
   SubscriptionRow,
@@ -105,68 +104,6 @@ async function createFreeSubscription(userId: string): Promise<PublicSubscriptio
   return toPublicSubscription(result.rows[0]);
 }
 
-/**
- * Check whether a user is allowed to send a challenge.
- *
- * Pro users have unlimited challenges. Free users are limited to
- * FREE_TIER_DAILY_CHALLENGES per day (counted by challenges created
- * today where the user is the challenger).
- *
- * @param userId - UUID of the user
- * @returns true if the user can send another challenge today
- */
-async function canSendChallenge(userId: string): Promise<boolean> {
-  const tier = await getUserTier(userId);
-
-  // Pro users have unlimited challenges
-  if (tier === "pro") {
-    return true;
-  }
-
-  // Count challenges sent today by this user
-  const countResult = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count
-     FROM challenges
-     WHERE challenger_id = $1
-       AND created_at >= CURRENT_DATE`,
-    [userId],
-  );
-
-  const todayCount = parseInt(countResult.rows[0].count, 10);
-  return todayCount < env.FREE_TIER_DAILY_CHALLENGES;
-}
-
-/**
- * Get the number of remaining challenges a user can send today.
- *
- * Pro users get -1 (representing unlimited). Free users get the
- * difference between FREE_TIER_DAILY_CHALLENGES and today's count,
- * floored at 0.
- *
- * @param userId - UUID of the user
- * @returns Remaining challenges (-1 for unlimited / pro users)
- */
-async function getRemainingChallenges(userId: string): Promise<number> {
-  const tier = await getUserTier(userId);
-
-  // Pro users have unlimited challenges
-  if (tier === "pro") {
-    return -1;
-  }
-
-  // Count challenges sent today by this user
-  const countResult = await pool.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count
-     FROM challenges
-     WHERE challenger_id = $1
-       AND created_at >= CURRENT_DATE`,
-    [userId],
-  );
-
-  const todayCount = parseInt(countResult.rows[0].count, 10);
-  return Math.max(0, env.FREE_TIER_DAILY_CHALLENGES - todayCount);
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -176,6 +113,4 @@ export const subscriptionService = {
   getUserTier,
   getPremiumFeatures,
   createFreeSubscription,
-  canSendChallenge,
-  getRemainingChallenges,
 };

@@ -3,7 +3,6 @@
  *
  * GET    /api/subscriptions/status     — Current user's subscription status + premium features (requireAuth)
  * POST   /api/subscriptions/checkout   — Create Stripe Checkout session, returns URL (requireAuth)
- * POST   /api/subscriptions/portal     — Create Stripe Customer Portal session, returns URL (requireAuth)
  * POST   /api/subscriptions/webhook    — Stripe webhook endpoint (raw body, no auth)
  */
 
@@ -13,6 +12,7 @@ import { requireAuth } from "../middleware/auth";
 import { subscriptionService } from "../services/subscriptionService";
 import { stripeService } from "../services/stripeService";
 import { env, isStripeConfigured } from "../config/env";
+import type { PremiumFeatures } from "../models/subscription";
 import { logger } from "../config/logger";
 
 const subscriptionsRouter = Router();
@@ -35,10 +35,26 @@ subscriptionsRouter.get(
 
       const tier = subscription?.tier ?? "free";
 
+      // When monetization is disabled, report everyone as free with no premium features
+      if (!env.MONETIZATION_ENABLED) {
+        const disabledFeatures: PremiumFeatures = {
+          adFree: false,
+          proBadge: false,
+        };
+        res.status(200).json({
+          tier: "free" as const,
+          features: disabledFeatures,
+          subscription: null,
+          monetizationEnabled: false,
+        });
+        return;
+      }
+
       res.status(200).json({
         tier,
         features,
         subscription,
+        monetizationEnabled: true,
       });
     } catch (err: unknown) {
       next(err);
@@ -55,6 +71,16 @@ subscriptionsRouter.post(
   requireAuth,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      if (!env.MONETIZATION_ENABLED) {
+        res.status(503).json({
+          error: {
+            message: "Monetization features are not enabled",
+            code: "MONETIZATION_DISABLED",
+          },
+        });
+        return;
+      }
+
       if (!isStripeConfigured()) {
         res.status(503).json({
           error: {
@@ -90,48 +116,6 @@ subscriptionsRouter.post(
             error: {
               message: "User not found",
               code: "USER_NOT_FOUND",
-            },
-          });
-          return;
-        }
-      }
-
-      next(err);
-    }
-  },
-);
-
-// ---------------------------------------------------------------------------
-// POST /portal — Create Stripe Customer Portal session
-// ---------------------------------------------------------------------------
-
-subscriptionsRouter.post(
-  "/portal",
-  requireAuth,
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      if (!isStripeConfigured()) {
-        res.status(503).json({
-          error: {
-            message: "Payment processing is not available",
-            code: "STRIPE_NOT_CONFIGURED",
-          },
-        });
-        return;
-      }
-
-      const userId = req.user!.userId;
-
-      const url = await stripeService.createCustomerPortalSession(userId);
-
-      res.status(200).json({ url });
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        if (err.message.includes("No Stripe customer found")) {
-          res.status(400).json({
-            error: {
-              message: "No active subscription found. Subscribe first.",
-              code: "NO_SUBSCRIPTION",
             },
           });
           return;

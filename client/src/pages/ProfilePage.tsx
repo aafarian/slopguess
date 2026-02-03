@@ -55,7 +55,7 @@ function formatDate(dateStr: string): string {
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
-  const { isPro } = useSubscription();
+  const { isPro, monetizationEnabled } = useSubscription();
 
   // Stats state
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -189,10 +189,10 @@ export default function ProfilePage() {
         {user && (
           <p className="profile-username">
             {user.username}
-            <ProBadge isPro={isPro} />
+            {monetizationEnabled && <ProBadge isPro={isPro} />}
           </p>
         )}
-        {!isPro && (
+        {monetizationEnabled && !isPro && (
           <Link to="/pricing" className="btn btn-sm btn-primary profile-upgrade-link">
             Upgrade to Pro
           </Link>

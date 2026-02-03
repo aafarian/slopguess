@@ -14,18 +14,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useSubscription } from '../hooks/useSubscription';
 import {
   getIncomingChallenges,
   getSentChallenges,
   createChallenge,
   getFriends,
 } from '../services/social';
-import { ApiRequestError } from '../services/api';
 import type { Challenge, Friendship } from '../types/social';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
+import AdBanner from '../components/AdBanner';
 
 type Tab = 'incoming' | 'sent';
 
@@ -62,7 +61,6 @@ function getStatusModifier(
 
 export default function ChallengePage() {
   const { isAuthenticated, user } = useAuth();
-  const { isPro, challengeLimit, canSendChallenge, refreshSubscription } = useSubscription();
   const [searchParams] = useSearchParams();
 
   // Tab state
@@ -144,20 +142,13 @@ export default function ChallengePage() {
         setCreateSuccess('Challenge sent! Your friend will be notified once the image is ready.');
         setPromptText('');
         setSelectedFriendId('');
-        // Refresh the sent list and challenge limits
+        // Refresh the sent list
         const sentRes = await getSentChallenges();
         setSent(sentRes.challenges);
-        refreshSubscription();
       } catch (err) {
-        if (err instanceof ApiRequestError && err.status === 429) {
-          setCreateError(
-            'You\u2019ve reached your daily challenge limit. Upgrade to Pro for unlimited challenges.',
-          );
-        } else {
-          setCreateError(
-            err instanceof Error ? err.message : 'Failed to create challenge.',
-          );
-        }
+        setCreateError(
+          err instanceof Error ? err.message : 'Failed to create challenge.',
+        );
       } finally {
         setCreating(false);
       }
@@ -190,7 +181,7 @@ export default function ChallengePage() {
   const isNearLimit = promptCharCount >= 180;
   const isAtLimit = promptCharCount >= MAX_PROMPT_CHARS;
   const canCreate =
-    selectedFriendId !== '' && promptText.trim().length > 0 && !creating && canSendChallenge;
+    selectedFriendId !== '' && promptText.trim().length > 0 && !creating;
 
   return (
     <div className="challenge-page">
@@ -203,25 +194,6 @@ export default function ChallengePage() {
           </p>
         )}
       </div>
-
-      {/* Challenge limit banner */}
-      {!isPro && (
-        <div className="challenge-limit-banner" role="status">
-          <span className="challenge-limit-banner-text">
-            {challengeLimit.remaining > 0
-              ? `${challengeLimit.remaining}/${challengeLimit.allowed} challenges remaining today`
-              : 'You\u2019ve used all your daily challenges'}
-          </span>
-          <Link to="/pricing" className="challenge-limit-banner-link">
-            Upgrade to Pro for unlimited
-          </Link>
-        </div>
-      )}
-      {isPro && (
-        <div className="challenge-limit-banner challenge-limit-banner--pro" role="status">
-          <span className="challenge-limit-banner-text">Unlimited challenges</span>
-        </div>
-      )}
 
       {/* ============================================================= */}
       {/* Create Challenge                                               */}
@@ -289,14 +261,6 @@ export default function ChallengePage() {
             {createError && (
               <div className="game-guess-error" role="alert">
                 {createError}
-                {createError.includes('daily challenge limit') && (
-                  <>
-                    {' '}
-                    <Link to="/pricing" className="challenge-upgrade-link">
-                      View plans
-                    </Link>
-                  </>
-                )}
               </div>
             )}
 
@@ -306,32 +270,26 @@ export default function ChallengePage() {
               </div>
             )}
 
-            {!canSendChallenge && !isPro ? (
-              <Link
-                to="/pricing"
-                className="btn btn-primary btn-block challenge-create-submit challenge-create-submit--upgrade"
-              >
-                Upgrade to Pro for unlimited
-              </Link>
-            ) : (
-              <button
-                type="submit"
-                className={`btn btn-primary btn-block challenge-create-submit${creating ? ' game-guess-submit--loading' : ''}`}
-                disabled={!canCreate}
-              >
-                {creating ? (
-                  <>
-                    <span className="game-guess-submit-spinner" aria-hidden="true" />
-                    Sending...
-                  </>
-                ) : (
-                  'Send Challenge'
-                )}
-              </button>
-            )}
+            <button
+              type="submit"
+              className={`btn btn-primary btn-block challenge-create-submit${creating ? ' game-guess-submit--loading' : ''}`}
+              disabled={!canCreate}
+            >
+              {creating ? (
+                <>
+                  <span className="game-guess-submit-spinner" aria-hidden="true" />
+                  Sending...
+                </>
+              ) : (
+                'Send Challenge'
+              )}
+            </button>
           </form>
         )}
       </section>
+
+      {/* Ad between create form and challenge list */}
+      <AdBanner slot="2768919826" />
 
       {/* ============================================================= */}
       {/* Challenge Lists (Tabs)                                         */}

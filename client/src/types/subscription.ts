@@ -11,7 +11,7 @@
 export type SubscriptionTier = 'free' | 'pro';
 
 /** Subscription lifecycle status -- matches server SubscriptionStatus. */
-export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'incomplete';
+export type SubscriptionStatus = 'active' | 'purchased';
 
 // ---------------------------------------------------------------------------
 // Premium features
@@ -19,11 +19,8 @@ export type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'incomplet
 
 /** Boolean flags for each premium perk -- matches server PremiumFeatures. */
 export interface PremiumFeatures {
-  unlimitedChallenges: boolean;
-  proBadge: boolean;
-  detailedAnalytics: boolean;
   adFree: boolean;
-  priorityImageGen: boolean;
+  proBadge: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -37,8 +34,7 @@ export interface PremiumFeatures {
 export interface UserSubscription {
   tier: SubscriptionTier;
   status: SubscriptionStatus;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
+  purchasedAt: string | null;
   premiumFeatures: PremiumFeatures;
 }
 
@@ -51,6 +47,8 @@ export interface SubscriptionStatusResponse {
   tier: SubscriptionTier;
   features: PremiumFeatures;
   subscription: PublicSubscription | null;
+  /** Whether monetization features are enabled on the server. */
+  monetizationEnabled: boolean;
 }
 
 /**
@@ -62,15 +60,13 @@ export interface PublicSubscription {
   userId: string;
   tier: SubscriptionTier;
   status: SubscriptionStatus;
-  currentPeriodStart: string | null;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
+  purchasedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 // ---------------------------------------------------------------------------
-// API response wrappers -- Checkout & Portal
+// API response wrappers -- Checkout
 // ---------------------------------------------------------------------------
 
 /** Response from POST /api/subscriptions/checkout. */
@@ -78,29 +74,12 @@ export interface CheckoutResponse {
   url: string;
 }
 
-/** Response from POST /api/subscriptions/portal. */
-export interface PortalResponse {
-  url: string;
-}
-
-// ---------------------------------------------------------------------------
-// Challenge limits
-// ---------------------------------------------------------------------------
-
-/** Challenge usage / limit info derived from the user's tier. */
-export interface ChallengeLimit {
-  allowed: number;
-  used: number;
-  remaining: number;
-  isPro: boolean;
-}
-
 // ---------------------------------------------------------------------------
 // Pro plan pricing constants
 // ---------------------------------------------------------------------------
 
-/** Monthly price displayed in the UI. */
-export const PRO_MONTHLY_PRICE = '$4.99';
+/** One-time price displayed in the UI. */
+export const PRO_PRICE = '$5.00';
 
 /** ISO 4217 currency code for Pro plan pricing. */
 export const PRO_CURRENCY = 'USD';

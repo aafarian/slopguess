@@ -51,10 +51,10 @@ interface EnvConfig {
   STRIPE_PUBLISHABLE_KEY: string;
   /** Stripe webhook signing secret for verifying webhook events. */
   STRIPE_WEBHOOK_SECRET: string;
-  /** Stripe Price ID for the Pro monthly subscription plan. */
+  /** Stripe Price ID for the Pro one-time purchase. */
   STRIPE_PRO_PRICE_ID: string;
-  /** Number of daily challenges available on the free tier (default: 3). */
-  FREE_TIER_DAILY_CHALLENGES: number;
+  /** Whether monetization features (Stripe, ads, Pro tier) are enabled (default: false). */
+  MONETIZATION_ENABLED: boolean;
 }
 
 /**
@@ -132,10 +132,9 @@ function loadEnvConfig(): EnvConfig {
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "",
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "",
     STRIPE_PRO_PRICE_ID: process.env.STRIPE_PRO_PRICE_ID || "",
-    FREE_TIER_DAILY_CHALLENGES: parseInt(
-      process.env.FREE_TIER_DAILY_CHALLENGES || "3",
-      10
-    ),
+    MONETIZATION_ENABLED:
+      process.env.MONETIZATION_ENABLED === "true" ||
+      process.env.MONETIZATION_ENABLED === "1",
   };
 }
 

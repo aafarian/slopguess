@@ -4,10 +4,9 @@
  * Route: /pricing
  *
  * Shows two plan cards side-by-side: Free and Pro.
- * - Free plan lists included features.
- * - Pro plan lists premium features, the monthly price, and an Upgrade CTA.
- * - If the user is already Pro, the Pro card shows a "Current Plan" badge
- *   and a "Manage Subscription" button that opens the Stripe Customer Portal.
+ * - Free plan lists included features (with ads).
+ * - Pro plan lists premium features: ad-free + Pro badge for $5 one-time.
+ * - If the user is already Pro, the Pro card shows a "Current Plan" badge.
  * - If the user is not logged in, shows a login prompt instead of the CTA.
  */
 
@@ -15,25 +14,27 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
-import { PRO_MONTHLY_PRICE, PRO_PLAN_NAME } from '../types/subscription';
+import { PRO_PRICE, PRO_PLAN_NAME } from '../types/subscription';
 
 /* -----------------------------------------------------------------------
    Feature list definitions
    ----------------------------------------------------------------------- */
 
-const FREE_FEATURES = [
+/** Features shared by both Free and Pro plans. */
+const BASE_FEATURES = [
   'Daily game',
   'Leaderboard access',
   'Friends list',
-  '3 challenges per day',
+  'Unlimited challenges',
 ];
 
+/** Free-only feature callouts. */
+const FREE_ONLY_FEATURES = ['Ad-supported'];
+
+/** Pro-exclusive feature callouts. */
 const PRO_FEATURES = [
-  'Unlimited challenges',
-  'Pro badge',
-  'Detailed analytics',
   'Ad-free experience',
-  'Priority image generation',
+  'Pro badge',
 ];
 
 /* -----------------------------------------------------------------------
@@ -42,10 +43,9 @@ const PRO_FEATURES = [
 
 export default function PricingPage() {
   const { isAuthenticated } = useAuth();
-  const { isPro, startCheckout, openPortal, loading } = useSubscription();
+  const { isPro, startCheckout, loading, monetizationEnabled } = useSubscription();
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleUpgrade() {
@@ -60,16 +60,17 @@ export default function PricingPage() {
     }
   }
 
-  async function handleManage() {
-    setError(null);
-    setPortalLoading(true);
-    try {
-      await openPortal();
-    } catch {
-      setError('Failed to open subscription portal. Please try again.');
-    } finally {
-      setPortalLoading(false);
-    }
+  if (!monetizationEnabled) {
+    return (
+      <div className="pricing-page">
+        <div className="pricing-header">
+          <h1 className="pricing-title">Coming Soon</h1>
+          <p className="pricing-subtitle">
+            Premium plans are not yet available. Stay tuned!
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -100,12 +101,11 @@ export default function PricingPage() {
             <h2 className="pricing-card-name">Free</h2>
             <div className="pricing-card-price">
               <span className="pricing-card-amount">$0</span>
-              <span className="pricing-card-period">/month</span>
             </div>
           </div>
 
           <ul className="pricing-card-features">
-            {FREE_FEATURES.map((feature) => (
+            {[...BASE_FEATURES, ...FREE_ONLY_FEATURES].map((feature) => (
               <li key={feature} className="pricing-card-feature">
                 <span className="pricing-card-feature-icon">&#10003;</span>
                 {feature}
@@ -131,13 +131,13 @@ export default function PricingPage() {
           <div className="pricing-card-header">
             <h2 className="pricing-card-name">{PRO_PLAN_NAME}</h2>
             <div className="pricing-card-price">
-              <span className="pricing-card-amount">{PRO_MONTHLY_PRICE}</span>
-              <span className="pricing-card-period">/month</span>
+              <span className="pricing-card-amount">{PRO_PRICE}</span>
+              <span className="pricing-card-period">one-time</span>
             </div>
           </div>
 
           <ul className="pricing-card-features">
-            {FREE_FEATURES.map((feature) => (
+            {BASE_FEATURES.map((feature) => (
               <li key={feature} className="pricing-card-feature">
                 <span className="pricing-card-feature-icon">&#10003;</span>
                 {feature}
@@ -170,19 +170,12 @@ export default function PricingPage() {
                 disabled={checkoutLoading || loading}
                 onClick={handleUpgrade}
               >
-                {checkoutLoading ? 'Redirecting...' : 'Upgrade Now'}
+                {checkoutLoading ? 'Redirecting...' : 'Buy Now'}
               </button>
             )}
 
             {isAuthenticated && isPro && (
-              <button
-                type="button"
-                className="btn btn-outline btn-block"
-                disabled={portalLoading || loading}
-                onClick={handleManage}
-              >
-                {portalLoading ? 'Opening...' : 'Manage Subscription'}
-              </button>
+              <span className="pricing-card-current-label">You own this</span>
             )}
           </div>
         </div>

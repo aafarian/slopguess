@@ -17,6 +17,7 @@ import type { RoundHistoryItem, Pagination } from '../types/game';
 import { HistoryPageSkeleton } from '../components/SkeletonLoader';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
+import AdBanner from '../components/AdBanner';
 
 const PAGE_LIMIT = 9;
 
@@ -150,6 +151,9 @@ export default function HistoryPage() {
           </Link>
         ))}
       </div>
+
+      {/* Ad banner at bottom */}
+      <AdBanner slot="3890138225" />
 
       {/* Pagination controls */}
       {pagination && pagination.totalPages > 1 && (
