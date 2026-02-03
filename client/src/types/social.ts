@@ -151,6 +151,75 @@ export interface PublicProfileResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Activity feed
+// ---------------------------------------------------------------------------
+
+/** Supported activity event types -- matches server ActivityEventType. */
+export type ActivityEventType =
+  | 'game_played'
+  | 'achievement_unlocked'
+  | 'challenge_completed'
+  | 'level_up';
+
+/** A single activity event as returned by the API. */
+export interface ActivityEvent {
+  id: string;
+  userId: string;
+  username: string;
+  eventType: ActivityEventType;
+  data: Record<string, unknown>;
+  createdAt: string;
+}
+
+/** Response from GET /api/activity/feed or /api/activity/user/:username. */
+export interface ActivityFeedResponse {
+  events: ActivityEvent[];
+  hasMore: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Group Challenge
+// ---------------------------------------------------------------------------
+
+/** Group challenge lifecycle status -- matches server GroupChallengeStatus. */
+export type GroupChallengeStatus =
+  | 'pending'
+  | 'active'
+  | 'scoring'
+  | 'completed'
+  | 'expired';
+
+/** Participant status within a group challenge -- matches server ParticipantStatus. */
+export type GroupChallengeParticipantStatus =
+  | 'pending'
+  | 'joined'
+  | 'guessed'
+  | 'declined';
+
+/** A single participant in a group challenge. */
+export interface GroupChallengeParticipant {
+  id: string;
+  userId: string;
+  username: string;
+  guessText: string | null;
+  score: number | null;
+  status: GroupChallengeParticipantStatus;
+}
+
+/** Public group challenge as returned by the API (matches server PublicGroupChallenge). */
+export interface GroupChallenge {
+  id: string;
+  creatorId: string;
+  creatorUsername: string;
+  imageUrl: string | null;
+  status: GroupChallengeStatus;
+  participants: GroupChallengeParticipant[];
+  createdAt: string;
+  updatedAt: string;
+  prompt?: string;
+}
+
+// ---------------------------------------------------------------------------
 // API response wrappers — Friends
 // ---------------------------------------------------------------------------
 
@@ -221,4 +290,38 @@ export interface NotificationsResponse {
 /** Response from GET /api/notifications/unread-count. */
 export interface UnreadCountResponse {
   count: number;
+}
+
+// ---------------------------------------------------------------------------
+// API response wrappers — Group Challenges
+// ---------------------------------------------------------------------------
+
+/** Response from GET /api/group-challenges (list of user's group challenges). */
+export interface GroupChallengeListResponse {
+  groupChallenges: GroupChallenge[];
+}
+
+/** Response from GET /api/group-challenges/:challengeId (single group challenge). */
+export interface GroupChallengeDetailResponse {
+  groupChallenge: GroupChallenge;
+}
+
+/** Response from POST /api/group-challenges (create group challenge). */
+export interface GroupChallengeCreateResponse {
+  groupChallenge: GroupChallenge;
+}
+
+/** Response from POST /api/group-challenges/:challengeId/join. */
+export interface GroupChallengeJoinResponse {
+  groupChallenge: GroupChallenge;
+}
+
+/** Response from POST /api/group-challenges/:challengeId/guess. */
+export interface GroupChallengeGuessResponse {
+  groupChallenge: GroupChallenge;
+}
+
+/** Response from POST /api/group-challenges/:challengeId/decline. */
+export interface GroupChallengeDeclineResponse {
+  groupChallenge: GroupChallenge;
 }

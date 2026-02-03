@@ -4163,6 +4163,176 @@ body {
 }
 
 /* ===================================================================
+   Activity feed page
+   =================================================================== */
+
+.activity-feed-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+.activity-feed-header {
+  margin-bottom: 1.5rem;
+}
+
+.activity-feed-title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* --- Event list --------------------------------------------------- */
+
+.activity-feed-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* --- Event card --------------------------------------------------- */
+
+.activity-feed-card {
+  display: flex;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  gap: 0.75rem;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.activity-feed-card:hover {
+  border-color: rgba(100, 108, 255, 0.3);
+  background: rgba(100, 108, 255, 0.04);
+}
+
+.activity-feed-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  background: rgba(100, 108, 255, 0.1);
+  line-height: 1;
+}
+
+.activity-feed-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.activity-feed-card-text {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.activity-feed-card-time {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* --- Username link ------------------------------------------------ */
+
+.activity-feed-username {
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.activity-feed-username:hover {
+  text-decoration: underline;
+}
+
+/* --- Inline link (e.g. "View round") ------------------------------ */
+
+.activity-feed-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.activity-feed-link:hover {
+  text-decoration: underline;
+}
+
+/* --- Achievement badge -------------------------------------------- */
+
+.activity-feed-achievement {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.activity-feed-achievement-icon {
+  margin-right: 0.25rem;
+}
+
+/* --- Challenge result badge --------------------------------------- */
+
+.activity-feed-challenge-result {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}
+
+.activity-feed-challenge-result--win {
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+}
+
+.activity-feed-challenge-result--lose {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* --- Level badge -------------------------------------------------- */
+
+.activity-feed-level {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* --- Load more ---------------------------------------------------- */
+
+.activity-feed-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+/* --- Responsive tweaks -------------------------------------------- */
+
+@media (max-width: 480px) {
+  .activity-feed-title {
+    font-size: 1.5rem;
+  }
+
+  .activity-feed-card {
+    padding: 0.75rem;
+  }
+
+  .activity-feed-card-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.95rem;
+  }
+}
+
+/* ===================================================================
    NotificationBell
    =================================================================== */
 

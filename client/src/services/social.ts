@@ -20,6 +20,13 @@ import type {
   NotificationsResponse,
   UnreadCountResponse,
   PublicProfileResponse,
+  ActivityFeedResponse,
+  GroupChallengeListResponse,
+  GroupChallengeDetailResponse,
+  GroupChallengeCreateResponse,
+  GroupChallengeJoinResponse,
+  GroupChallengeGuessResponse,
+  GroupChallengeDeclineResponse,
 } from '../types/social';
 
 // ---------------------------------------------------------------------------
@@ -350,5 +357,137 @@ export async function markNotificationRead(
   return request<{ message: string }>(
     `/api/notifications/${notificationId}/read`,
     { method: 'PATCH' },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Activity Feed
+// ---------------------------------------------------------------------------
+
+/**
+ * Get the friend activity feed (events from accepted friends).
+ * Requires authentication.
+ *
+ * GET /api/activity/feed?limit=N&offset=N
+ */
+export async function getFriendFeed(
+  limit: number = 20,
+  offset: number = 0,
+): Promise<ActivityFeedResponse> {
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
+  params.set('offset', String(offset));
+  return request<ActivityFeedResponse>(`/api/activity/feed?${params.toString()}`);
+}
+
+/**
+ * Get activity events for a specific user.
+ * Does not require authentication (optionalAuth on server).
+ *
+ * GET /api/activity/user/:username?limit=N&offset=N
+ */
+export async function getUserActivity(
+  username: string,
+  limit: number = 20,
+  offset: number = 0,
+): Promise<ActivityFeedResponse> {
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
+  params.set('offset', String(offset));
+  return request<ActivityFeedResponse>(
+    `/api/activity/user/${encodeURIComponent(username)}?${params.toString()}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Group Challenges
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a new group challenge.
+ * Requires authentication.
+ *
+ * POST /api/group-challenges
+ */
+export async function createGroupChallenge(
+  participantIds: string[],
+  prompt: string,
+): Promise<GroupChallengeCreateResponse> {
+  return request<GroupChallengeCreateResponse>('/api/group-challenges', {
+    method: 'POST',
+    body: JSON.stringify({ participantIds, prompt }),
+  });
+}
+
+/**
+ * List group challenges for the authenticated user.
+ * Requires authentication.
+ *
+ * GET /api/group-challenges
+ */
+export async function getGroupChallenges(): Promise<GroupChallengeListResponse> {
+  return request<GroupChallengeListResponse>('/api/group-challenges');
+}
+
+/**
+ * Get details of a specific group challenge.
+ * Requires authentication.
+ *
+ * GET /api/group-challenges/:challengeId
+ */
+export async function getGroupChallengeDetail(
+  challengeId: string,
+): Promise<GroupChallengeDetailResponse> {
+  return request<GroupChallengeDetailResponse>(
+    `/api/group-challenges/${challengeId}`,
+  );
+}
+
+/**
+ * Join a group challenge.
+ * Requires authentication.
+ *
+ * POST /api/group-challenges/:challengeId/join
+ */
+export async function joinGroupChallenge(
+  challengeId: string,
+): Promise<GroupChallengeJoinResponse> {
+  return request<GroupChallengeJoinResponse>(
+    `/api/group-challenges/${challengeId}/join`,
+    { method: 'POST' },
+  );
+}
+
+/**
+ * Submit a guess for a group challenge.
+ * Requires authentication.
+ *
+ * POST /api/group-challenges/:challengeId/guess
+ */
+export async function submitGroupChallengeGuess(
+  challengeId: string,
+  guess: string,
+): Promise<GroupChallengeGuessResponse> {
+  return request<GroupChallengeGuessResponse>(
+    `/api/group-challenges/${challengeId}/guess`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ guess }),
+    },
+  );
+}
+
+/**
+ * Decline a group challenge.
+ * Requires authentication.
+ *
+ * POST /api/group-challenges/:challengeId/decline
+ */
+export async function declineGroupChallenge(
+  challengeId: string,
+): Promise<GroupChallengeDeclineResponse> {
+  return request<GroupChallengeDeclineResponse>(
+    `/api/group-challenges/${challengeId}/decline`,
+    { method: 'POST' },
   );
 }
