@@ -76,6 +76,7 @@ import { challengesRouter } from "./challenges";
 import { messagesRouter } from "./messages";
 import { notificationsRouter } from "./notifications";
 import { achievementsRouter } from "./achievements";
+import { leaderboardsRouter } from "./leaderboards";
 import { subscriptionsRouter } from "./subscriptions";
 const router = Router();
 
@@ -108,6 +109,9 @@ router.use("/notifications", notificationsRouter);
 
 // Achievements (achievement definitions, user progress, recent unlocks)
 router.use("/achievements", achievementsRouter);
+
+// Seasonal leaderboards (weekly, monthly, all-time aggregated rankings)
+router.use("/leaderboards", leaderboardsRouter);
 
 // Subscriptions (subscription status, Stripe checkout, portal, webhook)
 router.use("/subscriptions", subscriptionsRouter);

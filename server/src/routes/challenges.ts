@@ -16,6 +16,7 @@ import { challengeService } from "../services/challengeService";
 import { containsBlockedContent } from "../services/contentFilter";
 import * as friendshipService from "../services/friendshipService";
 import { achievementService } from "../services/achievements";
+import { xpService } from "../services/xp";
 
 const challengesRouter = Router();
 
@@ -349,6 +350,7 @@ challengesRouter.post(
         challenge.challengedScore > challenge.challengerScore
       ) {
         achievementService.checkAndUnlock(userId, { type: 'challenge_won' }).catch(() => {});
+        xpService.awardChallengeWinXP(userId).catch(() => {});
       }
 
       res.status(200).json({ challenge });

@@ -19,6 +19,8 @@ import { scoringService } from "../services/scoringService";
 import { leaderboardService } from "../services/leaderboardService";
 import { streakService } from "../services/streakService";
 import { achievementService } from "../services/achievements";
+import { xpService } from "../services/xp";
+import { seasonalLeaderboardService } from "../services/seasonalLeaderboard";
 import { logger } from "../config/logger";
 import { containsBlockedContent } from "../services/contentFilter";
 import { scheduler } from "../services/scheduler";
@@ -237,6 +239,24 @@ roundsRouter.post(
         if (savedGuess.score !== null) {
           achievementService.checkAndUnlock(userId, { type: 'guess', score: savedGuess.score })
             .catch(() => {});
+        }
+
+        // Award XP for the guess (includes daily first-game bonus check)
+        if (savedGuess.score !== null) {
+          xpService.awardGuessXP(userId, savedGuess.score)
+            .catch(() => {});
+        }
+
+        // Seasonal leaderboard: update weekly, monthly, and all-time entries
+        if (savedGuess.score !== null) {
+          seasonalLeaderboardService.updateLeaderboardEntry(userId, savedGuess.score)
+            .catch((leaderboardErr: unknown) => {
+              const msg = leaderboardErr instanceof Error ? leaderboardErr.message : String(leaderboardErr);
+              logger.error("rounds", `Failed to update seasonal leaderboard for user ${userId}`, {
+                userId,
+                error: msg,
+              });
+            });
         }
       }
 

@@ -15,6 +15,7 @@
 import { pool } from "../config/database";
 import { logger } from "../config/logger";
 import { notificationService } from "./notificationService";
+import { xpService } from "./xp";
 import type { AchievementContext, AchievementDefinition, AchievementKey } from "../types/achievement";
 
 // ---------------------------------------------------------------------------
@@ -337,13 +338,16 @@ async function checkAndUnlock(
         break;
     }
 
-    // Send notifications for each newly unlocked achievement
+    // Send notifications and award XP for each newly unlocked achievement
     for (const achievement of unlocked) {
       await notificationService.addNotification(userId, 'achievement_unlocked', {
         achievementKey: achievement.key,
         title: achievement.title,
         icon: achievement.icon,
       });
+
+      // Fire-and-forget: award XP for achievement unlock
+      xpService.awardAchievementXP(userId, achievement.key).catch(() => {});
     }
 
     if (unlocked.length > 0) {
