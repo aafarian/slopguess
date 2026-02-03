@@ -26,8 +26,7 @@ import { containsBlockedContent } from "./contentFilter";
 const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 const MODEL = "gpt-4o-mini";
 const TEMPERATURE = 1.0;
-const MAX_TOKENS = 200;
-const MAX_PROMPT_LENGTH = 500;
+const MAX_TOKENS = 120;
 const RECENT_PROMPT_COUNT = 10;
 
 // ---------------------------------------------------------------------------
@@ -35,14 +34,14 @@ const RECENT_PROMPT_COUNT = 10;
 // ---------------------------------------------------------------------------
 
 const PERSONAS: string[] = [
-  "You describe weird, funny scenes like something out of a random dream.",
-  "You make up silly, absurd situations that would make someone laugh out loud.",
-  "You come up with bizarre scenes like a kid with a wild imagination.",
-  "You describe chaotic, goofy moments like a cartoon that makes no sense.",
-  "You think up random scenes that are so weird they're hilarious.",
-  "You describe the strangest things happening in totally normal places.",
-  "You make up ridiculous scenes that feel like a fever dream.",
-  "You describe impossible, funny moments like a surreal picture book.",
+  "You describe funny scenes using only simple, clear words a 10-year-old would know.",
+  "You make up silly situations and describe them in plain, easy-to-picture language.",
+  "You come up with goofy scenes and explain exactly what is happening using basic words.",
+  "You describe weird moments in short, simple sentences anyone can understand.",
+  "You think up random funny scenes and write them using only common everyday words.",
+  "You describe strange things happening in normal places using plain kid-friendly language.",
+  "You make up ridiculous scenes and describe them clearly with no fancy words.",
+  "You describe impossible funny moments using only words you would find in a children's book.",
 ];
 
 let personaIndex = 0;
@@ -79,7 +78,7 @@ async function getRecentPrompts(): Promise<string[]> {
  */
 function isValidPrompt(text: string): boolean {
   if (!text || text.trim().length === 0) return false;
-  if (text.length > MAX_PROMPT_LENGTH) return false;
+  if (text.length > env.PROMPT_MAX_LENGTH) return false;
 
   const metaPatterns = [
     /\bhere is\b/i,
@@ -239,13 +238,14 @@ async function generatePromptFromWords(
     const systemPrompt = nextPersona();
 
     const userPrompt =
-      `Create a weird, funny image prompt (1-2 sentences, 100-300 characters) that uses ALL of these words: ${wordList}. ` +
-      `Describe a bizarre, dream-like scene — like a penguin riding a motorcycle through a library, ` +
-      `or a whale wearing a top hat in a grocery store playing guitar while frogs rain from the sky. ` +
-      `The weirder and more random the combination, the better. ` +
-      `Rules: Use ONLY simple, everyday words a kid would understand. ` +
+      `Create a funny image prompt (1-2 sentences, 50-200 characters) that uses ALL of these words: ${wordList}. ` +
+      `Describe a silly scene — like a cat riding a skateboard in a kitchen, ` +
+      `or a dog wearing sunglasses sitting at a school desk. ` +
+      `The scene should be weird and fun, but described in the simplest way possible. ` +
+      `Rules: Use ONLY simple words a 10-year-old would know. ` +
+      `Do NOT use fancy adjectives, poetic language, or uncommon words. ` +
       `Every object, animal, and action should be something you can clearly see and point to in a picture. ` +
-      `No poetry, no metaphors, no fancy vocabulary — just describe what's literally happening in the scene. ` +
+      `No poetry, no metaphors — just describe what is literally happening in the scene. ` +
       `Output ONLY the prompt, nothing else.${blacklistSection}`;
 
     const messages: ChatMessage[] = [

@@ -41,7 +41,7 @@ interface EnvConfig {
   RATE_LIMIT_MAX: number;
   /** Default difficulty for new rounds (default: normal) */
   DEFAULT_DIFFICULTY: string;
-  /** JSON mapping of difficulty names to word counts (default: {"easy":4,"normal":7,"hard":10}) */
+  /** JSON mapping of difficulty names to word counts (default: {"easy":3,"normal":5,"hard":8}) */
   DIFFICULTY_WORD_COUNTS: Record<string, number>;
   /** Secret key for admin API access. If set, admin routes require X-Admin-Key header. */
   ADMIN_API_KEY: string;
@@ -53,6 +53,8 @@ interface EnvConfig {
   STRIPE_WEBHOOK_SECRET: string;
   /** Stripe Price ID for the Pro one-time purchase. */
   STRIPE_PRO_PRICE_ID: string;
+  /** Maximum character length for generated image prompts (default: 350) */
+  PROMPT_MAX_LENGTH: number;
   /** Whether monetization features (Stripe, ads, Pro tier) are enabled (default: false). */
   MONETIZATION_ENABLED: boolean;
 }
@@ -125,8 +127,9 @@ function loadEnvConfig(): EnvConfig {
     DEFAULT_DIFFICULTY: process.env.DEFAULT_DIFFICULTY || "normal",
     DIFFICULTY_WORD_COUNTS: JSON.parse(
       process.env.DIFFICULTY_WORD_COUNTS ||
-        '{"easy":4,"normal":7,"hard":10}'
+        '{"easy":3,"normal":5,"hard":8}'
     ),
+    PROMPT_MAX_LENGTH: parseInt(process.env.PROMPT_MAX_LENGTH || "350", 10),
     ADMIN_API_KEY: process.env.ADMIN_API_KEY || "",
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "",
