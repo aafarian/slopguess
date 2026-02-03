@@ -4372,6 +4372,35 @@ body {
   padding: 0 0.5rem;
 }
 
+.challenge-detail-score-card--winner {
+  border-left: 3px solid var(--accent);
+  background: rgba(124, 131, 255, 0.06);
+}
+
+.challenge-detail-winner-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 3px;
+}
+
+.challenge-detail-winner-badge--tied {
+  background: var(--text-secondary);
+}
+
+.challenge-detail-outcome {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 0.75rem 0 0;
+}
+
 /* --- Actions ------------------------------------------------------- */
 
 .challenge-detail-actions {
@@ -4466,6 +4495,15 @@ body {
     padding: 0;
   }
 
+  .challenge-detail-score-card--winner {
+    border-left: none;
+    border-top: 3px solid var(--accent);
+  }
+
+  .challenge-detail-outcome {
+    font-size: 0.9rem;
+  }
+
   .challenge-detail-actions {
     flex-direction: column;
   }
@@ -4486,6 +4524,10 @@ body {
 
   .challenge-detail-image-placeholder {
     aspect-ratio: 1 / 1;
+  }
+
+  .challenge-detail-outcome {
+    font-size: 0.85rem;
   }
 }
 

@@ -350,53 +350,105 @@ export default function ChallengeDetailPage() {
       {hasGuessed && !isAnalyzing && (
         <div className="challenge-detail-results game-result--fade-in">
           {/* Scores */}
-          <div className="challenge-detail-scores">
-            {/* Challenger score */}
-            <div className="challenge-detail-score-card">
-              <span className="challenge-detail-score-player">
-                {challenge.challengerUsername}
-                {isChallenger && (
-                  <span className="challenge-detail-you-badge">you</span>
-                )}
-              </span>
-              <span
-                className={`challenge-detail-score-value ${getScoreColorClass(challenge.challengerScore)}`}
-              >
-                {challenge.challengerScore !== null
-                  ? challenge.challengerScore
-                  : '--'}
-              </span>
-              {challenge.challengerScore !== null && (
-                <span className="challenge-detail-score-label">
-                  {getScoreLabel(challenge.challengerScore)}
-                </span>
-              )}
-            </div>
+          {(() => {
+            const cScore = challenge.challengerScore;
+            const dScore = challenge.challengedScore;
+            const bothScored = cScore !== null && dScore !== null;
+            const challengerWins = bothScored && cScore > dScore;
+            const challengedWins = bothScored && dScore > cScore;
+            const isTied = bothScored && cScore === dScore;
 
-            <div className="challenge-detail-vs">VS</div>
+            // Determine outcome text
+            let outcomeText = '';
+            if (bothScored) {
+              const delta = Math.abs(cScore - dScore);
+              if (isTied) {
+                outcomeText = "It's a tie!";
+              } else if (
+                (isChallenger && challengerWins) ||
+                (isChallenged && challengedWins)
+              ) {
+                outcomeText = `You won by ${delta} point${delta === 1 ? '' : 's'}!`;
+              } else {
+                outcomeText = `You lost by ${delta} point${delta === 1 ? '' : 's'}`;
+              }
+            } else if (cScore === null && dScore === null) {
+              outcomeText = 'Waiting for scores...';
+            } else if (cScore === null) {
+              outcomeText = `Waiting for ${challenge.challengerUsername}...`;
+            } else {
+              outcomeText = `Waiting for ${challenge.challengedUsername}...`;
+            }
 
-            {/* Challenged score */}
-            <div className="challenge-detail-score-card">
-              <span className="challenge-detail-score-player">
-                {challenge.challengedUsername}
-                {isChallenged && (
-                  <span className="challenge-detail-you-badge">you</span>
-                )}
-              </span>
-              <span
-                className={`challenge-detail-score-value ${getScoreColorClass(challenge.challengedScore)}`}
-              >
-                {challenge.challengedScore !== null
-                  ? challenge.challengedScore
-                  : '--'}
-              </span>
-              {challenge.challengedScore !== null && (
-                <span className="challenge-detail-score-label">
-                  {getScoreLabel(challenge.challengedScore)}
-                </span>
-              )}
-            </div>
-          </div>
+            return (
+              <>
+                <div className="challenge-detail-scores">
+                  {/* Challenger score */}
+                  <div
+                    className={`challenge-detail-score-card${challengerWins ? ' challenge-detail-score-card--winner' : ''}`}
+                  >
+                    <span className="challenge-detail-score-player">
+                      {challenge.challengerUsername}
+                      {isChallenger && (
+                        <span className="challenge-detail-you-badge">you</span>
+                      )}
+                    </span>
+                    {challengerWins && (
+                      <span className="challenge-detail-winner-badge">Winner</span>
+                    )}
+                    {isTied && (
+                      <span className="challenge-detail-winner-badge challenge-detail-winner-badge--tied">Tied</span>
+                    )}
+                    <span
+                      className={`challenge-detail-score-value ${getScoreColorClass(cScore)}`}
+                    >
+                      {cScore !== null ? cScore : 'Waiting...'}
+                    </span>
+                    {cScore !== null && (
+                      <span className="challenge-detail-score-label">
+                        {getScoreLabel(cScore)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="challenge-detail-vs">VS</div>
+
+                  {/* Challenged score */}
+                  <div
+                    className={`challenge-detail-score-card${challengedWins ? ' challenge-detail-score-card--winner' : ''}`}
+                  >
+                    <span className="challenge-detail-score-player">
+                      {challenge.challengedUsername}
+                      {isChallenged && (
+                        <span className="challenge-detail-you-badge">you</span>
+                      )}
+                    </span>
+                    {challengedWins && (
+                      <span className="challenge-detail-winner-badge">Winner</span>
+                    )}
+                    {isTied && (
+                      <span className="challenge-detail-winner-badge challenge-detail-winner-badge--tied">Tied</span>
+                    )}
+                    <span
+                      className={`challenge-detail-score-value ${getScoreColorClass(dScore)}`}
+                    >
+                      {dScore !== null ? dScore : 'Waiting...'}
+                    </span>
+                    {dScore !== null && (
+                      <span className="challenge-detail-score-label">
+                        {getScoreLabel(dScore)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Outcome line */}
+                <div className="challenge-detail-outcome">
+                  {outcomeText}
+                </div>
+              </>
+            );
+          })()}
 
           {/* Prompt reveal */}
           {challenge.prompt && (
