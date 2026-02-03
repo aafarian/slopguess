@@ -53,6 +53,11 @@
  * │ /api/notifications                  │ GET    │ Get user's notifications (auth)           │
  * │ /api/notifications/unread-count     │ GET    │ Get unread notification count (auth)      │
  * │ /api/notifications/:id/read        │ PATCH  │ Mark notification as read (auth)          │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/subscriptions/status           │ GET    │ Current subscription status + features    │
+ * │ /api/subscriptions/checkout         │ POST   │ Create Stripe Checkout session (auth)     │
+ * │ /api/subscriptions/portal           │ POST   │ Create Stripe Customer Portal (auth)      │
+ * │ /api/subscriptions/webhook          │ POST   │ Stripe webhook endpoint (raw body)        │
  * └─────────────────────────────────────┴────────┴──────────────────────────────────────────┘
  *
  * Auth: Routes marked "requires auth" expect an Authorization: Bearer <JWT> header.
@@ -70,6 +75,7 @@ import { friendsRouter } from "./friends";
 import { challengesRouter } from "./challenges";
 import { messagesRouter } from "./messages";
 import { notificationsRouter } from "./notifications";
+import { subscriptionsRouter } from "./subscriptions";
 const router = Router();
 
 // Health check
@@ -98,6 +104,9 @@ router.use("/messages", messagesRouter);
 
 // Notifications (user notifications, unread count, mark read)
 router.use("/notifications", notificationsRouter);
+
+// Subscriptions (subscription status, Stripe checkout, portal, webhook)
+router.use("/subscriptions", subscriptionsRouter);
 
 // Admin (round management, dev tools)
 router.use("/admin", adminRouter);
