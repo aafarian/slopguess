@@ -54,7 +54,7 @@ function formatDate(dateStr: string): string {
    ----------------------------------------------------------------------- */
 
 export default function ProfilePage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { isPro, monetizationEnabled } = useSubscription();
 
   // Stats state
@@ -146,6 +146,19 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, fetchStats, fetchHistory, historyPage, fetchStreaks, fetchWeeklyStats]);
 
+  // Derive whether ALL data fetches have finished AND all failed
+  const allDataLoaded = !statsLoading && !historyLoading && !streakLoading && !weeklyLoading;
+  const allDataFailed = allDataLoaded && !!statsError && !!historyError && !!streakError && !!weeklyError;
+
+  // Show a loading spinner while auth state is resolving.
+  if (authLoading) {
+    return (
+      <div className="profile-page">
+        <LoadingSpinner message="Checking authentication..." />
+      </div>
+    );
+  }
+
   // Show an inline login prompt when not authenticated.
   if (!isAuthenticated) {
     return (
@@ -198,6 +211,19 @@ export default function ProfilePage() {
           </Link>
         )}
       </div>
+
+      {/* All-fetches-failed banner */}
+      {allDataFailed && (
+        <ErrorMessage
+          message="Unable to load your profile data. Please check your connection and try again."
+          onRetry={() => {
+            fetchStats();
+            fetchHistory(historyPage);
+            fetchStreaks();
+            fetchWeeklyStats();
+          }}
+        />
+      )}
 
       {/* ============================================================= */}
       {/* Stats Dashboard                                                */}
