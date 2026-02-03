@@ -16,6 +16,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useSubscription } from '../hooks/useSubscription';
 import { fetchXPStatus } from '../services/achievements';
 import { getConfig as getPrintShopConfig } from '../services/printShop';
+import { PullToRefreshProvider } from '../hooks/usePullToRefresh';
 import NotificationBell from './NotificationBell';
 import ProBadge from './ProBadge';
 
@@ -38,6 +39,7 @@ export default function Layout() {
   const [openDropdown, setOpenDropdown] = useState<'social' | 'account' | null>(null);
   const socialRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLElement>(null);
 
   // Fetch print shop feature flag once on mount (cached at module level)
   useEffect(() => {
@@ -305,8 +307,10 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="main-content">
-        <Outlet />
+      <main className="main-content" ref={mainContentRef}>
+        <PullToRefreshProvider scrollRef={mainContentRef}>
+          <Outlet />
+        </PullToRefreshProvider>
       </main>
     </div>
   );

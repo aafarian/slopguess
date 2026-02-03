@@ -478,6 +478,43 @@ h1 {
   width: 100%;
   padding: 0.75rem 2rem;
   overflow-y: auto;
+  /* Prevent iOS rubber-band from interfering with pull-to-refresh */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===================================================================
+   Pull-to-Refresh indicator
+   =================================================================== */
+
+.ptr-content {
+  min-height: 100%;
+}
+
+.ptr-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.ptr-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+}
+
+.ptr-spinner--active {
+  animation: ptr-spin 0.7s linear infinite;
+}
+
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ===================================================================
