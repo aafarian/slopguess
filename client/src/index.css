@@ -6479,3 +6479,674 @@ body {
     font-size: 0.65rem;
   }
 }
+
+/* ===================================================================
+   Group Challenge Page
+   =================================================================== */
+
+.gc-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+.gc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.gc-header-text {
+  flex: 1;
+  min-width: 200px;
+}
+
+.gc-title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.gc-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.gc-create-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* --- Success message ------------------------------------------------ */
+
+.gc-create-success {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* --- Section headings ----------------------------------------------- */
+
+.gc-section {
+  margin-bottom: 2rem;
+}
+
+.gc-section-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* --- Card list ------------------------------------------------------ */
+
+.gc-card-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gc-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.2s, background-color 0.2s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.gc-card:hover {
+  border-color: rgba(100, 108, 255, 0.3);
+  background: rgba(100, 108, 255, 0.04);
+  color: inherit;
+}
+
+/* Thumbnail */
+
+.gc-card-thumb-wrapper {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.gc-card-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gc-card-thumb--placeholder {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-hover));
+}
+
+/* Card details */
+
+.gc-card-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.gc-card-creator {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.gc-card-prompt {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gc-card-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Status badge */
+
+.gc-card-status {
+  flex-shrink: 0;
+}
+
+.gc-status-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.gc-status-badge--active {
+  background: rgba(124, 131, 255, 0.15);
+  color: var(--accent);
+}
+
+.gc-status-badge--completed {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success);
+}
+
+.gc-status-badge--expired {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--error);
+}
+
+.gc-status-badge--pending {
+  background: rgba(176, 176, 200, 0.15);
+  color: var(--text-secondary);
+}
+
+/* ===================================================================
+   Group Challenge Create Modal
+   =================================================================== */
+
+.gc-create-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 1rem;
+}
+
+.gc-create-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.gc-create-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.gc-create-modal-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.gc-create-modal-close {
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.gc-create-modal-close:hover {
+  color: var(--text-primary);
+}
+
+.gc-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.gc-create-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gc-create-step-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.gc-create-no-friends {
+  padding: 1rem;
+  text-align: center;
+}
+
+.gc-create-no-friends-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Friend chip selection */
+
+.gc-friend-select-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.gc-friend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.gc-friend-chip:hover:not(.gc-friend-chip--disabled) {
+  border-color: var(--accent);
+  background: rgba(124, 131, 255, 0.08);
+}
+
+.gc-friend-chip--selected {
+  border-color: var(--accent);
+  background: rgba(124, 131, 255, 0.15);
+  color: var(--accent);
+}
+
+.gc-friend-chip--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gc-friend-chip-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.gc-friend-chip--selected .gc-friend-chip-initial {
+  background: var(--accent);
+}
+
+.gc-friend-chip-name {
+  white-space: nowrap;
+}
+
+.gc-friend-chip-check {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.gc-create-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* ===================================================================
+   Group Challenge Detail Page
+   =================================================================== */
+
+.gc-detail {
+  max-width: 700px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+.gc-detail-back {
+  margin-bottom: 1rem;
+}
+
+.gc-detail-back-link {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.gc-detail-back-link:hover {
+  color: var(--accent);
+}
+
+/* Creator info */
+
+.gc-detail-creator-info {
+  margin-bottom: 1rem;
+}
+
+.gc-detail-creator-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Image */
+
+.gc-detail-image-container {
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.gc-detail-image {
+  width: 100%;
+  display: block;
+}
+
+.gc-detail-image-placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+}
+
+/* Section title */
+
+.gc-detail-section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+/* Invite section */
+
+.gc-detail-invite-section {
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.gc-detail-invite-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.gc-detail-invite-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+/* Guess section */
+
+.gc-detail-guess-section {
+  margin-bottom: 1.5rem;
+}
+
+/* Leaderboard */
+
+.gc-detail-leaderboard {
+  margin-bottom: 1.5rem;
+}
+
+.gc-leaderboard-table {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.gc-leaderboard-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 100px;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gc-leaderboard-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px 100px;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s;
+}
+
+.gc-leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.gc-leaderboard-row--me {
+  background: rgba(124, 131, 255, 0.06);
+}
+
+.gc-leaderboard-row--declined {
+  opacity: 0.5;
+}
+
+.gc-leaderboard-rank {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.gc-leaderboard-player {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.gc-leaderboard-you-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  background: var(--accent);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.gc-leaderboard-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.gc-leaderboard-status--pending {
+  color: var(--text-secondary);
+}
+
+.gc-leaderboard-status--joined {
+  color: var(--accent);
+}
+
+.gc-leaderboard-status--guessed {
+  color: var(--success);
+}
+
+.gc-leaderboard-status--declined {
+  color: var(--error);
+}
+
+.gc-leaderboard-score {
+  font-size: 0.85rem;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.gc-leaderboard-score-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.gc-leaderboard-score-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Waiting / Declined / Expired */
+
+.gc-detail-waiting {
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.gc-detail-waiting-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.gc-detail-declined {
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.gc-detail-declined-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.gc-detail-expired {
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.gc-detail-expired-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Not found */
+
+.gc-detail-not-found {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.gc-detail-not-found-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.gc-detail-not-found-text {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+/* Footer actions */
+
+.gc-detail-footer-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+/* ===================================================================
+   Group Challenge — Responsive
+   =================================================================== */
+
+@media (max-width: 600px) {
+  .gc-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gc-create-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .gc-card {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .gc-card-details {
+    flex: 1 1 calc(100% - 80px);
+  }
+
+  .gc-card-status {
+    flex: 0 0 auto;
+  }
+
+  .gc-leaderboard-header,
+  .gc-leaderboard-row {
+    grid-template-columns: 32px 1fr 60px 80px;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .gc-leaderboard-score-value {
+    font-size: 0.95rem;
+  }
+
+  .gc-detail-invite-actions {
+    flex-direction: column;
+  }
+
+  .gc-create-modal {
+    max-height: 90vh;
+  }
+
+  .gc-friend-select-list {
+    max-height: 160px;
+  }
+}

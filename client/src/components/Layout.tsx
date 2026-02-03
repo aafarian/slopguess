@@ -19,7 +19,7 @@ import NotificationBell from './NotificationBell';
 import ProBadge from './ProBadge';
 
 /** Paths that should mark the Social dropdown as active. */
-const SOCIAL_PATHS = ['/friends', '/challenges', '/messages', '/activity'];
+const SOCIAL_PATHS = ['/friends', '/challenges', '/group-challenges', '/messages', '/activity'];
 
 /** Paths that should mark the Account dropdown as active. */
 const ACCOUNT_PATHS = ['/profile', '/achievements', '/pricing'];
@@ -174,6 +174,14 @@ export default function Layout() {
                       }
                     >
                       Challenges
+                    </NavLink>
+                    <NavLink
+                      to="/group-challenges"
+                      className={({ isActive }) =>
+                        `navbar-dropdown-item${isActive ? ' navbar-dropdown-item--active' : ''}`
+                      }
+                    >
+                      Group Challenges
                     </NavLink>
                     <NavLink
                       to="/messages"

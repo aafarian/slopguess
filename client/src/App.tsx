@@ -19,6 +19,8 @@ import PricingPage from './pages/PricingPage'
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage'
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage'
 import ActivityFeedPage from './pages/ActivityFeedPage'
+import GroupChallengePage from './pages/GroupChallengePage'
+import GroupChallengeDetailPage from './pages/GroupChallengeDetailPage'
 import PublicProfilePage from './pages/PublicProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -54,6 +56,8 @@ function App() {
             <Route path="/challenges/:challengeId" element={<ChallengeDetailPage />} />
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/activity" element={<ActivityFeedPage />} />
+            <Route path="/group-challenges" element={<GroupChallengePage />} />
+            <Route path="/group-challenges/:challengeId" element={<GroupChallengeDetailPage />} />
             <Route path="/achievements" element={<AchievementsPage />} />
 
             {/* Public user profiles (short shareable URL) */}
