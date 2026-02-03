@@ -18,7 +18,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getActiveRound, rotateRound, getStreaks } from '../services/game';
+import { getActiveRound, rotateRound, getStreaks, getUserStats } from '../services/game';
 import type { Round, GuessResult, ElementScoreBreakdown, StreakData } from '../types/game';
 import { ApiRequestError } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -58,6 +58,9 @@ export default function GamePage() {
 
   // Streak data (loaded asynchronously after guess)
   const [streakData, setStreakData] = useState<StreakData | null>(null);
+
+  // Personal best indicator (loaded asynchronously after guess)
+  const [isPersonalBest, setIsPersonalBest] = useState(false);
 
   // Dev toolbar state
   const [rotating, setRotating] = useState(false);
@@ -108,19 +111,35 @@ export default function GamePage() {
     }
   }, [loading, hasGuessed, isAuthenticated, streakData, submissionPhase, fetchStreakData]);
 
+  // Check if the submitted score is a personal best (fire-and-forget, never blocks UI)
+  const checkPersonalBest = useCallback(async (score: number) => {
+    try {
+      const { stats } = await getUserStats();
+      // After submission the API may already include this score in bestScore.
+      // If score === bestScore, this IS the personal best (or tied with it).
+      if (score >= stats.bestScore) {
+        setIsPersonalBest(true);
+      }
+    } catch {
+      // Non-critical -- silently ignore stats fetch failures
+    }
+  }, []);
+
   const handleGuessSuccess = useCallback((result: GuessResult) => {
     setGuessResult(result);
     setSubmissionPhase('analyzing');
 
     // Kick off async streak fetch when guess is submitted
     fetchStreakData();
+    // Kick off async personal best check
+    checkPersonalBest(result.score);
 
     setTimeout(() => {
       setSubmissionPhase('revealed');
       setHasGuessed(true);
       setUserScore(result.score);
     }, ANALYZING_DELAY_MS);
-  }, [fetchStreakData]);
+  }, [fetchStreakData, checkPersonalBest]);
 
   const handleAlreadyGuessed = useCallback(() => {
     setHasGuessed(true);
@@ -149,6 +168,7 @@ export default function GamePage() {
       setNextRotationAt(null);
       setRoundEnded(false);
       setStreakData(null);
+      setIsPersonalBest(false);
       await fetchRound();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to rotate round.');
@@ -330,6 +350,14 @@ export default function GamePage() {
 
             return (
               <div className="game-result game-result--fade-in">
+                {/* Personal best badge — only for fresh guesses */}
+                {guessResult && isPersonalBest && (
+                  <div className="game-personal-best">
+                    <span className="game-personal-best-icon" aria-hidden="true">&#9733;</span>
+                    <span className="game-personal-best-text">New Personal Best!</span>
+                  </div>
+                )}
+
                 {guessResult ? (
                   <ScoreDisplay
                     score={guessResult.score ?? 0}
