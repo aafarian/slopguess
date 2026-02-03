@@ -72,6 +72,14 @@
  * │ /api/group-challenges/:id/join     │ POST   │ Join a group challenge (auth)              │
  * │ /api/group-challenges/:id/guess    │ POST   │ Submit a guess for group challenge (auth)  │
  * │ /api/group-challenges/:id/decline  │ POST   │ Decline a group challenge (auth)           │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /api/print-shop/config             │ GET    │ Print shop feature flag status (public)   │
+ * │ /api/print-shop/products           │ GET    │ Available frame products (optionalAuth)   │
+ * │ /api/print-shop/quote?sku=XXX      │ GET    │ Price quote for a SKU (optionalAuth)      │
+ * │ /api/print-shop/orders             │ POST   │ Create a print order (auth)               │
+ * │ /api/print-shop/orders             │ GET    │ List user's print orders (auth)           │
+ * │ /api/print-shop/orders/:orderId    │ GET    │ Get print order detail (auth)             │
+ * │ /api/print-shop/webhook            │ POST   │ Prodigi webhook for status updates        │
  * └─────────────────────────────────────┴────────┴──────────────────────────────────────────┘
  *
  * Auth: Routes marked "requires auth" expect an Authorization: Bearer <JWT> header.
@@ -94,6 +102,7 @@ import { leaderboardsRouter } from "./leaderboards";
 import { subscriptionsRouter } from "./subscriptions";
 import { activityRouter } from "./activity";
 import { groupChallengesRouter } from "./groupChallenges";
+import { printShopRouter } from "./printShop";
 const router = Router();
 
 // Health check
@@ -137,6 +146,9 @@ router.use("/activity", activityRouter);
 
 // Group challenges (multi-player image challenges)
 router.use("/group-challenges", groupChallengesRouter);
+
+// Print shop (framed prints of AI-generated art)
+router.use("/print-shop", printShopRouter);
 
 // Admin (round management, dev tools)
 router.use("/admin", adminRouter);
