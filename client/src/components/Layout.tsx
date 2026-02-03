@@ -115,6 +115,15 @@ export default function Layout() {
                 >
                   Messages
                 </NavLink>
+                <NavLink
+                  to="/achievements"
+                  className={({ isActive }) =>
+                    `navbar-nav-link ${isActive ? 'navbar-nav-link--active' : ''}`
+                  }
+                  onClick={closeMobileMenu}
+                >
+                  Achievements
+                </NavLink>
                 {monetizationEnabled && (
                   <NavLink
                     to="/pricing"

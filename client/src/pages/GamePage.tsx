@@ -19,7 +19,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getActiveRound, rotateRound, getStreaks, getUserStats } from '../services/game';
+import { fetchRecentAchievements } from '../services/achievements';
 import type { Round, GuessResult, ElementScoreBreakdown, StreakData } from '../types/game';
+import type { Achievement } from '../types/achievement';
 import { ApiRequestError } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -61,6 +63,9 @@ export default function GamePage() {
 
   // Personal best indicator (loaded asynchronously after guess)
   const [isPersonalBest, setIsPersonalBest] = useState(false);
+
+  // Achievement unlock toast state
+  const [achievementToasts, setAchievementToasts] = useState<Achievement[]>([]);
 
   // Dev toolbar state
   const [rotating, setRotating] = useState(false);
@@ -125,6 +130,24 @@ export default function GamePage() {
     }
   }, []);
 
+  // Check for newly unlocked achievements after guess (fire-and-forget)
+  const checkNewAchievements = useCallback(async () => {
+    try {
+      const { achievements } = await fetchRecentAchievements();
+      // Show achievements unlocked in the last 30 seconds (just now)
+      const cutoff = Date.now() - 30_000;
+      const newlyUnlocked = achievements.filter((a) => {
+        if (!a.unlockedAt) return false;
+        return new Date(a.unlockedAt).getTime() > cutoff;
+      });
+      if (newlyUnlocked.length > 0) {
+        setAchievementToasts(newlyUnlocked);
+      }
+    } catch {
+      // Non-critical -- silently ignore
+    }
+  }, []);
+
   const handleGuessSuccess = useCallback((result: GuessResult) => {
     setGuessResult(result);
     setSubmissionPhase('analyzing');
@@ -138,8 +161,13 @@ export default function GamePage() {
       setSubmissionPhase('revealed');
       setHasGuessed(true);
       setUserScore(result.score);
+
+      // Check for new achievements after reveal (slight delay for server processing)
+      setTimeout(() => {
+        checkNewAchievements();
+      }, 500);
     }, ANALYZING_DELAY_MS);
-  }, [fetchStreakData, checkPersonalBest]);
+  }, [fetchStreakData, checkPersonalBest, checkNewAchievements]);
 
   const handleAlreadyGuessed = useCallback(() => {
     setHasGuessed(true);
@@ -169,6 +197,7 @@ export default function GamePage() {
       setRoundEnded(false);
       setStreakData(null);
       setIsPersonalBest(false);
+      setAchievementToasts([]);
       await fetchRound();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to rotate round.');
@@ -176,6 +205,19 @@ export default function GamePage() {
       setRotating(false);
     }
   }, [fetchRound]);
+
+  // Auto-dismiss achievement toasts after 5 seconds
+  useEffect(() => {
+    if (achievementToasts.length === 0) return;
+    const timer = setTimeout(() => {
+      setAchievementToasts([]);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [achievementToasts]);
+
+  function dismissAchievementToast(id: string) {
+    setAchievementToasts((prev) => prev.filter((a) => a.id !== id));
+  }
 
   // -----------------------------------------------------------------------
   // Render: Loading
@@ -265,6 +307,31 @@ export default function GamePage() {
 
   return (
     <div className="game-page">
+      {/* Achievement unlock toasts */}
+      {achievementToasts.length > 0 && (
+        <div className="achievement-toast-container">
+          {achievementToasts.map((achievement) => (
+            <div key={achievement.id} className="achievement-toast">
+              <span className="achievement-toast-icon" aria-hidden="true">
+                {achievement.icon}
+              </span>
+              <div className="achievement-toast-info">
+                <span className="achievement-toast-label">Achievement Unlocked!</span>
+                <span className="achievement-toast-title">{achievement.title}</span>
+              </div>
+              <button
+                type="button"
+                className="achievement-toast-close"
+                onClick={() => dismissAchievementToast(achievement.id)}
+                aria-label="Dismiss"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {import.meta.env.DEV && (
         <div className="dev-toolbar">
           <span className="dev-toolbar-label">DEV</span>

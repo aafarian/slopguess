@@ -13,6 +13,7 @@ import FriendsPage from './pages/FriendsPage'
 import ChallengePage from './pages/ChallengePage'
 import ChallengeDetailPage from './pages/ChallengeDetailPage'
 import MessagesPage from './pages/MessagesPage'
+import AchievementsPage from './pages/AchievementsPage'
 import PricingPage from './pages/PricingPage'
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage'
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage'
@@ -46,6 +47,7 @@ function App() {
             <Route path="/challenges" element={<ChallengePage />} />
             <Route path="/challenges/:challengeId" element={<ChallengeDetailPage />} />
             <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/achievements" element={<AchievementsPage />} />
 
             {/* Subscription / monetization */}
             <Route path="/pricing" element={<PricingPage />} />
