@@ -137,9 +137,10 @@ export default function RoundDetailPage() {
 
           {/* Round info */}
           <div className="round-detail-stats">
+            <h3 className="round-detail-section-title">Round Info</h3>
             <div className="round-detail-stats-grid">
               <StatCard label="Difficulty" value={capitalize(round.difficulty ?? 'normal')} />
-              <StatCard label="Words to Guess" value={round.wordCount ?? '--'} />
+              <StatCard label="Prompt Words" value={round.wordCount ?? '--'} />
               <StatCard label="Guesses So Far" value={round.guessCount ?? 0} />
               <StatCard label="Started" value={timeAgo(round.startedAt)} />
             </div>
