@@ -117,6 +117,7 @@ export default function PrintShopOrderPage() {
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Derived SKU from selections
   const selectedSku = useMemo(() => {
@@ -353,30 +354,36 @@ export default function PrintShopOrderPage() {
         </div>
       )}
 
+      {/* Lightbox overlay */}
+      {lightboxOpen && round.imageUrl && (
+        <div className="ps-lightbox" onClick={() => setLightboxOpen(false)}>
+          <img src={round.imageUrl} alt="Full-size preview" className="ps-lightbox-img" />
+          <button type="button" className="ps-lightbox-close" aria-label="Close">&times;</button>
+        </div>
+      )}
+
       {/* ---- Step 1: Preview ---- */}
       {step === 1 && (
-        <div className="ps-order-step-content">
-          <div className="ps-order-preview-layout">
-            <div className="ps-order-preview">
-              <img
-                src={round.imageUrl}
-                alt="AI-generated image to be framed"
-                className="ps-order-preview-img"
-              />
-            </div>
-            <div className="ps-order-preview-info">
-              <p className="ps-order-preview-caption">
-                This AI-generated image will be printed on high-quality paper and professionally framed.
-              </p>
-              <div className="ps-order-actions">
-                <button className="btn btn-primary" onClick={() => setStep(2)}>
-                  Select Frame Options
-                </button>
-                <Link to={`/rounds/${round.id}`} className="btn btn-outline">
-                  Back to Round
-                </Link>
-              </div>
-            </div>
+        <div className="ps-order-step-content ps-order-step-content--centered">
+          <div className="ps-order-preview">
+            <img
+              src={round.imageUrl}
+              alt="AI-generated image to be framed"
+              className="ps-order-preview-img ps-order-preview-img--clickable"
+              onClick={() => setLightboxOpen(true)}
+              title="Click to enlarge"
+            />
+          </div>
+          <p className="ps-order-preview-caption">
+            Printed on high-quality paper and professionally framed. Click image to enlarge.
+          </p>
+          <div className="ps-order-actions ps-order-actions--centered">
+            <button className="btn btn-primary" onClick={() => setStep(2)}>
+              Choose Frame Options
+            </button>
+            <Link to={`/rounds/${round.id}`} className="btn btn-outline">
+              Back to Round
+            </Link>
           </div>
         </div>
       )}
@@ -387,7 +394,11 @@ export default function PrintShopOrderPage() {
           <div className="ps-order-customize">
             {/* Live frame preview */}
             <div className="ps-order-customize-preview">
-              <div className={framePreviewClass()}>
+              <div
+                className={`${framePreviewClass()} ps-order-frame-preview--clickable`}
+                onClick={() => setLightboxOpen(true)}
+                title="Click to enlarge"
+              >
                 <img
                   src={round.imageUrl}
                   alt="Frame preview"
@@ -447,20 +458,21 @@ export default function PrintShopOrderPage() {
                   )}
                 </div>
               )}
-            </div>
-          </div>
 
-          <div className="ps-order-actions">
-            <button
-              className="btn btn-primary"
-              disabled={!selectedSize || !selectedStyle || !quote}
-              onClick={() => setStep(3)}
-            >
-              Continue to Shipping
-            </button>
-            <button className="btn btn-outline" onClick={() => setStep(1)}>
-              Back
-            </button>
+              {/* Actions inside the options column so they align */}
+              <div className="ps-order-actions">
+                <button
+                  className="btn btn-primary"
+                  disabled={!selectedSize || !selectedStyle || !quote}
+                  onClick={() => setStep(3)}
+                >
+                  Continue to Shipping
+                </button>
+                <button className="btn btn-outline" onClick={() => setStep(1)}>
+                  Back
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

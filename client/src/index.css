@@ -7252,9 +7252,12 @@ body {
    =================================================================== */
 
 .ps-order-page {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 1.5rem 1.5rem 2rem;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .ps-order-title {
@@ -7366,6 +7369,7 @@ body {
 /* ---- Step content ---- */
 
 .ps-order-step-content {
+  flex: 1;
   animation: psOrderFadeIn 0.3s ease;
 }
 
@@ -7374,66 +7378,124 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ---- Step 1: Preview ---- */
+/* ---- Centered step content variant ---- */
 
-.ps-order-preview-layout {
+.ps-order-step-content--centered {
   display: flex;
-  gap: 2rem;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
 }
 
+/* ---- Step 1: Preview ---- */
+
 .ps-order-preview {
-  flex: 1 1 55%;
   display: flex;
   justify-content: center;
+  margin-bottom: 0.75rem;
 }
 
 .ps-order-preview-img {
   max-width: 100%;
-  max-height: 340px;
+  max-height: 400px;
   border-radius: 8px;
   object-fit: contain;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
-.ps-order-preview-info {
-  flex: 1 1 40%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 200px;
+.ps-order-preview-img--clickable {
+  cursor: zoom-in;
+  transition: transform 0.2s ease;
+}
+
+.ps-order-preview-img--clickable:hover {
+  transform: scale(1.02);
 }
 
 .ps-order-preview-caption {
+  text-align: center;
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ---- Lightbox ---- */
+
+.ps-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+  animation: psLightboxIn 0.2s ease;
+}
+
+@keyframes psLightboxIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ps-lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.ps-lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+
+.ps-lightbox-close:hover {
+  opacity: 1;
 }
 
 /* ---- Step 2: Customize ---- */
 
 .ps-order-customize {
   display: flex;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
+  gap: 2.5rem;
+  align-items: center;
+  flex: 1;
 }
 
 .ps-order-customize-preview {
-  flex: 0 0 auto;
+  flex: 1 1 50%;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
 }
 
+.ps-order-frame-preview--clickable {
+  cursor: zoom-in;
+  transition: transform 0.2s ease, background 0.3s, box-shadow 0.3s;
+}
+
+.ps-order-frame-preview--clickable:hover {
+  transform: scale(1.02);
+}
+
 .ps-order-customize-options {
-  flex: 1;
+  flex: 1 1 50%;
   min-width: 0;
 }
 
 /* Frame preview container */
 .ps-order-frame-preview {
-  padding: 12px;
+  padding: 14px;
   border-radius: 2px;
   background: #333;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
@@ -7442,22 +7504,23 @@ body {
 
 .ps-order-frame-preview--black {
   background: #1a1a1a;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #2a2a2a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #2a2a2a;
 }
 
 .ps-order-frame-preview--white {
   background: #f0f0f0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 0 0 2px #e0e0e0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 0 0 2px #e0e0e0;
 }
 
 .ps-order-frame-preview--natural {
   background: #8b6914;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 0 0 2px #a07d1f;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 0 2px #a07d1f;
 }
 
 .ps-order-frame-img {
   display: block;
-  width: 180px;
+  width: 100%;
+  max-width: 340px;
   height: auto;
   border-radius: 1px;
 }
@@ -7776,6 +7839,10 @@ body {
   flex-wrap: wrap;
 }
 
+.ps-order-actions--centered {
+  justify-content: center;
+}
+
 /* ===================================================================
    Print Shop Order Page — Responsive
    =================================================================== */
@@ -7798,26 +7865,18 @@ body {
     font-size: 0.7rem;
   }
 
-  .ps-order-preview-layout {
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .ps-order-preview-info {
-    min-height: 0;
-  }
-
-  .ps-order-preview-caption {
-    text-align: center;
-  }
-
   .ps-order-customize {
     flex-direction: column;
+    align-items: center;
     gap: 1.25rem;
   }
 
   .ps-order-frame-img {
-    width: 140px;
+    width: 200px;
+  }
+
+  .ps-order-customize-options {
+    width: 100%;
   }
 
   .ps-order-option-grid {
