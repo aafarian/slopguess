@@ -21,6 +21,7 @@ import type { PublicProfile } from '../types/social';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
+import ShareButton from '../components/ShareButton';
 
 /* -----------------------------------------------------------------------
    Score color helper -- matches ScoreDisplay color coding
@@ -296,6 +297,14 @@ export default function PublicProfilePage() {
             Log in to add friend
           </Link>
         )}
+      </section>
+
+      {/* ============================================================= */}
+      {/* Share Profile                                                  */}
+      {/* ============================================================= */}
+      <section className="public-profile-page__share">
+        <h2 className="public-profile-page__section-heading">Share Profile</h2>
+        <ShareButton profileUsername={profile.username} />
       </section>
     </div>
   );

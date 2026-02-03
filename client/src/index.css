@@ -3222,6 +3222,10 @@ body {
   flex-shrink: 0;
 }
 
+.share-button__btn--discord {
+  color: var(--text-secondary);
+}
+
 /* --- Toast notification ------------------------------------------- */
 
 @keyframes share-toast-enter {
@@ -6280,6 +6284,14 @@ body {
   display: flex;
   justify-content: center;
   margin-top: 1.25rem;
+}
+
+/* --- Share profile section ------------------------------------------- */
+
+.public-profile-page__share {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
 }
 
 /* --- Responsive tweaks ----------------------------------------------- */
