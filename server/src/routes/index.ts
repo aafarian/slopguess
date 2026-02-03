@@ -22,6 +22,10 @@
  * │ /api/rounds/:roundId                │ GET    │ Get a specific round (optionalAuth)       │
  * │ /api/rounds/:roundId/leaderboard    │ GET    │ Round leaderboard (public)                │
  * │ /api/rounds/:roundId/results        │ GET    │ Full results for completed round          │
+ * │ /api/rounds/:roundId/share-data    │ GET    │ Share metadata for share buttons (auth)   │
+ * │ /api/rounds/:roundId/share/:userId │ GET    │ Score card (HTML for bots, JSON for API)  │
+ * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
+ * │ /share/:roundId/:userId            │ GET    │ Public OG share page (outside /api)       │
  * ├─────────────────────────────────────┼────────┼──────────────────────────────────────────┤
  * │ /api/users/me/history               │ GET    │ Current user's game history (auth)        │
  * │ /api/users/me/stats                 │ GET    │ Current user's statistics (auth)          │

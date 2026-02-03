@@ -256,6 +256,19 @@ export interface ShareData {
   rank: number;
   totalGuesses: number;
   roundImageUrl: string | null;
-  prompt: string | null;
+  prompt?: string | null;
   roundId: string;
+}
+
+/**
+ * Extended share metadata returned by GET /api/rounds/:roundId/share-data.
+ * Includes pre-built share URL, title, and description for client-side share buttons.
+ */
+export interface ShareMetadata extends ShareData {
+  /** Full share URL for the score card page (e.g. https://slopguesser.com/share/:roundId/:userId) */
+  shareUrl: string;
+  /** Pre-built OG title (e.g. "SlopGuesser - alice scored 85!") */
+  title: string;
+  /** Pre-built OG description (e.g. "Ranked #3 of 42 players. Can you beat them?") */
+  description: string;
 }

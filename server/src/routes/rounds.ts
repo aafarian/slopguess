@@ -6,7 +6,8 @@
  * POST /api/rounds/:roundId/guess      — Submit a guess (requireAuth)
  * GET  /api/rounds/:roundId            — Get a specific round (optionalAuth)
  * GET  /api/rounds/:roundId/leaderboard — Round leaderboard (public)
- * GET  /api/rounds/:roundId/share/:userId — Public shareable score data (no auth)
+ * GET  /api/rounds/:roundId/share/:userId — Public shareable score card (HTML for bots, JSON for API)
+ * GET  /api/rounds/:roundId/share-data — Share metadata JSON for client share buttons (optionalAuth)
  * GET  /api/rounds/:roundId/results    — Full results for a completed round (optionalAuth)
  */
 
@@ -23,8 +24,14 @@ import { xpService } from "../services/xp";
 import { seasonalLeaderboardService } from "../services/seasonalLeaderboard";
 import { activityFeedService } from "../services/activityFeedService";
 import { logger } from "../config/logger";
+import { env } from "../config/env";
 import { containsBlockedContent } from "../services/contentFilter";
 import { scheduler } from "../services/scheduler";
+import {
+  isBotUserAgent,
+  generateShareCardHtml,
+  buildShareUrl,
+} from "../services/shareCardService";
 import { toPublicRound, toCompletedRound } from "../models/round";
 import type { GuessRow } from "../models/guess";
 import type { ElementScoreBreakdown } from "../models/guess";
@@ -469,7 +476,98 @@ roundsRouter.get(
 );
 
 // ---------------------------------------------------------------------------
-// GET /:roundId/share/:userId — Public shareable score data
+// GET /:roundId/share-data — Share metadata JSON for client share buttons
+// ---------------------------------------------------------------------------
+
+roundsRouter.get(
+  "/:roundId/share-data",
+  optionalAuth,
+  async (
+    req: Request<{ roundId: string }>,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { roundId } = req.params;
+
+      // 1. Look up the round
+      const round = await roundService.getRoundById(roundId);
+
+      if (!round) {
+        res.status(404).json({
+          error: { message: "Round not found", code: "ROUND_NOT_FOUND" },
+        });
+        return;
+      }
+
+      // 2. If user is authenticated, look up their guess
+      if (!req.user) {
+        res.status(401).json({
+          error: { message: "Authentication required to generate share data", code: "AUTH_REQUIRED" },
+        });
+        return;
+      }
+
+      const userId = req.user.userId;
+
+      const guessResult = await pool.query<GuessRow & { username: string }>(
+        `SELECT g.*, u.username
+         FROM guesses g
+         JOIN users u ON u.id = g.user_id
+         WHERE g.round_id = $1 AND g.user_id = $2`,
+        [roundId, userId]
+      );
+
+      if (guessResult.rows.length === 0) {
+        res.status(404).json({
+          error: { message: "No guess found for this round", code: "GUESS_NOT_FOUND" },
+        });
+        return;
+      }
+
+      const row = guessResult.rows[0];
+
+      // 3. Compute rank
+      const rankResult = await pool.query<{ count: string }>(
+        `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1 AND score > $2`,
+        [roundId, row.score]
+      );
+      const rank = parseInt(rankResult.rows[0].count, 10) + 1;
+
+      // 4. Total guesses
+      const totalResult = await pool.query<{ count: string }>(
+        `SELECT COUNT(*) AS count FROM guesses WHERE round_id = $1`,
+        [roundId]
+      );
+      const totalGuesses = parseInt(totalResult.rows[0].count, 10);
+
+      // 5. Build the share URL
+      const appBaseUrl = env.CORS_ORIGIN || `http://localhost:${env.PORT}`;
+      const shareUrl = buildShareUrl(appBaseUrl, roundId, userId);
+
+      // 6. Return JSON with share metadata
+      res.status(200).json({
+        username: row.username,
+        score: row.score,
+        rank,
+        totalGuesses,
+        roundImageUrl: round.imageUrl,
+        roundId: round.id,
+        shareUrl,
+        title: `SlopGuesser - ${row.username} scored ${row.score ?? 0}!`,
+        description: `Ranked #${rank} of ${totalGuesses} player${totalGuesses === 1 ? "" : "s"}. Can you beat them?`,
+      });
+    } catch (err: unknown) {
+      next(err);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// GET /:roundId/share/:userId — Public shareable score card
+//
+// Bot/crawler User-Agents receive a full HTML page with OG meta tags for
+// rich link previews. All other clients receive JSON data.
 // ---------------------------------------------------------------------------
 
 roundsRouter.get(
@@ -524,20 +622,30 @@ roundsRouter.get(
       );
       const totalGuesses = parseInt(totalResult.rows[0].count, 10);
 
-      // 5. Build response — only include prompt if round is completed
-      const shareData: Record<string, unknown> = {
+      // 5. Build share data
+      const shareData = {
         username: row.username,
         score: row.score,
         rank,
         totalGuesses,
         roundImageUrl: round.imageUrl,
         roundId: round.id,
+        ...(round.status === "completed" ? { prompt: round.prompt } : {}),
       };
 
-      if (round.status === "completed") {
-        shareData.prompt = round.prompt;
+      // 6. Bot detection — serve HTML with OG tags for crawlers
+      if (isBotUserAgent(req.headers["user-agent"])) {
+        const appBaseUrl = env.CORS_ORIGIN || `http://localhost:${env.PORT}`;
+        const html = generateShareCardHtml(shareData, {
+          appBaseUrl,
+          userId,
+        });
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.status(200).send(html);
+        return;
       }
 
+      // 7. Non-bot clients get JSON (backwards compatible)
       res.status(200).json(shareData);
     } catch (err: unknown) {
       next(err);

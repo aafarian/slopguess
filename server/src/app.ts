@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import * as path from "path";
 import { router as apiRouter } from "./routes/index";
+import { shareRouter } from "./routes/share";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
 import { generalLimiter } from "./middleware/rateLimiter";
@@ -49,6 +50,10 @@ app.use(requestLogger);
 
 // General rate limiting (300 req / 15 min per IP)
 app.use(generalLimiter);
+
+// Public share pages (serves HTML with OG tags for social media link previews)
+// Mounted outside /api so share URLs are clean: /share/:roundId/:userId
+app.use("/share", shareRouter);
 
 // API routes
 app.use("/api", apiRouter);

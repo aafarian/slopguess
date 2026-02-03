@@ -15,6 +15,7 @@ import type {
   StreakResponse,
   WeeklyStatsResponse,
   ShareData,
+  ShareMetadata,
 } from '../types/game';
 
 /**
@@ -153,6 +154,19 @@ export async function getShareData(
   userId: string,
 ): Promise<ShareData> {
   return request<ShareData>(`/api/rounds/${roundId}/share/${userId}`);
+}
+
+/**
+ * Fetch share metadata for the current user's result in a round.
+ * Includes pre-built share URL, title, and description for share buttons.
+ * Requires authentication.
+ *
+ * GET /api/rounds/:roundId/share-data
+ */
+export async function getShareMetadata(
+  roundId: string,
+): Promise<ShareMetadata> {
+  return request<ShareMetadata>(`/api/rounds/${roundId}/share-data`);
 }
 
 /**
