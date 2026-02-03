@@ -112,24 +112,6 @@ export default function GamePage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchRound();
-  }, [fetchRound]);
-
-  // Capture XP snapshot before the user guesses (so we can show gain later)
-  useEffect(() => {
-    if (isAuthenticated && !hasGuessed && submissionPhase === 'idle') {
-      capturePreGuessXP();
-    }
-  }, [isAuthenticated, hasGuessed, submissionPhase, capturePreGuessXP]);
-
-  // Fetch streak data for returning users who already guessed
-  useEffect(() => {
-    if (!loading && hasGuessed && isAuthenticated && !streakData && submissionPhase !== 'analyzing') {
-      fetchStreakData();
-    }
-  }, [loading, hasGuessed, isAuthenticated, streakData, submissionPhase, fetchStreakData]);
-
   // Check if the submitted score is a personal best (fire-and-forget, never blocks UI)
   const checkPersonalBest = useCallback(async (score: number) => {
     try {
@@ -153,6 +135,24 @@ export default function GamePage() {
       // Non-critical — silently ignore
     }
   }, []);
+
+  useEffect(() => {
+    fetchRound();
+  }, [fetchRound]);
+
+  // Capture XP snapshot before the user guesses (so we can show gain later)
+  useEffect(() => {
+    if (isAuthenticated && !hasGuessed && submissionPhase === 'idle') {
+      capturePreGuessXP();
+    }
+  }, [isAuthenticated, hasGuessed, submissionPhase, capturePreGuessXP]);
+
+  // Fetch streak data for returning users who already guessed
+  useEffect(() => {
+    if (!loading && hasGuessed && isAuthenticated && !streakData && submissionPhase !== 'analyzing') {
+      fetchStreakData();
+    }
+  }, [loading, hasGuessed, isAuthenticated, streakData, submissionPhase, fetchStreakData]);
 
   // Check XP gain after guess submission (compare with pre-guess snapshot)
   const checkXPGain = useCallback(async () => {
