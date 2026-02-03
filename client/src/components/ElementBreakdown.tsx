@@ -140,8 +140,8 @@ export default function ElementBreakdown({
             <div className="element-breakdown-group">
               <span className="element-breakdown-group-label">Matched</span>
               <div className="element-breakdown-pills">
-                {matchedWords.map((word) => (
-                  <span key={word} className="element-breakdown-pill element-breakdown-pill--matched">
+                {matchedWords.map((word, i) => (
+                  <span key={`${word}-${i}`} className="element-breakdown-pill element-breakdown-pill--matched">
                     <span className="element-breakdown-pill-check" aria-hidden="true">
                       &#10003;
                     </span>
@@ -157,9 +157,9 @@ export default function ElementBreakdown({
             <div className="element-breakdown-group">
               <span className="element-breakdown-group-label">Partial</span>
               <div className="element-breakdown-pills">
-                {partialMatches.map((pm) => (
+                {partialMatches.map((pm, i) => (
                   <span
-                    key={pm.word}
+                    key={`${pm.word}-${i}`}
                     className="element-breakdown-pill element-breakdown-pill--partial"
                   >
                     {pm.word}
@@ -177,8 +177,8 @@ export default function ElementBreakdown({
             <div className="element-breakdown-group">
               <span className="element-breakdown-group-label">Missed</span>
               <div className="element-breakdown-pills">
-                {missedWords.map((word) => (
-                  <span key={word} className="element-breakdown-pill element-breakdown-pill--missed">
+                {missedWords.map((word, i) => (
+                  <span key={`${word}-${i}`} className="element-breakdown-pill element-breakdown-pill--missed">
                     {word}
                   </span>
                 ))}
