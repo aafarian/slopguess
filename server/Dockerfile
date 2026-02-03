@@ -41,8 +41,16 @@ COPY --from=builder /app/dist ./dist
 # Copy SQL migration files (not handled by tsc)
 COPY server/src/db/migrations/ ./dist/db/migrations/
 
+# Create public directory for persisted images (volume mount target)
+# Must exist before chown so appuser can write to it
+RUN mkdir -p /app/public/images
+
 # Set ownership to non-root user
 RUN chown -R appuser:appgroup /app
+
+# Copy entrypoint script
+COPY server/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
 USER appuser
 
@@ -50,7 +58,8 @@ USER appuser
 EXPOSE 3001
 
 # Health check against the API health endpoint
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "dist/index.js"]

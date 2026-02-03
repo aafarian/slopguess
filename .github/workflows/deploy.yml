@@ -151,8 +151,8 @@ jobs:
             echo "==> Rebuilding and restarting services..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
 
-            echo "==> Running migrations..."
-            docker exec slopguess-server node dist/db/migrate.js || echo "Warning: Migration failed (non-blocking)"
+            echo "==> Waiting for server to be healthy..."
+            sleep 15
 
             echo "==> Deployment complete."
 
