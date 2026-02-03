@@ -33,6 +33,45 @@ type Tab = 'friends' | 'pending' | 'search';
 
 const DEBOUNCE_MS = 300;
 
+// -------------------------------------------------------------------------
+// Avatar helpers
+// -------------------------------------------------------------------------
+
+const AVATAR_COLORS = [
+  '#6C63FF', // indigo
+  '#FF6584', // rose
+  '#43B88C', // teal
+  '#F9A826', // amber
+  '#5B8DEF', // blue
+  '#E85D75', // crimson
+  '#36B5A0', // mint
+  '#D97CF6', // violet
+  '#EF8354', // coral
+  '#47C9AF', // aqua
+];
+
+/** Simple string hash (djb2) mapped to AVATAR_COLORS index. */
+function avatarColor(username: string): string {
+  let hash = 5381;
+  for (let i = 0; i < username.length; i++) {
+    hash = (hash * 33) ^ username.charCodeAt(i);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function Avatar({ username }: { username: string }) {
+  const initial = username.charAt(0).toUpperCase();
+  return (
+    <span
+      className="friends-avatar"
+      style={{ backgroundColor: avatarColor(username) }}
+      aria-hidden="true"
+    >
+      {initial}
+    </span>
+  );
+}
+
 export default function FriendsPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -309,8 +348,15 @@ export default function FriendsPage() {
 
           {!friendsLoading && !friendsError && friends.length > 0 && (
             <ul className="friends-list">
-              {friends.map((friend) => (
+              {[...friends]
+                .sort((a, b) =>
+                  a.friendUsername.localeCompare(b.friendUsername, undefined, {
+                    sensitivity: 'base',
+                  })
+                )
+                .map((friend) => (
                 <li key={friend.id} className="friends-list-item">
+                  <Avatar username={friend.friendUsername} />
                   <div className="friends-list-item-info">
                     <span className="friends-list-item-username">
                       {friend.friendUsername}
@@ -375,6 +421,7 @@ export default function FriendsPage() {
               <ul className="friends-list">
                 {pending.map((req) => (
                   <li key={req.id} className="friends-list-item">
+                    <Avatar username={req.friendUsername} />
                     <div className="friends-list-item-info">
                       <span className="friends-list-item-username">
                         {req.friendUsername}
@@ -413,6 +460,7 @@ export default function FriendsPage() {
               <ul className="friends-list">
                 {sent.map((req) => (
                   <li key={req.id} className="friends-list-item">
+                    <Avatar username={req.friendUsername} />
                     <div className="friends-list-item-info">
                       <span className="friends-list-item-username">
                         {req.friendUsername}
@@ -470,6 +518,7 @@ export default function FriendsPage() {
             <ul className="friends-list">
               {searchResults.map((user) => (
                 <li key={user.id} className="friends-list-item">
+                  <Avatar username={user.username} />
                   <div className="friends-list-item-info">
                     <span className="friends-list-item-username">
                       {user.username}
