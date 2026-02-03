@@ -32,6 +32,11 @@ app.use(
 // Serve persisted images (and any other static assets) from server/public/
 app.use(express.static(path.join(__dirname, "../public")));
 
+// Stripe webhook needs the raw body (Buffer) for signature verification.
+// Mount express.raw() on the webhook path BEFORE the global JSON parser so
+// the body is captured as a Buffer and express.json() skips it.
+app.use("/api/subscriptions/webhook", express.raw({ type: "application/json" }));
+
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
