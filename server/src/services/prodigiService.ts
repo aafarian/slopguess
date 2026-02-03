@@ -226,7 +226,7 @@ async function getQuote(sku: string, quantity: number): Promise<ProdigiQuote> {
       {
         sku,
         copies: quantity,
-        assets: [{ printArea: "default", url: "https://placeholder.test/image.jpg" }],
+        assets: [{ printArea: "default" }],
       },
     ],
   });
