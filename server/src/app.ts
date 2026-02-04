@@ -7,7 +7,7 @@ import { router as apiRouter } from "./routes/index";
 import { shareRouter } from "./routes/share";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
-import { generalLimiter } from "./middleware/rateLimiter";
+import { apiSafetyNet } from "./middleware/rateLimiter";
 import { sanitizeBody } from "./middleware/sanitize";
 import { env } from "./config/env";
 
@@ -48,15 +48,12 @@ app.use(sanitizeBody);
 // Request logging
 app.use(requestLogger);
 
-// General rate limiting (1000 req / 15 min per IP)
-app.use(generalLimiter);
-
 // Public share pages (serves HTML with OG tags for social media link previews)
 // Mounted outside /api so share URLs are clean: /share/:roundId/:userId
 app.use("/share", shareRouter);
 
-// API routes
-app.use("/api", apiRouter);
+// API routes — safety-net rate limiter (very high ceiling, only stops abuse)
+app.use("/api", apiSafetyNet, apiRouter);
 
 // Catch-all 404 for any /api route that was not matched above
 app.use("/api", (_req: Request, res: Response) => {

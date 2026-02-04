@@ -1,56 +1,45 @@
 /**
  * Rate limiting middleware using express-rate-limit.
  *
- * Four tiers:
- *   - generalLimiter   — configurable via RATE_LIMIT_MAX / RATE_LIMIT_WINDOW_MS
- *   - loginLimiter     — 10 requests per 1 minute (POST /login only)
- *   - registerLimiter  — 5 requests per 1 minute  (POST /register only)
- *   - guessLimiter     — 10 requests per 1 minute (POST guess endpoint)
+ * Philosophy: rate limiting should only restrict abusive behaviour, not
+ * normal site usage. We therefore apply targeted limiters to specific
+ * abuse-prone endpoints (login, register, guess) rather than a blanket
+ * limiter on every API call. A generous API-wide safety-net limiter
+ * exists only to stop automated scraping / DDoS — normal users should
+ * never hit it.
+ *
+ * Tiers:
+ *   - apiSafetyNet      — very high ceiling (10 000 req / 15 min per IP)
+ *   - loginLimiter      — 10 requests per 1 minute  (POST /login only)
+ *   - registerLimiter   — 5 requests per 1 minute   (POST /register only)
+ *   - guessLimiter      — 10 requests per 1 minute  (POST guess endpoint)
  *
  * Login and register have separate instances so their budgets are independent.
- * GET /me has no dedicated limiter — only the general limiter applies.
  *
  * All limiters use the default in-memory store which is sufficient for
  * single-process deployments. Upgrade to a Redis-backed store when
  * horizontal scaling is needed.
  */
 
-import rateLimit, { ipKeyGenerator } from "express-rate-limit";
-import { Request } from "express";
+import rateLimit from "express-rate-limit";
 import { env } from "../config/env";
 
 const isTest = process.env.NODE_ENV === "test";
 
 /** In test mode, set limits high enough to avoid interfering with test suites. */
-const testMax = 10000;
+const testMax = 100000;
 
 /**
- * General API rate limiter.
- * Applied globally to all /api routes.
- * Defaults: 1000 requests per 15 minutes (900000ms) per IP.
- * Configurable via RATE_LIMIT_MAX and RATE_LIMIT_WINDOW_MS env vars.
- *
- * Per-IP isolation model:
- *   - Uses req.ip as the rate limit key so each client IP gets its own counter.
- *   - When TRUST_PROXY=true is set in env (which calls app.set("trust proxy", 1)
- *     in app.ts), req.ip is derived from the X-Forwarded-For header. This is
- *     required when running behind nginx or a load balancer so that all clients
- *     are not bucketed under the proxy's IP address.
- *   - The default in-memory store maintains counters per process. Each IP gets
- *     an independent counter; one client's usage does not affect another's budget.
- *   - To verify isolation: different source IPs should receive independent
- *     RateLimit-Remaining values in the RateLimit-* response headers.
+ * API safety-net limiter.
+ * Very high ceiling — normal users will never reach this. It exists only
+ * to stop automated scraping or DDoS-style abuse.
+ * Defaults: 10 000 requests per 15 minutes per IP.
  */
-export const generalLimiter = rateLimit({
+export const apiSafetyNet = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: isTest ? testMax : env.RATE_LIMIT_MAX,
-  standardHeaders: true, // Return rate limit info in RateLimit-* headers
-  legacyHeaders: false, // Disable X-RateLimit-* headers
-  // Explicit keyGenerator to make per-IP isolation auditable.
-  // express-rate-limit defaults to req.ip, but being explicit prevents
-  // accidental override and documents the intended behavior.
-  // ipKeyGenerator collapses IPv6 addresses to /56 subnets to prevent bypass.
-  keyGenerator: (req: Request) => ipKeyGenerator(req.ip || "unknown"),
+  standardHeaders: true,
+  legacyHeaders: false,
   message: {
     error: {
       message: "Too many requests, please try again later.",
@@ -101,7 +90,7 @@ export const registerLimiter = rateLimit({
  * 10 requests per 1 minute per IP.
  */
 export const guessLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute (always fixed)
+  windowMs: 1 * 60 * 1000,
   max: isTest ? testMax : 10,
   standardHeaders: true,
   legacyHeaders: false,
