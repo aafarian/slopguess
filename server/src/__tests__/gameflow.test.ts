@@ -309,8 +309,9 @@ describe("scoringService.normalizeScore", () => {
     expect(scoringService.normalizeScore(0.3)).toBe(0);
   });
 
-  it("maps similarity 0.65 to score 50", () => {
-    expect(scoringService.normalizeScore(0.65)).toBe(50);
+  it("maps similarity 0.65 with power curve", () => {
+    // linear = (0.65 - 0.3) / 0.7 = 0.5, curved = pow(0.5, 0.8) ≈ 0.574 -> 57
+    expect(scoringService.normalizeScore(0.65)).toBe(57);
   });
 
   it("maps similarity below 0.3 to score 0 (clamped)", () => {
@@ -324,17 +325,17 @@ describe("scoringService.normalizeScore", () => {
     expect(scoringService.normalizeScore(1.5)).toBe(100);
   });
 
-  it("maps similarity 0.65 to score 50 exactly", () => {
-    // (0.65 - 0.3) / 0.7 = 0.35 / 0.7 = 0.5 -> 50
-    expect(scoringService.normalizeScore(0.65)).toBe(50);
+  it("maps similarity 0.65 with power curve exactly", () => {
+    // linear = (0.65 - 0.3) / 0.7 = 0.5, curved = pow(0.5, 0.8) ≈ 0.574 -> 57
+    expect(scoringService.normalizeScore(0.65)).toBe(57);
   });
 
-  it("maps intermediate values correctly", () => {
-    // (0.44 - 0.3) / 0.7 = 0.14 / 0.7 = 0.2 -> 20
-    expect(scoringService.normalizeScore(0.44)).toBe(20);
+  it("maps intermediate values correctly with power curve", () => {
+    // linear = (0.44 - 0.3) / 0.7 = 0.2, curved = pow(0.2, 0.8) ≈ 0.277 -> 28
+    expect(scoringService.normalizeScore(0.44)).toBe(28);
 
-    // (0.86 - 0.3) / 0.7 = 0.56 / 0.7 = 0.8 -> 80
-    expect(scoringService.normalizeScore(0.86)).toBe(80);
+    // linear = (0.86 - 0.3) / 0.7 = 0.8, curved = pow(0.8, 0.8) ≈ 0.837 -> 84
+    expect(scoringService.normalizeScore(0.86)).toBe(84);
   });
 
   it("returns an integer", () => {
