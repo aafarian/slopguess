@@ -137,7 +137,7 @@ function loadEnvConfig(): EnvConfig {
       process.env.DIFFICULTY_WORD_COUNTS ||
         '{"easy":3,"normal":5,"hard":8}'
     ),
-    PROMPT_MAX_LENGTH: parseInt(process.env.PROMPT_MAX_LENGTH || "350", 10),
+    PROMPT_MAX_LENGTH: parseInt(process.env.PROMPT_MAX_LENGTH || "500", 10),
     ADMIN_API_KEY: process.env.ADMIN_API_KEY || "",
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "",

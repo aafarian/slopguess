@@ -70,6 +70,30 @@ const ATMOSPHERE_CATEGORIES = new Set([
   "weather",
 ]);
 
+// ---------------------------------------------------------------------------
+// Scene shapes — variable word-role distributions, randomly selected per round
+// ---------------------------------------------------------------------------
+
+interface SceneShape {
+  nouns: number;
+  adjectives: number;
+  actions: number;
+  settings: number;
+  extras: number;
+  atmospheres: number;
+}
+
+const SCENE_SHAPES: SceneShape[] = [
+  { nouns: 2, adjectives: 1, actions: 1, settings: 1, extras: 1, atmospheres: 1 },
+  { nouns: 3, adjectives: 1, actions: 2, settings: 1, extras: 0, atmospheres: 0 },
+  { nouns: 1, adjectives: 2, actions: 1, settings: 1, extras: 2, atmospheres: 0 },
+  { nouns: 2, adjectives: 1, actions: 1, settings: 1, extras: 0, atmospheres: 2 },
+  { nouns: 1, adjectives: 1, actions: 1, settings: 1, extras: 3, atmospheres: 0 },
+  { nouns: 2, adjectives: 0, actions: 3, settings: 1, extras: 1, atmospheres: 0 },
+  { nouns: 2, adjectives: 1, actions: 1, settings: 2, extras: 1, atmospheres: 0 },
+  { nouns: 2, adjectives: 1, actions: 1, settings: 1, extras: 0, atmospheres: 0 },
+];
+
 /** Return "an" if the next word starts with a vowel sound, otherwise "a". */
 function aOrAn(word: string): string {
   return /^[aeiou]/i.test(word) ? "an" : "a";
@@ -545,19 +569,35 @@ async function getRandomSubset(count: number): Promise<WordBankEntry[]> {
  * @returns Array of WordBankEntry objects with guaranteed diversity
  */
 async function getBalancedWordsForPrompt(total: number = 10): Promise<WordBankEntry[]> {
-  // Guarantee specific roles so templates can build rich sentences.
-  // We pull 2 nouns, 2 adjectives, 2 extras to feed the largest templates.
-  const requiredRoles = [
-    { categories: Array.from(NOUN_CATEGORIES), role: "noun-1" },
-    { categories: Array.from(NOUN_CATEGORIES), role: "noun-2" },
-    { categories: ["adjectives", "emotions"], role: "adjective-1" },
-    { categories: ["adjectives", "emotions"], role: "adjective-2" },
-    { categories: ["actions"], role: "action" },
-    { categories: ["settings"], role: "setting" },
-    { categories: Array.from(EXTRA_CATEGORIES), role: "extra-1" },
-    { categories: Array.from(EXTRA_CATEGORIES), role: "extra-2" },
-    { categories: Array.from(ATMOSPHERE_CATEGORIES), role: "atmosphere" },
-  ];
+  // Pick a random scene shape whose total slot count fits within `total`
+  const fittingShapes = SCENE_SHAPES.filter((s) => {
+    const slotCount = s.nouns + s.adjectives + s.actions + s.settings + s.extras + s.atmospheres;
+    return slotCount <= total;
+  });
+  const shape = fittingShapes.length > 0
+    ? fittingShapes[Math.floor(Math.random() * fittingShapes.length)]
+    : SCENE_SHAPES[0];
+
+  // Build requiredRoles dynamically from the selected shape
+  const requiredRoles: { categories: string[]; role: string }[] = [];
+  for (let i = 0; i < shape.nouns; i++) {
+    requiredRoles.push({ categories: Array.from(NOUN_CATEGORIES), role: `noun-${i + 1}` });
+  }
+  for (let i = 0; i < shape.adjectives; i++) {
+    requiredRoles.push({ categories: ["adjectives", "emotions"], role: `adjective-${i + 1}` });
+  }
+  for (let i = 0; i < shape.actions; i++) {
+    requiredRoles.push({ categories: ["actions"], role: `action-${i + 1}` });
+  }
+  for (let i = 0; i < shape.settings; i++) {
+    requiredRoles.push({ categories: ["settings"], role: `setting-${i + 1}` });
+  }
+  for (let i = 0; i < shape.extras; i++) {
+    requiredRoles.push({ categories: Array.from(EXTRA_CATEGORIES), role: `extra-${i + 1}` });
+  }
+  for (let i = 0; i < shape.atmospheres; i++) {
+    requiredRoles.push({ categories: Array.from(ATMOSPHERE_CATEGORIES), role: `atmosphere-${i + 1}` });
+  }
 
   const selected: WordBankEntry[] = [];
   const usedIds = new Set<number>();

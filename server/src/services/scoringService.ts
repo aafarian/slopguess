@@ -10,9 +10,10 @@
  *
  * Normalization rationale:
  *   Text embeddings rarely produce cosine similarity below ~0.3 for completely
- *   unrelated texts. We map [0.3, 1.0] linearly to [0, 100] so that:
+ *   unrelated texts. We map [0.3, 1.0] to [0, 100] with a gentle concave
+ *   curve (exponent 0.85) that boosts mid-range scores slightly:
  *     - similarity = 1.0  -> score = 100 (perfect match)
- *     - similarity = 0.65 -> score = 50  (halfway)
+ *     - similarity = 0.65 -> score = 57  (boosted from linear 50)
  *     - similarity <= 0.3 -> score = 0   (completely unrelated)
  *
  * Per FR-005, scoring is deterministic for the same input: same guess text
@@ -53,9 +54,17 @@ const SIMILARITY_RANGE = SIMILARITY_CEILING - SIMILARITY_FLOOR;
 // ---------------------------------------------------------------------------
 
 /**
+ * Exponent for the score curve. Values below 1.0 produce a concave curve
+ * that gently boosts mid-range scores while keeping 0 and 100 anchored.
+ * 1.0 = linear (no boost), 0.8 = moderate boost (~66 → ~74).
+ */
+const SCORE_CURVE_EXPONENT = 0.8;
+
+/**
  * Convert a raw cosine similarity value to a 0-100 integer score.
  *
- * Uses linear mapping from [SIMILARITY_FLOOR, SIMILARITY_CEILING] to [0, 100].
+ * Maps [SIMILARITY_FLOOR, SIMILARITY_CEILING] to [0, 100] with a gentle
+ * concave curve (exponent < 1) that boosts mid-range scores slightly.
  * Values outside the range are clamped.
  *
  * @param rawSimilarity - Cosine similarity value (typically -1 to 1)
@@ -64,7 +73,8 @@ const SIMILARITY_RANGE = SIMILARITY_CEILING - SIMILARITY_FLOOR;
 function normalizeScore(rawSimilarity: number): number {
   const normalized = (rawSimilarity - SIMILARITY_FLOOR) / SIMILARITY_RANGE;
   const clamped = Math.max(0, Math.min(1, normalized));
-  return Math.round(clamped * 100);
+  const curved = Math.pow(clamped, SCORE_CURVE_EXPONENT);
+  return Math.round(curved * 100);
 }
 
 /**

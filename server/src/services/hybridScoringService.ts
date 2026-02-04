@@ -32,7 +32,7 @@ import { createEmbeddingProvider, cosineSimilarity } from "./embedding";
  * Minimum cosine similarity between two word embeddings to consider them
  * a partial/semantic match.
  */
-const PARTIAL_MATCH_THRESHOLD = 0.7;
+const PARTIAL_MATCH_THRESHOLD = 0.6;
 
 /**
  * Common English stop words to exclude from tokenization.
@@ -128,12 +128,16 @@ async function computeElementBreakdown(
     };
   }
 
+  // Deduplicate prompt tokens — repeated words should only need to be
+  // matched once, not penalise the player for having fewer copies.
+  const uniquePromptTokens = [...new Set(promptTokens)];
+
   // Step 1: Find exact matches
   const matchedWords: string[] = [];
   const unmatchedPromptWords: string[] = [];
   const remainingGuessWords = new Set(guessTokens);
 
-  for (const promptWord of promptTokens) {
+  for (const promptWord of uniquePromptTokens) {
     if (remainingGuessWords.has(promptWord)) {
       matchedWords.push(promptWord);
       remainingGuessWords.delete(promptWord);
@@ -201,7 +205,7 @@ async function computeElementBreakdown(
   }
 
   // Step 3: Compute element score
-  const totalPromptWords = promptTokens.length;
+  const totalPromptWords = uniquePromptTokens.length;
   const rawElementScore =
     (matchedWords.length + 0.5 * partialMatches.length) / totalPromptWords;
   const elementScore = Math.round(Math.min(1, rawElementScore) * 100);

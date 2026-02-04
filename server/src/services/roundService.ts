@@ -280,15 +280,37 @@ async function getRecentRounds(limit: number = 10): Promise<Round[]> {
  * @returns The newly created and activated Round
  */
 async function createAndActivateRound(difficulty?: string): Promise<Round> {
-  // Complete the currently active round if one exists
-  const currentActive = await getActiveRound();
-  if (currentActive) {
-    logger.info("roundService", `Completing currently active round ${currentActive.id} before creating new one`, { roundId: currentActive.id });
-    await completeRound(currentActive.id);
+  // Create the new round FIRST — before completing the old one.
+  // If image generation fails (e.g. DALL-E content policy rejection),
+  // the current active round stays intact instead of leaving the game
+  // with no active round. Retries up to 3 times with fresh prompts.
+  const MAX_CREATE_RETRIES = 3;
+  let newRound: Round | null = null;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_CREATE_RETRIES; attempt++) {
+    try {
+      newRound = await createRound(difficulty);
+      break;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      logger.warn("roundService", `createRound attempt ${attempt}/${MAX_CREATE_RETRIES} failed`, {
+        attempt,
+        error: lastError.message,
+      });
+    }
   }
 
-  // Create a new round with the requested difficulty
-  const newRound = await createRound(difficulty);
+  if (!newRound) {
+    throw lastError ?? new Error("Failed to create round after retries");
+  }
+
+  // Only now complete the old round — the new one is safely created
+  const currentActive = await getActiveRound();
+  if (currentActive) {
+    logger.info("roundService", `Completing currently active round ${currentActive.id} before activating new one`, { roundId: currentActive.id });
+    await completeRound(currentActive.id);
+  }
 
   // Activate the new round
   const activatedRound = await activateRound(newRound.id);

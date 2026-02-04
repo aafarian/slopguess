@@ -34,21 +34,37 @@ function getScoreBarBgClass(score: number): string {
   return 'element-breakdown-bar-fill--low';
 }
 
+/** Strip punctuation from a word so "birthday." matches "birthday". */
+function stripPunctuation(word: string): string {
+  return word.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+/** Stop words excluded from scoring — don't show as "missed". */
+const STOP_WORDS = new Set([
+  'a', 'an', 'the', 'in', 'of', 'and', 'with', 'on', 'at', 'to',
+  'for', 'is', 'it', 'by', 'as', 'or', 'be', 'was', 'are', 'from',
+  'that', 'this', 'but', 'not', 'has', 'have', 'had', 'its', 'while',
+]);
+
 /**
  * Derive missed words: prompt words that are not in matchedWords or
- * partialMatches word list.
+ * partialMatches word list. Strips punctuation before comparing so
+ * "birthday." matches "birthday". Filters out stop words since they
+ * are excluded from scoring.
  */
 function deriveMissedWords(
   promptWords: string[],
   matchedWords: string[],
   partialMatches: { word: string; similarity: number }[],
 ): string[] {
-  const matchedSet = new Set(matchedWords.map((w) => w.toLowerCase()));
-  const partialSet = new Set(partialMatches.map((p) => p.word.toLowerCase()));
+  const matchedSet = new Set(matchedWords.map((w) => stripPunctuation(w)));
+  const partialSet = new Set(partialMatches.map((p) => stripPunctuation(p.word)));
 
   return promptWords.filter((w) => {
-    const lower = w.toLowerCase();
-    return !matchedSet.has(lower) && !partialSet.has(lower);
+    const cleaned = stripPunctuation(w);
+    if (cleaned.length === 0) return false;
+    if (STOP_WORDS.has(cleaned)) return false;
+    return !matchedSet.has(cleaned) && !partialSet.has(cleaned);
   });
 }
 

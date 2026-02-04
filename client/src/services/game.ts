@@ -178,8 +178,14 @@ export async function getShareMetadata(
 export async function rotateRound(
   difficulty?: string,
 ): Promise<{ message: string; difficulty: string; nextRotationAt: string | null }> {
+  const headers: Record<string, string> = {};
+  const adminKey = import.meta.env.VITE_ADMIN_API_KEY;
+  if (adminKey) {
+    headers['X-Admin-Key'] = adminKey;
+  }
   return request('/api/admin/rounds/rotate', {
     method: 'POST',
+    headers,
     body: JSON.stringify(difficulty ? { difficulty } : {}),
   });
 }
