@@ -20,8 +20,10 @@ export interface ImageGenerationProvider {
 }
 
 export interface ImageGenerationResult {
-  /** URL of the generated (or placeholder) image */
-  imageUrl: string;
+  /** URL of the generated (or placeholder) image — used by URL-based providers */
+  imageUrl?: string;
+  /** Base64-encoded image data — used by GPT Image models */
+  imageBase64?: string;
   /** Name of the provider that produced this image */
   provider: string;
   /** Optional provider-specific metadata */

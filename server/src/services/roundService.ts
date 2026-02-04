@@ -21,7 +21,7 @@ import { wordBankService } from "./wordBankService";
 import { promptGenerator } from "./promptGenerator";
 import { createImageProvider } from "./imageGeneration";
 import { createEmbeddingProvider } from "./embedding";
-import { persistImage } from "./imageStorage";
+import { persistImage, persistImageFromBase64 } from "./imageStorage";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -75,9 +75,16 @@ async function createRound(difficulty?: string): Promise<Round> {
   const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
   const imageResult = await imageProvider.generate(prompt);
 
-  // Download the image to local disk so the URL never expires.
-  // The stored URL becomes /images/<filename> served by express.static.
-  const imageFilename = await persistImage(imageResult.imageUrl);
+  // Persist the image to local disk. GPT Image models return base64,
+  // while older models (DALL-E) return temporary URLs.
+  let imageFilename: string;
+  if (imageResult.imageBase64) {
+    imageFilename = await persistImageFromBase64(imageResult.imageBase64);
+  } else if (imageResult.imageUrl) {
+    imageFilename = await persistImage(imageResult.imageUrl);
+  } else {
+    throw new Error("[roundService] Image generation returned no image data");
+  }
   const persistedImageUrl = `/images/${imageFilename}`;
 
   // Step 4: Compute prompt embedding

@@ -1,8 +1,8 @@
 /**
- * OpenAI DALL-E image generation provider.
+ * OpenAI image generation provider.
  *
  * Calls the OpenAI Images API directly via fetch (no SDK dependency).
- * Uses DALL-E 3 by default with 1024x1024 resolution.
+ * Uses GPT Image 1.5 with 1024x1024 resolution.
  * Requires OPENAI_API_KEY to be set when IMAGE_PROVIDER=openai.
  */
 
@@ -12,12 +12,13 @@ import type { ImageGenerationProvider, ImageGenerationResult } from "./types";
 /** OpenAI Images API endpoint */
 const OPENAI_IMAGES_URL = "https://api.openai.com/v1/images/generations";
 
-/** Shape of the OpenAI Images API response */
+const MODEL = "gpt-image-1.5";
+
+/** Shape of the GPT Image API response (returns base64, not URLs) */
 interface OpenAIImagesResponse {
   created: number;
   data: Array<{
-    url?: string;
-    revised_prompt?: string;
+    b64_json?: string;
   }>;
 }
 
@@ -53,12 +54,16 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
       throw new Error("Image generation prompt must not be empty.");
     }
 
+    // Steer toward vivid, colorful illustrated style (GPT Image has no style param)
+    const styledPrompt = `Vivid, colorful, highly detailed digital illustration. ${prompt}`;
+
     const body = {
-      model: "dall-e-3",
-      prompt,
+      model: MODEL,
+      prompt: styledPrompt,
       n: 1,
       size: "1024x1024",
-      response_format: "url",
+      quality: "medium" as const,
+      output_format: "png" as const,
     };
 
     let response: Response;
@@ -86,21 +91,19 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
 
     const json = (await response.json()) as OpenAIImagesResponse;
 
-    if (!json.data || json.data.length === 0 || !json.data[0].url) {
+    if (!json.data || json.data.length === 0 || !json.data[0].b64_json) {
       throw new Error(
-        "OpenAI API returned an unexpected response: no image URL in response data."
+        "OpenAI API returned an unexpected response: no image data in response."
       );
     }
 
-    const imageData = json.data[0];
-
     return {
-      imageUrl: imageData.url!,
+      imageBase64: json.data[0].b64_json,
       provider: this.name,
       metadata: {
-        model: "dall-e-3",
+        model: MODEL,
         size: "1024x1024",
-        revisedPrompt: imageData.revised_prompt,
+        quality: "medium",
         created: json.created,
       },
     };

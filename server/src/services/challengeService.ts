@@ -22,7 +22,7 @@ import type { ChallengeRow, PublicChallenge } from "../models/challenge";
 import { toPublicChallenge } from "../models/challenge";
 import { createEmbeddingProvider, cosineSimilarity } from "./embedding";
 import { createImageProvider } from "./imageGeneration";
-import { persistImage } from "./imageStorage";
+import { persistImage, persistImageFromBase64 } from "./imageStorage";
 import { containsBlockedContent } from "./contentFilter";
 import * as friendshipService from "./friendshipService";
 import { notificationService } from "./notificationService";
@@ -186,8 +186,15 @@ async function processChallengeBackground(
     const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
     const imageResult = await imageProvider.generate(prompt);
 
-    // Persist image locally
-    const imageFilename = await persistImage(imageResult.imageUrl);
+    // Persist image locally (GPT Image returns base64, older models return URLs)
+    let imageFilename: string;
+    if (imageResult.imageBase64) {
+      imageFilename = await persistImageFromBase64(imageResult.imageBase64);
+    } else if (imageResult.imageUrl) {
+      imageFilename = await persistImage(imageResult.imageUrl);
+    } else {
+      throw new Error("Image generation returned no image data");
+    }
     const persistedImageUrl = `/images/${imageFilename}`;
 
     // Compute prompt embedding

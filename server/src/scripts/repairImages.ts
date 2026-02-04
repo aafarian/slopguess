@@ -17,7 +17,7 @@ import * as path from "path";
 import { pool, closePool } from "../config/database";
 import { env } from "../config/env";
 import { createImageProvider } from "../services/imageGeneration";
-import { persistImage } from "../services/imageStorage";
+import { persistImage, persistImageFromBase64 } from "../services/imageStorage";
 
 const IMAGES_DIR = path.resolve(__dirname, "../../public/images");
 
@@ -123,7 +123,14 @@ async function main(): Promise<void> {
       console.log(`${label} Generating image for ${row.table} ${row.id}...`);
 
       const result = await imageProvider.generate(row.prompt);
-      const filename = await persistImage(result.imageUrl);
+      let filename: string;
+      if (result.imageBase64) {
+        filename = await persistImageFromBase64(result.imageBase64);
+      } else if (result.imageUrl) {
+        filename = await persistImage(result.imageUrl);
+      } else {
+        throw new Error("Image generation returned no image data");
+      }
       const newUrl = `/images/${filename}`;
 
       await pool.query(

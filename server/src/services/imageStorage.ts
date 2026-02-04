@@ -50,3 +50,29 @@ export async function persistImage(externalUrl: string): Promise<string> {
 
   return filename;
 }
+
+/**
+ * Save a base64-encoded image to local disk.
+ *
+ * @param base64Data - The base64-encoded image data (without data URI prefix)
+ * @returns The local filename (e.g. "abc123.png") suitable for building a serving URL
+ */
+export async function persistImageFromBase64(base64Data: string): Promise<string> {
+  // Ensure the images directory exists
+  if (!fs.existsSync(IMAGES_DIR)) {
+    fs.mkdirSync(IMAGES_DIR, { recursive: true });
+  }
+
+  const filename = `${randomUUID()}.png`;
+  const filepath = path.join(IMAGES_DIR, filename);
+
+  const buffer = Buffer.from(base64Data, "base64");
+  fs.writeFileSync(filepath, buffer);
+
+  logger.info("imageStorage", `Persisted image as ${filename}`, {
+    filename,
+    bytes: buffer.length,
+  });
+
+  return filename;
+}
