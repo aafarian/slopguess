@@ -738,12 +738,25 @@ export default function GamePage() {
 
           {/* ---- State: Authenticated, not yet guessed ---- */}
           {isAuthenticated && !alreadyGuessed && !isAnalyzing && (
-            <GuessForm
-              roundId={round.id}
-              onSuccess={handleGuessSuccess}
-              onAlreadyGuessed={handleAlreadyGuessed}
-              onRoundEnded={handleRoundEnded}
-            />
+            <>
+              <GuessForm
+                roundId={round.id}
+                onSuccess={handleGuessSuccess}
+                onAlreadyGuessed={handleAlreadyGuessed}
+                onRoundEnded={handleRoundEnded}
+              />
+              {printShopEnabled && round.imageUrl && (
+                <div className="game-preguess-frame">
+                  <Link
+                    to={`/print-shop/order?roundId=${round.id}`}
+                    className="frame-this-btn"
+                  >
+                    <span className="frame-this-btn-icon" aria-hidden="true">&#128444;&#65039;</span>
+                    Frame This
+                  </Link>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

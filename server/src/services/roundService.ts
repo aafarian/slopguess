@@ -75,17 +75,15 @@ async function createRound(difficulty?: string): Promise<Round> {
   const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
   const imageResult = await imageProvider.generate(prompt, { quality: "low" });
 
-  // Persist the image to local disk. GPT Image models return base64,
-  // while older models (DALL-E) return temporary URLs.
-  let imageFilename: string;
+  // Persist the image (to R2 if configured, otherwise locally)
+  let persistedImageUrl: string;
   if (imageResult.imageBase64) {
-    imageFilename = await persistImageFromBase64(imageResult.imageBase64);
+    persistedImageUrl = await persistImageFromBase64(imageResult.imageBase64);
   } else if (imageResult.imageUrl) {
-    imageFilename = await persistImage(imageResult.imageUrl);
+    persistedImageUrl = await persistImage(imageResult.imageUrl);
   } else {
     throw new Error("[roundService] Image generation returned no image data");
   }
-  const persistedImageUrl = `/images/${imageFilename}`;
 
   // Step 4: Compute prompt embedding
   const embeddingProvider = createEmbeddingProvider(env.EMBEDDING_PROVIDER);

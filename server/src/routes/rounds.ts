@@ -93,9 +93,7 @@ roundsRouter.get(
           hasGuessed = true;
           userScore = guessResult.rows[0].score;
           userGuessText = guessResult.rows[0].guess_text;
-          if (isDev) {
-            userElementScores = guessResult.rows[0].element_scores;
-          }
+          userElementScores = guessResult.rows[0].element_scores;
         }
       }
 
@@ -114,7 +112,7 @@ roundsRouter.get(
           hasGuessed,
           userScore,
           userGuessText,
-          ...(isDev ? { elementScores: userElementScores ?? null } : {}),
+          elementScores: userElementScores ?? null,
         } : {}),
       });
     } catch (err: unknown) {
@@ -290,12 +288,11 @@ roundsRouter.post(
       );
       const totalGuesses = parseInt(totalResult.rows[0].count, 10);
 
-      // Dev-only: include prompt and element scores for debugging
+      // Dev-only: include prompt for debugging
       const devFields: Record<string, unknown> = {};
       if (isDev) {
         const round = await roundService.getRoundById(roundId);
         devFields.prompt = round?.prompt ?? null;
-        devFields.elementScores = savedGuess.elementScores ?? null;
       }
 
       res.status(201).json({
@@ -304,6 +301,7 @@ roundsRouter.post(
         score: savedGuess.score,
         rank,
         totalGuesses,
+        elementScores: savedGuess.elementScores ?? null,
         ...devFields,
       });
     } catch (err: unknown) {

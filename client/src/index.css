@@ -7229,6 +7229,13 @@ body {
   margin-bottom: 0.25rem;
 }
 
+/* Container for frame button below guess form (pre-guess) */
+.game-preguess-frame {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
 @media (max-width: 600px) {
   .frame-this-btn {
     font-size: 0.75rem;

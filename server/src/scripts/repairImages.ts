@@ -123,15 +123,14 @@ async function main(): Promise<void> {
       console.log(`${label} Generating image for ${row.table} ${row.id}...`);
 
       const result = await imageProvider.generate(row.prompt);
-      let filename: string;
+      let newUrl: string;
       if (result.imageBase64) {
-        filename = await persistImageFromBase64(result.imageBase64);
+        newUrl = await persistImageFromBase64(result.imageBase64);
       } else if (result.imageUrl) {
-        filename = await persistImage(result.imageUrl);
+        newUrl = await persistImage(result.imageUrl);
       } else {
         throw new Error("Image generation returned no image data");
       }
-      const newUrl = `/images/${filename}`;
 
       await pool.query(
         `UPDATE ${row.table} SET image_url = $1 WHERE id = $2`,

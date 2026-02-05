@@ -250,16 +250,15 @@ async function processGroupChallengeBackground(
     const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
     const imageResult = await imageProvider.generate(prompt, { quality: "medium" });
 
-    // Persist image locally (GPT Image returns base64, older models return URLs)
-    let imageFilename: string;
+    // Persist image (to R2 if configured, otherwise locally)
+    let persistedImageUrl: string;
     if (imageResult.imageBase64) {
-      imageFilename = await persistImageFromBase64(imageResult.imageBase64);
+      persistedImageUrl = await persistImageFromBase64(imageResult.imageBase64);
     } else if (imageResult.imageUrl) {
-      imageFilename = await persistImage(imageResult.imageUrl);
+      persistedImageUrl = await persistImage(imageResult.imageUrl);
     } else {
       throw new Error("Image generation returned no image data");
     }
-    const persistedImageUrl = `/images/${imageFilename}`;
 
     // Compute prompt embedding
     const embeddingProvider = createEmbeddingProvider(env.EMBEDDING_PROVIDER);

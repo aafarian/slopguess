@@ -65,6 +65,16 @@ interface EnvConfig {
   PRODIGI_API_URL: string;
   /** Margin percentage added on top of Prodigi base cost for print shop items (default: 30). */
   PRINT_SHOP_MARGIN_PERCENT: number;
+  /** Cloudflare R2 account ID (optional - falls back to local storage if not configured). */
+  R2_ACCOUNT_ID: string;
+  /** Cloudflare R2 access key ID. */
+  R2_ACCESS_KEY_ID: string;
+  /** Cloudflare R2 secret access key. */
+  R2_SECRET_ACCESS_KEY: string;
+  /** Cloudflare R2 bucket name. */
+  R2_BUCKET_NAME: string;
+  /** Cloudflare R2 public URL for serving images (e.g. https://pub-xxx.r2.dev). */
+  R2_PUBLIC_URL: string;
 }
 
 /**
@@ -157,6 +167,11 @@ function loadEnvConfig(): EnvConfig {
       process.env.PRINT_SHOP_MARGIN_PERCENT || "30",
       10
     ),
+    R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID || "",
+    R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || "",
+    R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || "",
+    R2_BUCKET_NAME: process.env.R2_BUCKET_NAME || "",
+    R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || "",
   };
 }
 
@@ -179,5 +194,19 @@ function isProdigiConfigured(): boolean {
   return env.PRODIGI_API_KEY.trim().length > 0;
 }
 
-export { env, isStripeConfigured, isProdigiConfigured };
+/**
+ * Returns true when Cloudflare R2 is configured,
+ * indicating that images will be stored in R2 instead of locally.
+ */
+function isR2Configured(): boolean {
+  return (
+    env.R2_ACCOUNT_ID.trim().length > 0 &&
+    env.R2_ACCESS_KEY_ID.trim().length > 0 &&
+    env.R2_SECRET_ACCESS_KEY.trim().length > 0 &&
+    env.R2_BUCKET_NAME.trim().length > 0 &&
+    env.R2_PUBLIC_URL.trim().length > 0
+  );
+}
+
+export { env, isStripeConfigured, isProdigiConfigured, isR2Configured };
 export type { EnvConfig };
