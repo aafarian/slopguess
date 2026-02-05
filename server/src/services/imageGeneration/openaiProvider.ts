@@ -7,7 +7,7 @@
  */
 
 import { env } from "../../config/env";
-import type { ImageGenerationProvider, ImageGenerationResult } from "./types";
+import type { ImageGenerationOptions, ImageGenerationProvider, ImageGenerationResult } from "./types";
 
 /** OpenAI Images API endpoint */
 const OPENAI_IMAGES_URL = "https://api.openai.com/v1/images/generations";
@@ -49,10 +49,12 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
     this.apiKey = key;
   }
 
-  async generate(prompt: string): Promise<ImageGenerationResult> {
+  async generate(prompt: string, options?: ImageGenerationOptions): Promise<ImageGenerationResult> {
     if (!prompt || prompt.trim() === "") {
       throw new Error("Image generation prompt must not be empty.");
     }
+
+    const quality = options?.quality ?? "low";
 
     // Steer toward vivid, colorful illustrated style (GPT Image has no style param)
     const styledPrompt = `Vivid, colorful, highly detailed digital illustration. ${prompt}`;
@@ -62,7 +64,7 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
       prompt: styledPrompt,
       n: 1,
       size: "1024x1024",
-      quality: "medium" as const,
+      quality,
       output_format: "png" as const,
     };
 
@@ -103,7 +105,7 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
       metadata: {
         model: MODEL,
         size: "1024x1024",
-        quality: "medium",
+        quality,
         created: json.created,
       },
     };

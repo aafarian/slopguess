@@ -29,6 +29,9 @@ let checkIntervalId: ReturnType<typeof setInterval> | null = null;
 let nextRotationTime: Date | null = null;
 let isRunning = false;
 
+/** How many minutes before rotation to pre-generate the next round. */
+const PRE_GEN_LEAD_MINUTES = 5;
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -61,6 +64,7 @@ async function tick(): Promise<void> {
       // Check if the active round has exceeded its duration
       const expiresAt = computeNextRotation(activeRound.startedAt!);
       const now = new Date();
+      const preGenTime = new Date(expiresAt.getTime() - PRE_GEN_LEAD_MINUTES * 60 * 1000);
 
       if (now >= expiresAt) {
         // Check if anyone guessed before spending money on a new round
@@ -82,8 +86,23 @@ async function tick(): Promise<void> {
             guessCount,
             startedAt: activeRound.startedAt!.toISOString(),
           });
+          // createAndActivateRound will use pre-generated round if available
           await rotateRound();
         }
+      } else if (now >= preGenTime) {
+        // Approaching expiry — pre-generate next round if none pending
+        const pending = await roundService.getNextPendingRound();
+        if (!pending) {
+          logger.info("scheduler", "Pre-generating next round...");
+          try {
+            await roundService.createRound();
+          } catch (err) {
+            // Non-fatal — we'll create on rotation if pre-gen fails
+            const message = err instanceof Error ? err.message : String(err);
+            logger.warn("scheduler", "Pre-generation failed", { error: message });
+          }
+        }
+        nextRotationTime = expiresAt;
       } else {
         // Update the next rotation time tracker
         nextRotationTime = expiresAt;

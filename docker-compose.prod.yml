@@ -53,6 +53,7 @@ services:
       IMAGE_PROVIDER: ${IMAGE_PROVIDER:-openai}
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
       TRUST_PROXY: "true"
+      ROUND_DURATION_HOURS: "1"
     deploy:
       resources:
         limits:

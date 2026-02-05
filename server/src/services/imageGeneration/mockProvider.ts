@@ -7,7 +7,7 @@
  * same placeholder image.
  */
 
-import type { ImageGenerationProvider, ImageGenerationResult } from "./types";
+import type { ImageGenerationOptions, ImageGenerationProvider, ImageGenerationResult } from "./types";
 
 /**
  * Simple string hash function that produces a positive integer.
@@ -26,7 +26,7 @@ function hashPrompt(prompt: string): number {
 export class MockImageProvider implements ImageGenerationProvider {
   readonly name = "mock";
 
-  async generate(prompt: string): Promise<ImageGenerationResult> {
+  async generate(prompt: string, _options?: ImageGenerationOptions): Promise<ImageGenerationResult> {
     const seed = hashPrompt(prompt);
 
     // picsum.photos supports deterministic images via /seed/{seed}/{width}/{height}

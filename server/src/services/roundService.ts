@@ -73,7 +73,7 @@ async function createRound(difficulty?: string): Promise<Round> {
 
   // Step 3: Generate image and persist locally
   const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
-  const imageResult = await imageProvider.generate(prompt);
+  const imageResult = await imageProvider.generate(prompt, { quality: "low" });
 
   // Persist the image to local disk. GPT Image models return base64,
   // while older models (DALL-E) return temporary URLs.
@@ -277,49 +277,71 @@ async function getRecentRounds(limit: number = 10): Promise<Round[]> {
 }
 
 /**
+ * Get the next pending (pre-generated) round, if one exists.
+ *
+ * Returns the oldest pending round, which can be activated immediately
+ * instead of generating a new one from scratch.
+ *
+ * @returns The oldest pending Round, or null if none exist
+ */
+async function getNextPendingRound(): Promise<Round | null> {
+  const result = await pool.query<RoundRow>(
+    `SELECT * FROM rounds WHERE status = 'pending' ORDER BY created_at ASC LIMIT 1`
+  );
+  return result.rows.length > 0 ? toRound(result.rows[0]) : null;
+}
+
+/**
  * Convenience method: create a new round and immediately activate it.
  *
  * If there is currently an active round, it will be completed first to
  * ensure only one round is active at a time.
+ *
+ * First checks for an existing pre-generated pending round to reuse,
+ * avoiding an expensive image generation API call. Falls back to creating
+ * a new round with retries if no pending round is available.
  *
  * @param difficulty Optional difficulty level (e.g. "easy", "normal", "hard").
  *                   Defaults to env.DEFAULT_DIFFICULTY when omitted.
  * @returns The newly created and activated Round
  */
 async function createAndActivateRound(difficulty?: string): Promise<Round> {
-  // Create the new round FIRST — before completing the old one.
-  // If image generation fails (e.g. DALL-E content policy rejection),
-  // the current active round stays intact instead of leaving the game
-  // with no active round. Retries up to 3 times with fresh prompts.
-  const MAX_CREATE_RETRIES = 3;
-  let newRound: Round | null = null;
-  let lastError: Error | null = null;
+  // Step 1: Check for a pre-generated pending round
+  let newRound = await getNextPendingRound();
 
-  for (let attempt = 1; attempt <= MAX_CREATE_RETRIES; attempt++) {
-    try {
-      newRound = await createRound(difficulty);
-      break;
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      logger.warn("roundService", `createRound attempt ${attempt}/${MAX_CREATE_RETRIES} failed`, {
-        attempt,
-        error: lastError.message,
-      });
-    }
-  }
-
+  // Step 2: If none, create one (with retries)
   if (!newRound) {
-    throw lastError ?? new Error("Failed to create round after retries");
+    const MAX_CREATE_RETRIES = 3;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= MAX_CREATE_RETRIES; attempt++) {
+      try {
+        newRound = await createRound(difficulty);
+        break;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        logger.warn("roundService", `createRound attempt ${attempt}/${MAX_CREATE_RETRIES} failed`, {
+          attempt,
+          error: lastError.message,
+        });
+      }
+    }
+
+    if (!newRound) {
+      throw lastError ?? new Error("Failed to create round after retries");
+    }
+  } else {
+    logger.info("roundService", `Using pre-generated pending round ${newRound.id}`, { roundId: newRound.id });
   }
 
-  // Only now complete the old round — the new one is safely created
+  // Step 3: Complete the old active round — the new one is safely available
   const currentActive = await getActiveRound();
   if (currentActive) {
     logger.info("roundService", `Completing currently active round ${currentActive.id} before activating new one`, { roundId: currentActive.id });
     await completeRound(currentActive.id);
   }
 
-  // Activate the new round
+  // Step 4: Activate the new/recycled round
   const activatedRound = await activateRound(newRound.id);
 
   return activatedRound;
@@ -364,6 +386,7 @@ export const roundService = {
   activateRound,
   completeRound,
   getActiveRound,
+  getNextPendingRound,
   getRoundById,
   getRecentRounds,
   getCompletedRoundsPaginated,

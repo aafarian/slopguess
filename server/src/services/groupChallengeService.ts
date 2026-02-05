@@ -248,7 +248,7 @@ async function processGroupChallengeBackground(
   try {
     // Generate image
     const imageProvider = createImageProvider(env.IMAGE_PROVIDER);
-    const imageResult = await imageProvider.generate(prompt);
+    const imageResult = await imageProvider.generate(prompt, { quality: "medium" });
 
     // Persist image locally (GPT Image returns base64, older models return URLs)
     let imageFilename: string;
